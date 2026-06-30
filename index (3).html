@@ -1,171 +1,527 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workflow & Tiến Độ Hằng Ngày</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; padding: 20px; color: #333; }
-        header { text-align: center; margin-bottom: 30px; }
-        header h1 { color: #2c3e50; margin-bottom: 10px; font-size: 28px; }
-        header p { color: #7f8c8d; font-size: 16px; }
-        
-        /* Khung nhập công việc */
-        .task-input-container { max-width: 500px; margin: 0 auto 30px; display: flex; gap: 10px; }
-        .task-input-container input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border 0.2s; }
-        .task-input-container input:focus { border-color: #3498db; }
-        .task-input-container button { padding: 12px 24px; background-color: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.2s; }
-        .task-input-container button:hover { background-color: #2980b9; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow - Theo Dõi Công Việc</title>
+<meta name="description" content="Quản lý công việc hàng ngày, tuần, tháng, năm">
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --surface2: #f1f4f8;
+    --border: #e2e8f0;
+    --border-strong: #c8d3de;
+    --text: #1a202c;
+    --text2: #4a5568;
+    --text3: #94a3b8;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --accent-dark: #1d4ed8;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --yellow: #ca8a04;
+    --yellow-light: #fefce8;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  [data-dark] {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232636;
+    --border: #2d3148;
+    --border-strong: #3d4460;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #4a5568;
+    --accent-light: #1e3a5f;
+    --green-light: #052e16;
+    --red-light: #3b0a0a;
+    --yellow-light: #2d1f01;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.2s,color 0.2s}
 
-        /* Bảng Kanban */
-        .kanban-board { display: flex; justify-content: space-between; gap: 20px; max-width: 1200px; margin: 0 auto; overflow-x: auto; padding-bottom: 20px; }
-        .column { flex: 1; background-color: #ebecf0; border-radius: 10px; padding: 20px; min-height: 550px; display: flex; flex-direction: column; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .column h2 { font-size: 18px; margin-bottom: 20px; color: #4a5568; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Màu sắc riêng cho từng cột */
-        #todo-col h2 { color: #e74c3c; border-bottom: 3px solid #e74c3c; padding-bottom: 5px; }
-        #progress-col h2 { color: #f39c12; border-bottom: 3px solid #f39c12; padding-bottom: 5px; }
-        #done-col h2 { color: #2ecc71; border-bottom: 3px solid #2ecc71; padding-bottom: 5px; }
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:16px;height:56px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+  .logo{font-size:16px;font-weight:700;color:var(--accent);letter-spacing:-0.3px;flex:1}
+  .logo span{color:var(--text2);font-weight:400}
+  .header-actions{display:flex;gap:8px;align-items:center}
+  .icon-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--surface2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text2)}
+  .icon-btn:hover{background:var(--border);color:var(--text)}
 
-        .task-list { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 450px; padding: 5px 0; }
-        
-        /* Thẻ công việc */
-        .task-card { background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); cursor: grab; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s, box-shadow 0.2s; border-left: 5px solid #bdc3c7; }
-        .task-card:active { cursor: grabbing; }
-        .task-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
-        
-        #todo .task-card { border-left-color: #e74c3c; }
-        #progress .task-card { border-left-color: #f39c12; }
-        #done .task-card { border-left-color: #2ecc71; text-decoration: line-through; color: #7f8c8d; }
+  .tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 24px;gap:0;overflow-x:auto}
+  .tab{padding:14px 20px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px;transition:color 0.15s;white-space:nowrap}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-icon{font-size:15px}
 
-        .task-card p { flex: 1; font-size: 15px; line-height: 1.4; word-break: break-word; padding-right: 10px; }
-        .task-card .delete-btn { background: none; border: none; color: #95a5a6; cursor: pointer; font-weight: bold; font-size: 20px; padding: 0 5px; transition: color 0.2s; }
-        .task-card .delete-btn:hover { color: #e74c3c; }
-    </style>
+  .main{max-width:1000px;margin:0 auto;padding:24px 20px}
+  .view{display:none}.view.active{display:block}
+
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .nav-btn{height:34px;padding:0 14px;border:1px solid var(--border);background:var(--surface);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:4px}
+  .nav-btn:hover{border-color:var(--border-strong);color:var(--text)}
+  .period-label{font-size:17px;font-weight:600;color:var(--text);flex:1;text-align:center;min-width:140px}
+  .today-btn{height:34px;padding:0 16px;background:var(--accent-light);color:var(--accent);border:1px solid #bfdbfe;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500}
+  .today-btn:hover{background:#dbeafe}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .stat-num{font-size:28px;font-weight:700;letter-spacing:-0.5px;line-height:1}
+  .stat-lbl{font-size:11px;color:var(--text3);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+  .stat-card.blue .stat-num{color:var(--accent)}
+  .stat-card.green .stat-num{color:var(--green)}
+  .stat-card.red .stat-num{color:var(--red)}
+  .stat-card.yellow .stat-num{color:var(--yellow)}
+
+  .add-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;box-shadow:var(--shadow)}
+  .add-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .task-input{flex:1;min-width:160px;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface2);color:var(--text);outline:none}
+  .task-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+  .pri-select{height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);outline:none;cursor:pointer}
+  .add-btn{height:38px;padding:0 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+  .add-btn:hover{background:var(--accent-dark)}
+
+  .search-row{display:flex;gap:8px;margin-bottom:14px}
+  .search-input{flex:1;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);outline:none}
+  .search-input:focus{border-color:var(--accent)}
+
+  .task-list{display:flex;flex-direction:column;gap:6px}
+  .task-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);transition:opacity 0.2s}
+  .task-item:hover{border-color:var(--border-strong)}
+  .task-item.done{opacity:0.55}
+  .task-check{width:18px;height:18px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+  .task-name{flex:1;font-size:14px;color:var(--text);cursor:text;outline:none;border-radius:4px;padding:2px 4px}
+  .task-name:focus{background:var(--surface2)}
+  .task-item.done .task-name{text-decoration:line-through;color:var(--text3)}
+  .pri-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;flex-shrink:0;border:none;cursor:pointer}
+  .badge-high{background:var(--red-light);color:var(--red)}
+  .badge-med{background:var(--yellow-light);color:var(--yellow)}
+  .badge-low{background:var(--green-light);color:var(--green)}
+  .del-btn{width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:6px;font-size:16px;color:var(--text3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .del-btn:hover{background:var(--red-light);color:var(--red)}
+
+  .empty{text-align:center;padding:48px 20px;color:var(--text3)}
+  .empty-icon{font-size:40px;margin-bottom:12px}
+  .empty-text{font-size:14px}
+
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .day-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;min-height:120px;box-shadow:var(--shadow)}
+  .day-col.is-today{border-color:var(--accent);border-width:2px}
+  .day-col-dow{font-size:11px;font-weight:600;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+  .day-col-num{font-size:22px;font-weight:700;color:var(--text);text-align:center;margin-bottom:8px;line-height:1}
+  .day-col.is-today .day-col-num{color:var(--accent)}
+  .day-mini-task{font-size:11px;padding:4px 6px;border-radius:5px;margin-bottom:3px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--border)}
+  .day-mini-task.done{text-decoration:line-through;opacity:0.5}
+  .day-mini-task:hover{background:var(--accent-light);color:var(--accent);border-color:#bfdbfe}
+  .day-mini-more{font-size:11px;color:var(--text3);text-align:center;margin-top:4px}
+
+  .month-dow-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+  .month-dow-cell{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:6px 0;text-transform:uppercase;letter-spacing:0.5px}
+  .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .month-day{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;min-height:80px;cursor:pointer;transition:border-color 0.15s}
+  .month-day:hover{border-color:var(--border-strong)}
+  .month-day.is-today{border-color:var(--accent);border-width:2px}
+  .month-day-num{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+  .month-day.is-today .month-day-num{color:var(--accent)}
+  .dot-row{display:flex;flex-wrap:wrap;gap:3px}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .dot-high{background:var(--red)}.dot-med{background:var(--yellow)}.dot-low{background:var(--green)}.dot-done{background:var(--accent)}
+
+  .year-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .month-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;box-shadow:var(--shadow);transition:border-color 0.15s,box-shadow 0.15s}
+  .month-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+  .month-card.is-current{border-color:var(--accent)}
+  .month-card-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px}
+  .month-mini-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px}
+  .mini-cell{aspect-ratio:1;border-radius:2px}
+  .mini-cell.has-task{background:var(--accent)}
+  .mini-cell.empty-d{background:var(--surface2)}
+  .mini-cell.no-d{background:transparent}
+  .prog-wrap{background:var(--surface2);border-radius:20px;height:5px;margin-bottom:6px}
+  .prog-bar{height:5px;border-radius:20px;background:var(--accent);transition:width 0.4s}
+  .month-card-meta{font-size:11px;color:var(--text3)}
+
+  .day-progress{background:var(--surface2);border-radius:20px;height:6px;overflow:hidden;margin-bottom:16px}
+  .day-prog-fill{height:6px;border-radius:20px;background:linear-gradient(90deg,var(--accent),#60a5fa);transition:width 0.5s}
+
+  .section-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .mini-link-btn{font-size:11px;color:var(--accent);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600;background:none;border:none}
+  .mini-link-btn:hover{text-decoration:underline}
+
+  /* modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.active{display:flex}
+  .modal{background:var(--surface);border-radius:var(--radius);padding:24px;max-width:440px;width:100%;box-shadow:var(--shadow-md)}
+  .modal h3{font-size:16px;margin-bottom:12px;color:var(--text)}
+  .modal p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6}
+  .modal textarea{width:100%;height:120px;font-family:monospace;font-size:11px;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);resize:vertical;margin-bottom:12px}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end}
+  .modal-btn{height:36px;padding:0 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border)}
+  .modal-btn.primary{background:var(--accent);color:#fff;border:none}
+  .modal-btn.secondary{background:var(--surface2);color:var(--text)}
+  .file-input-hidden{display:none}
+
+  @media(max-width:700px){
+    .stats-row{grid-template-columns:repeat(2,1fr)}
+    .week-grid{grid-template-columns:repeat(4,1fr)}
+    .year-grid{grid-template-columns:repeat(2,1fr)}
+    .add-row{flex-wrap:wrap}
+    .task-input{width:100%}
+    .period-label{font-size:14px}
+    .tab{padding:12px 12px;font-size:12px}
+    .main{padding:16px 12px}
+  }
+  @media(max-width:480px){
+    .week-grid{grid-template-columns:repeat(2,1fr)}
+    .year-grid{grid-template-columns:repeat(2,1fr)}
+    .month-grid{gap:2px}
+    .month-day{min-height:60px;padding:5px}
+  }
+</style>
 </head>
 <body>
 
-    <header>
-        <h1>My Daily Workflow</h1>
-        <p>Quản lý tiến độ và hiệu suất công việc mỗi ngày</p>
-    </header>
+<header class="header">
+  <div class="logo">TaskFlow <span>· Theo dõi công việc</span></div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="openBackupModal()" title="Sao lưu / Phục hồi dữ liệu">💾</button>
+    <button class="icon-btn" onclick="toggleDark()" title="Chế độ tối/sáng" id="dark-btn">🌙</button>
+  </div>
+</header>
 
-    <div class="task-input-container">
-        <input type="text" id="task-input" placeholder="Nhập công việc cần làm hôm nay...">
-        <button onclick="addNewTask()">Thêm việc</button>
+<nav class="tabs">
+  <div class="tab active" onclick="switchView('day')"><span class="tab-icon">📅</span> Ngày</div>
+  <div class="tab" onclick="switchView('week')"><span class="tab-icon">📆</span> Tuần</div>
+  <div class="tab" onclick="switchView('month')"><span class="tab-icon">🗓️</span> Tháng</div>
+  <div class="tab" onclick="switchView('year')"><span class="tab-icon">📊</span> Năm</div>
+</nav>
+
+<main class="main">
+
+  <div id="view-day" class="view active">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftDay(-1)">&#8592; Trước</button>
+      <div class="period-label" id="day-label"></div>
+      <button class="nav-btn" onclick="shiftDay(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Hôm nay</button>
     </div>
-
-    <div class="kanban-board">
-        <!-- Cột Cần Làm -->
-        <div class="column" id="todo-col">
-            <h2>Cần Làm (To do)</h2>
-            <div class="task-list" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-        </div>
-
-        <!-- Cột Đang Làm -->
-        <div class="column" id="progress-col">
-            <h2>Đang Làm (In Progress)</h2>
-            <div class="task-list" id="progress" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-        </div>
-
-        <!-- Cột Hoàn Thành -->
-        <div class="column" id="done-col">
-            <h2>Đã Xong (Done)</h2>
-            <div class="task-list" id="done" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-        </div>
+    <div class="stats-row" id="day-stats"></div>
+    <div class="day-progress"><div class="day-prog-fill" id="day-prog" style="width:0%"></div></div>
+    <div class="add-panel">
+      <div class="section-lbl">Thêm công việc mới</div>
+      <div class="add-row">
+        <input class="task-input" id="task-input" placeholder="Tên công việc..." onkeydown="if(event.key==='Enter')addTask()">
+        <select class="pri-select" id="pri-select">
+          <option value="high">🔴 Cao</option>
+          <option value="med" selected>🟡 Trung bình</option>
+          <option value="low">🟢 Thấp</option>
+        </select>
+        <button class="add-btn" onclick="addTask()">+ Thêm</button>
+      </div>
     </div>
+    <div class="section-lbl">
+      <span>Danh sách hôm nay</span>
+    </div>
+    <div class="search-row">
+      <input class="search-input" id="search-input" placeholder="🔎 Tìm công việc..." oninput="renderDay()">
+    </div>
+    <div class="task-list" id="task-list"></div>
+  </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", loadTasks);
+  <div id="view-week" class="view">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftWeek(-1)">&#8592; Trước</button>
+      <div class="period-label" id="week-label"></div>
+      <button class="nav-btn" onclick="shiftWeek(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Tuần này</button>
+    </div>
+    <div class="stats-row" id="week-stats"></div>
+    <div class="week-grid" id="week-grid"></div>
+  </div>
 
-        function allowDrop(ev) {
-            ev.preventDefault();
-        }
+  <div id="view-month" class="view">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftMonth(-1)">&#8592; Trước</button>
+      <div class="period-label" id="month-label"></div>
+      <button class="nav-btn" onclick="shiftMonth(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Tháng này</button>
+    </div>
+    <div class="stats-row" id="month-stats"></div>
+    <div class="month-dow-hdr" id="month-dow-hdr"></div>
+    <div class="month-grid" id="month-grid"></div>
+  </div>
 
-        function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.id);
-        }
+  <div id="view-year" class="view">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftYear(-1)">&#8592; Trước</button>
+      <div class="period-label" id="year-label"></div>
+      <button class="nav-btn" onclick="shiftYear(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Năm này</button>
+    </div>
+    <div class="stats-row" id="year-stats"></div>
+    <div class="year-grid" id="year-grid"></div>
+  </div>
 
-        function drop(ev) {
-            ev.preventDefault();
-            var data = ev.dataTransfer.getData("text");
-            var taskCard = document.getElementById(data);
-            
-            let targetList = ev.target;
-            while (!targetList.classList.contains('task-list') && targetList.parentNode) {
-                targetList = targetList.parentNode;
-            }
-            
-            if (targetList.classList.contains('task-list')) {
-                targetList.appendChild(taskCard);
-                saveTasks();
-            }
-        }
+</main>
 
-        function addNewTask() {
-            var input = document.getElementById("task-input");
-            var taskText = input.value.trim();
-            if (taskText === "") return;
+<div class="modal-overlay" id="backup-modal">
+  <div class="modal">
+    <h3>💾 Sao lưu / Phục hồi dữ liệu</h3>
+    <p>Tải file sao lưu để giữ an toàn, hoặc dán dữ liệu cũ vào đây để khôi phục (ví dụ khi chuyển sang thiết bị khác).</p>
+    <div class="modal-actions" style="margin-bottom:16px">
+      <button class="modal-btn secondary" onclick="exportData()">⬇️ Tải file sao lưu (.json)</button>
+      <button class="modal-btn secondary" onclick="document.getElementById('import-file').click()">⬆️ Tải lên file</button>
+      <input type="file" id="import-file" class="file-input-hidden" accept=".json" onchange="importFromFile(event)">
+    </div>
+    <textarea id="backup-text" placeholder="...hoặc dán dữ liệu JSON vào đây..."></textarea>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeBackupModal()">Đóng</button>
+      <button class="modal-btn primary" onclick="importFromText()">Khôi phục từ văn bản</button>
+    </div>
+  </div>
+</div>
 
-            var taskId = "task-" + Date.now();
-            createTaskElement(taskText, taskId, "todo");
-            
-            input.value = "";
-            saveTasks();
-        }
+<script>
+const SK = 'taskflow_v2';
+let tasks = JSON.parse(localStorage.getItem(SK) || '{}');
+function save(){ localStorage.setItem(SK, JSON.stringify(tasks)); }
 
-        function createTaskElement(text, id, columnId) {
-            var card = document.createElement("div");
-            card.className = "task-card";
-            card.id = id;
-            card.draggable = true;
-            card.setAttribute("ondragstart", "drag(event)");
+let curDay  = new Date();
+let curWeekOffset = 0;
+let curMonthDate  = new Date();
+let curYear = new Date().getFullYear();
+let curView = 'day';
 
-            var p = document.createElement("p");
-            p.innerText = text;
-            card.appendChild(p);
+const VN_DOW   = ['CN','T2','T3','T4','T5','T6','T7'];
+const VN_MON   = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const PRIM = {high:'🔴 Cao', med:'🟡 TB', low:'🟢 Thấp'};
+const PCLS = {high:'badge-high', med:'badge-med', low:'badge-low'};
+const DCLS = {high:'dot-high', med:'dot-med', low:'dot-low'};
 
-            var deleteBtn = document.createElement("button");
-            deleteBtn.className = "delete-btn";
-            deleteBtn.innerHTML = "&times;";
-            deleteBtn.onclick = function() {
-                card.remove();
-                saveTasks();
-            };
-            card.appendChild(deleteBtn);
+function dk(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function todayKey(){ return dk(new Date()); }
+function getDay(key){ return tasks[key]||[]; }
+function setDay(key,arr){ tasks[key]=arr; save(); }
 
-            document.getElementById(columnId).appendChild(card);
-        }
+let dark = localStorage.getItem('taskflow_dark')==='1';
+function applyDark(){ document.body.toggleAttribute('data-dark',dark); document.getElementById('dark-btn').textContent=dark?'☀️':'🌙'; }
+function toggleDark(){ dark=!dark; localStorage.setItem('taskflow_dark',dark?'1':'0'); applyDark(); }
+applyDark();
 
-        function saveTasks() {
-            var columns = ["todo", "progress", "done"];
-            var data = {};
-            
-            columns.forEach(colId => {
-                data[colId] = [];
-                var cards = document.getElementById(colId).querySelectorAll(".task-card");
-                cards.forEach(card => {
-                    data[colId].push({
-                        id: card.id,
-                        text: card.querySelector("p").innerText
-                    });
-                });
-            });
-            localStorage.setItem("kanban-tasks", JSON.stringify(data));
-        }
+function switchView(v){
+  curView=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  const idx={'day':0,'week':1,'month':2,'year':3}[v];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  render(v);
+}
+function render(v){
+  if(v==='day')   renderDay();
+  if(v==='week')  renderWeek();
+  if(v==='month') renderMonth();
+  if(v==='year')  renderYear();
+}
 
-        function loadTasks() {
-            var data = localStorage.getItem("kanban-tasks");
-            if (!data) return;
-            data = JSON.parse(data);
+function addTask(){
+  const inp=document.getElementById('task-input');
+  const name=inp.value.trim(); if(!name)return;
+  const pri=document.getElementById('pri-select').value;
+  const key=dk(curDay);
+  const arr=getDay(key);
+  arr.push({id:Date.now(),name,pri,done:false});
+  setDay(key,arr); inp.value=''; renderDay();
+}
+function toggleTask(key,id){
+  const arr=getDay(key), t=arr.find(x=>x.id===id);
+  if(t)t.done=!t.done; setDay(key,arr); renderDay();
+}
+function deleteTask(key,id){
+  setDay(key,getDay(key).filter(x=>x.id!==id)); renderDay();
+}
+function cyclePriority(key,id){
+  const arr=getDay(key), t=arr.find(x=>x.id===id);
+  if(!t)return;
+  const order=['high','med','low'];
+  t.pri = order[(order.indexOf(t.pri)+1)%3];
+  setDay(key,arr); renderDay();
+}
+function renameTask(key,id,el){
+  const newName=el.textContent.trim();
+  const arr=getDay(key), t=arr.find(x=>x.id===id);
+  if(t && newName){ t.name=newName; setDay(key,arr); }
+  else { el.textContent=t?t.name:''; }
+}
 
-            Object.keys(data).forEach(colId => {
-                data[colId].forEach(task => {
-                    createTaskElement(task.text, task.id, colId);
-                });
-            });
-        }
-    </script>
+function statsHtml(total,done,pct){
+  const remaining=total-done;
+  return `
+    <div class="stat-card blue"><div class="stat-num">${total}</div><div class="stat-lbl">Tổng công việc</div></div>
+    <div class="stat-card green"><div class="stat-num">${done}</div><div class="stat-lbl">Hoàn thành</div></div>
+    <div class="stat-card yellow"><div class="stat-num">${remaining}</div><div class="stat-lbl">Còn lại</div></div>
+    <div class="stat-card blue"><div class="stat-num">${pct}%</div><div class="stat-lbl">Tiến độ</div></div>`;
+}
+
+function renderDay(){
+  const key=dk(curDay), arr=getDay(key), todK=todayKey();
+  const isToday=key===todK;
+  document.getElementById('day-label').textContent =
+    `${VN_DOW[curDay.getDay()]}, ${curDay.getDate()} ${VN_MON[curDay.getMonth()]} ${curDay.getFullYear()}${isToday?' · Hôm nay':''}`;
+  const done=arr.filter(x=>x.done).length, total=arr.length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('day-stats').innerHTML=statsHtml(total,done,pct);
+  document.getElementById('day-prog').style.width=pct+'%';
+
+  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  const filtered = q ? arr.filter(t=>t.name.toLowerCase().includes(q)) : arr;
+
+  const listEl=document.getElementById('task-list');
+  if(!arr.length){
+    listEl.innerHTML=`<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Chưa có công việc nào.<br>Thêm việc mới ở ô phía trên!</div></div>`;
+    return;
+  }
+  if(!filtered.length){
+    listEl.innerHTML=`<div class="empty"><div class="empty-icon">🔎</div><div class="empty-text">Không tìm thấy công việc phù hợp.</div></div>`;
+    return;
+  }
+  listEl.innerHTML=filtered.map(t=>`
+    <div class="task-item${t.done?' done':''}">
+      <input type="checkbox" class="task-check"${t.done?' checked':''} onchange="toggleTask('${key}',${t.id})">
+      <span class="task-name" contenteditable="true" spellcheck="false" onblur="renameTask('${key}',${t.id},this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${escHtml(t.name)}</span>
+      <button class="pri-badge ${PCLS[t.pri]}" onclick="cyclePriority('${key}',${t.id})" title="Bấm để đổi ưu tiên">${PRIM[t.pri]}</button>
+      <button class="del-btn" onclick="deleteTask('${key}',${t.id})" title="Xoá">✕</button>
+    </div>`).join('');
+}
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function shiftDay(n){ curDay=new Date(curDay); curDay.setDate(curDay.getDate()+n); renderDay(); }
+function goToday(){ curDay=new Date(); curWeekOffset=0; curMonthDate=new Date(); curYear=new Date().getFullYear(); render(curView); }
+
+function getMonday(offset){
+  const d=new Date(), dow=(d.getDay()+6)%7;
+  d.setDate(d.getDate()-dow+offset*7); d.setHours(0,0,0,0); return d;
+}
+function renderWeek(){
+  const mon=getMonday(curWeekOffset);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  document.getElementById('week-label').textContent=
+    `${mon.getDate()}/${mon.getMonth()+1} – ${sun.getDate()}/${sun.getMonth()+1}/${sun.getFullYear()}`;
+  const todK=todayKey();
+  let total=0,done=0,cols='';
+  for(let i=0;i<7;i++){
+    const d=new Date(mon); d.setDate(mon.getDate()+i);
+    const key=dk(d), arr=getDay(key);
+    total+=arr.length; done+=arr.filter(x=>x.done).length;
+    const isToday=key===todK;
+    const taskHtml=arr.slice(0,5).map(t=>`<div class="day-mini-task${t.done?' done':''}" title="${escHtml(t.name)}" onclick="curDay=new Date('${key}T00:00:00');switchView('day')">${escHtml(t.name)}</div>`).join('');
+    const more=arr.length>5?`<div class="day-mini-more">+${arr.length-5} việc khác</div>`:'';
+    cols+=`<div class="day-col${isToday?' is-today':''}">
+      <div class="day-col-dow">${VN_DOW[(d.getDay())]}</div>
+      <div class="day-col-num">${d.getDate()}</div>
+      ${taskHtml}${more}
+      ${!arr.length?`<div class="empty-text" style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px">Trống</div>`:''}
+    </div>`;
+  }
+  document.getElementById('week-grid').innerHTML=cols;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('week-stats').innerHTML=statsHtml(total,done,pct);
+}
+function shiftWeek(n){ curWeekOffset+=n; renderWeek(); }
+
+function renderMonth(){
+  const y=curMonthDate.getFullYear(), m=curMonthDate.getMonth();
+  document.getElementById('month-label').textContent=`${VN_MON[m]} ${y}`;
+  const todK=todayKey();
+  const firstDay=new Date(y,m,1), lastDay=new Date(y,m+1,0);
+  const startDow=(firstDay.getDay()+6)%7;
+  const days=['T2','T3','T4','T5','T6','T7','CN'];
+  document.getElementById('month-dow-hdr').innerHTML=days.map(d=>`<div class="month-dow-cell">${d}</div>`).join('');
+  let total=0,done=0,cells='';
+  for(let i=0;i<startDow;i++) cells+=`<div class="month-day" style="visibility:hidden"></div>`;
+  for(let d=1;d<=lastDay.getDate();d++){
+    const date=new Date(y,m,d), key=dk(date), arr=getDay(key);
+    total+=arr.length; done+=arr.filter(x=>x.done).length;
+    const isToday=key===todK;
+    const dots=arr.slice(0,9).map(t=>`<div class="dot ${t.done?'dot-done':DCLS[t.pri]}"></div>`).join('');
+    cells+=`<div class="month-day${isToday?' is-today':''}" onclick="curDay=new Date('${key}T00:00:00');switchView('day')">
+      <div class="month-day-num">${d}</div>
+      <div class="dot-row">${dots}</div>
+    </div>`;
+  }
+  document.getElementById('month-grid').innerHTML=cells;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('month-stats').innerHTML=statsHtml(total,done,pct);
+}
+function shiftMonth(n){ curMonthDate=new Date(curMonthDate); curMonthDate.setMonth(curMonthDate.getMonth()+n); renderMonth(); }
+
+function renderYear(){
+  document.getElementById('year-label').textContent=`Năm ${curYear}`;
+  const curM=new Date().getMonth(), curY=new Date().getFullYear();
+  let total=0,done=0,cards='';
+  for(let m=0;m<12;m++){
+    const firstDay=new Date(curYear,m,1), lastDay=new Date(curYear,m+1,0);
+    const startDow=(firstDay.getDay()+6)%7;
+    let mTotal=0,mDone=0,mini='';
+    for(let i=0;i<startDow;i++) mini+=`<div class="mini-cell no-d"></div>`;
+    for(let d=1;d<=lastDay.getDate();d++){
+      const key=dk(new Date(curYear,m,d)), arr=getDay(key);
+      mTotal+=arr.length; mDone+=arr.filter(x=>x.done).length;
+      mini+=`<div class="mini-cell ${arr.length?'has-task':'empty-d'}"></div>`;
+    }
+    total+=mTotal; done+=mDone;
+    const pct=mTotal?Math.round(mDone/mTotal*100):0;
+    const isCurrent=curYear===curY&&m===curM;
+    cards+=`<div class="month-card${isCurrent?' is-current':''}" onclick="curMonthDate=new Date(${curYear},${m},1);switchView('month')">
+      <div class="month-card-name">${VN_MON[m]}</div>
+      <div class="month-mini-cal">${mini}</div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+      <div class="month-card-meta">${mTotal} việc · ${pct}% xong</div>
+    </div>`;
+  }
+  document.getElementById('year-grid').innerHTML=cards;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('year-stats').innerHTML=statsHtml(total,done,pct);
+}
+function shiftYear(n){ curYear+=n; renderYear(); }
+
+// ── BACKUP / RESTORE ──
+function openBackupModal(){ document.getElementById('backup-modal').classList.add('active'); }
+function closeBackupModal(){ document.getElementById('backup-modal').classList.remove('active'); }
+function exportData(){
+  const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`taskflow-backup-${todayKey()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function applyImported(obj){
+  if(typeof obj!=='object'||obj===null){ alert('Dữ liệu không hợp lệ.'); return; }
+  tasks=obj; save(); render(curView); closeBackupModal();
+  alert('Khôi phục dữ liệu thành công!');
+}
+function importFromFile(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{ applyImported(JSON.parse(ev.target.result)); }
+    catch(err){ alert('Không đọc được file JSON.'); }
+  };
+  reader.readAsText(file);
+}
+function importFromText(){
+  const txt=document.getElementById('backup-text').value.trim();
+  if(!txt){ alert('Vui lòng dán dữ liệu JSON.'); return; }
+  try{ applyImported(JSON.parse(txt)); }
+  catch(err){ alert('Dữ liệu JSON không hợp lệ.'); }
+}
+
+renderDay();
+</script>
 </body>
 </html>
