@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow & Tiến Độ Hằng Ngày</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; padding: 20px; color: #333; }
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { color: #2c3e50; margin-bottom: 10px; font-size: 28px; }
+        header p { color: #7f8c8d; font-size: 16px; }
+        
+        /* Khung nhập công việc */
+        .task-input-container { max-width: 500px; margin: 0 auto 30px; display: flex; gap: 10px; }
+        .task-input-container input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: border 0.2s; }
+        .task-input-container input:focus { border-color: #3498db; }
+        .task-input-container button { padding: 12px 24px; background-color: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: background 0.2s; }
+        .task-input-container button:hover { background-color: #2980b9; }
+
+        /* Bảng Kanban */
+        .kanban-board { display: flex; justify-content: space-between; gap: 20px; max-width: 1200px; margin: 0 auto; overflow-x: auto; padding-bottom: 20px; }
+        .column { flex: 1; background-color: #ebecf0; border-radius: 10px; padding: 20px; min-height: 550px; display: flex; flex-direction: column; min-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .column h2 { font-size: 18px; margin-bottom: 20px; color: #4a5568; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Màu sắc riêng cho từng cột */
+        #todo-col h2 { color: #e74c3c; border-bottom: 3px solid #e74c3c; padding-bottom: 5px; }
+        #progress-col h2 { color: #f39c12; border-bottom: 3px solid #f39c12; padding-bottom: 5px; }
+        #done-col h2 { color: #2ecc71; border-bottom: 3px solid #2ecc71; padding-bottom: 5px; }
+
+        .task-list { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 450px; padding: 5px 0; }
+        
+        /* Thẻ công việc */
+        .task-card { background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); cursor: grab; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s, box-shadow 0.2s; border-left: 5px solid #bdc3c7; }
+        .task-card:active { cursor: grabbing; }
+        .task-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        
+        #todo .task-card { border-left-color: #e74c3c; }
+        #progress .task-card { border-left-color: #f39c12; }
+        #done .task-card { border-left-color: #2ecc71; text-decoration: line-through; color: #7f8c8d; }
+
+        .task-card p { flex: 1; font-size: 15px; line-height: 1.4; word-break: break-word; padding-right: 10px; }
+        .task-card .delete-btn { background: none; border: none; color: #95a5a6; cursor: pointer; font-weight: bold; font-size: 20px; padding: 0 5px; transition: color 0.2s; }
+        .task-card .delete-btn:hover { color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>My Daily Workflow</h1>
+        <p>Quản lý tiến độ và hiệu suất công việc mỗi ngày</p>
+    </header>
+
+    <div class="task-input-container">
+        <input type="text" id="task-input" placeholder="Nhập công việc cần làm hôm nay...">
+        <button onclick="addNewTask()">Thêm việc</button>
+    </div>
+
+    <div class="kanban-board">
+        <!-- Cột Cần Làm -->
+        <div class="column" id="todo-col">
+            <h2>Cần Làm (To do)</h2>
+            <div class="task-list" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+
+        <!-- Cột Đang Làm -->
+        <div class="column" id="progress-col">
+            <h2>Đang Làm (In Progress)</h2>
+            <div class="task-list" id="progress" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+
+        <!-- Cột Hoàn Thành -->
+        <div class="column" id="done-col">
+            <h2>Đã Xong (Done)</h2>
+            <div class="task-list" id="done" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", loadTasks);
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+            var taskCard = document.getElementById(data);
+            
+            let targetList = ev.target;
+            while (!targetList.classList.contains('task-list') && targetList.parentNode) {
+                targetList = targetList.parentNode;
+            }
+            
+            if (targetList.classList.contains('task-list')) {
+                targetList.appendChild(taskCard);
+                saveTasks();
+            }
+        }
+
+        function addNewTask() {
+            var input = document.getElementById("task-input");
+            var taskText = input.value.trim();
+            if (taskText === "") return;
+
+            var taskId = "task-" + Date.now();
+            createTaskElement(taskText, taskId, "todo");
+            
+            input.value = "";
+            saveTasks();
+        }
+
+        function createTaskElement(text, id, columnId) {
+            var card = document.createElement("div");
+            card.className = "task-card";
+            card.id = id;
+            card.draggable = true;
+            card.setAttribute("ondragstart", "drag(event)");
+
+            var p = document.createElement("p");
+            p.innerText = text;
+            card.appendChild(p);
+
+            var deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-btn";
+            deleteBtn.innerHTML = "&times;";
+            deleteBtn.onclick = function() {
+                card.remove();
+                saveTasks();
+            };
+            card.appendChild(deleteBtn);
+
+            document.getElementById(columnId).appendChild(card);
+        }
+
+        function saveTasks() {
+            var columns = ["todo", "progress", "done"];
+            var data = {};
+            
+            columns.forEach(colId => {
+                data[colId] = [];
+                var cards = document.getElementById(colId).querySelectorAll(".task-card");
+                cards.forEach(card => {
+                    data[colId].push({
+                        id: card.id,
+                        text: card.querySelector("p").innerText
+                    });
+                });
+            });
+            localStorage.setItem("kanban-tasks", JSON.stringify(data));
+        }
+
+        function loadTasks() {
+            var data = localStorage.getItem("kanban-tasks");
+            if (!data) return;
+            data = JSON.parse(data);
+
+            Object.keys(data).forEach(colId => {
+                data[colId].forEach(task => {
+                    createTaskElement(task.text, task.id, colId);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
