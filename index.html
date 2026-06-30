@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow Pro Banking</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --surface2: #f1f4f8;
+    --border: #e2e8f0;
+    --border-strong: #c8d3de;
+    --text: #1a202c;
+    --text2: #4a5568;
+    --text3: #94a3b8;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --accent-dark: #1d4ed8;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --yellow: #ca8a04;
+    --yellow-light: #fefce8;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  [data-dark] {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232636;
+    --border: #2d3148;
+    --border-strong: #3d4460;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #4a5568;
+    --accent-light: #1e3a5f;
+    --green-light: #052e16;
+    --red-light: #3b0a0a;
+    --yellow-light: #2d1f01;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.2s,color 0.2s}
+  
+  /* ── HEADER ── */
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:16px;height:56px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+  .logo{font-size:16px;font-weight:700;color:var(--accent);letter-spacing:-0.3px;flex:1}
+  .logo span{color:var(--text2);font-weight:400}
+  .header-actions{display:flex;gap:8px;align-items:center}
+  .icon-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--surface2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text2)}
+  .icon-btn:hover{background:var(--border);color:var(--text)}
+
+  /* ── TABS ── */
+  .tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 24px;gap:0}
+  .tab{padding:14px 20px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:flex;align-items:center;gap:6px;transition:color 0.15s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-icon{font-size:15px}
+
+  /* ── LAYOUT ── */
+  .main{max-width:1000px;margin:0 auto;padding:24px 20px}
+  .view{display:none}.view.active{display:block}
+
+  /* ── TOPBAR ── */
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  .nav-btn{height:34px;padding:0 14px;border:1px solid var(--border);background:var(--surface);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:4px}
+  .nav-btn:hover{border-color:var(--border-strong);color:var(--text)}
+  .period-label{font-size:17px;font-weight:600;color:var(--text);flex:1;text-align:center}
+  .today-btn{height:34px;padding:0 16px;background:var(--accent-light);color:var(--accent);border:1px solid #bfdbfe;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500}
+  .today-btn:hover{background:#dbeafe}
+
+  /* ── STAT CARDS ── */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .stat-num{font-size:28px;font-weight:700;letter-spacing:-0.5px;line-height:1}
+  .stat-lbl{font-size:11px;color:var(--text3);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+  .stat-card.blue .stat-num{color:var(--accent)}
+  .stat-card.green .stat-num{color:var(--green)}
+  .stat-card.red .stat-num{color:var(--red)}
+  .stat-card.yellow .stat-num{color:var(--yellow)}
+
+  /* ── ADD TASK ── */
+  .add-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;box-shadow:var(--shadow)}
+  .add-row{display:flex;gap:8px;align-items:center}
+  .task-input{flex:1;height:38px;padding:0 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:var(--surface2);color:var(--text);outline:none}
+  .task-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+  .pri-select{height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2);color:var(--text);outline:none;cursor:pointer}
+  .add-btn{height:38px;padding:0 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap}
+  .add-btn:hover{background:var(--accent-dark)}
+
+  /* ── TASK LIST ── */
+  .task-list{display:flex;flex-direction:column;gap:6px}
+  .task-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow);transition:opacity 0.2s}
+  .task-item:hover{border-color:var(--border-strong)}
+  .task-item.done{opacity:0.55}
+  .task-check{width:18px;height:18px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+  .task-name{flex:1;font-size:14px;color:var(--text)}
+  .task-item.done .task-name{text-decoration:line-through;color:var(--text3)}
+  .pri-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;flex-shrink:0}
+  .badge-high{background:var(--red-light);color:var(--red)}
+  .badge-med{background:var(--yellow-light);color:var(--yellow)}
+  .badge-low{background:var(--green-light);color:var(--green)}
+  .del-btn{width:28px;height:28px;border:none;background:transparent;cursor:pointer;border-radius:6px;font-size:16px;color:var(--text3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .del-btn:hover{background:var(--red-light);color:var(--red)}
+
+  /* ── EMPTY STATE ── */
+  .empty{text-align:center;padding:48px 20px;color:var(--text3)}
+  .empty-icon{font-size:40px;margin-bottom:12px}
+  .empty-text{font-size:14px}
+
+  /* ── WEEK VIEW ── */
+  .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .day-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px;min-height:120px;box-shadow:var(--shadow)}
+  .day-col.is-today{border-color:var(--accent);border-width:2px}
+  .day-col-dow{font-size:11px;font-weight:600;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+  .day-col-num{font-size:22px;font-weight:700;color:var(--text);text-align:center;margin-bottom:8px;line-height:1}
+  .day-col.is-today .day-col-num{color:var(--accent)}
+  .day-mini-task{font-size:11px;padding:4px 6px;border-radius:5px;margin-bottom:3px;background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--border)}
+  .day-mini-task.done{text-decoration:line-through;opacity:0.5}
+  .day-mini-task:hover{background:var(--accent-light);color:var(--accent);border-color:#bfdbfe}
+  .day-mini-more{font-size:11px;color:var(--text3);text-align:center;margin-top:4px}
+
+  /* ── MONTH VIEW ── */
+  .month-dow-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+  .month-dow-cell{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:6px 0;text-transform:uppercase;letter-spacing:0.5px}
+  .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .month-day{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;min-height:80px;cursor:pointer;transition:border-color 0.15s}
+  .month-day:hover{border-color:var(--border-strong)}
+  .month-day.is-today{border-color:var(--accent);border-width:2px}
+  .month-day.other-month .month-day-num{color:var(--text3)}
+  .month-day.other-month{background:var(--surface2)}
+  .month-day-num{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px}
+  .month-day.is-today .month-day-num{color:var(--accent)}
+  .dot-row{display:flex;flex-wrap:wrap;gap:3px}
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .dot-high{background:var(--red)}.dot-med{background:var(--yellow)}.dot-low{background:var(--green)}.dot-done{background:var(--accent)}
+
+  /* ── YEAR VIEW ── */
+  .year-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .month-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;box-shadow:var(--shadow);transition:border-color 0.15s,box-shadow 0.15s}
+  .month-card:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+  .month-card.is-current{border-color:var(--accent)}
+  .month-card-name{font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px}
+  .month-mini-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px}
+  .mini-cell{aspect-ratio:1;border-radius:2px}
+  .mini-cell.has-task{background:var(--accent)}
+  .mini-cell.empty-d{background:var(--surface2)}
+  .mini-cell.no-d{background:transparent}
+  .prog-wrap{background:var(--surface2);border-radius:20px;height:5px;margin-bottom:6px}
+  .prog-bar{height:5px;border-radius:20px;background:var(--accent);transition:width 0.4s}
+  .month-card-meta{font-size:11px;color:var(--text3)}
+
+  /* ── PROGRESS BAR IN DAY ── */
+  .day-progress{background:var(--surface2);border-radius:20px;height:6px;overflow:hidden;margin-bottom:16px}
+  .day-prog-fill{height:6px;border-radius:20px;background:linear-gradient(90deg,var(--accent),#60a5fa);transition:width 0.5s}
+
+  /* ── SECTION LABEL ── */
+  .section-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:10px}
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:700px){
+    .stats-row{grid-template-columns:repeat(2,1fr)}
+    .week-grid{grid-template-columns:repeat(4,1fr)}
+    .year-grid{grid-template-columns:repeat(2,1fr)}
+    .add-row{flex-wrap:wrap}
+    .task-input{width:100%}
+    .period-label{font-size:14px}
+    .tab{padding:12px 12px;font-size:12px}
+    .main{padding:16px 12px}
+  }
+  @media(max-width:480px){
+    .week-grid{grid-template-columns:repeat(2,1fr)}
+    .year-grid{grid-template-columns:repeat(2,1fr)}
+    .month-grid{gap:2px}
+    .month-day{min-height:60px;padding:5px}
+  }
+</style>
+
+<style>
+.tf-shell{font-family:Arial,sans-serif;display:flex;min-height:100vh;background:#f5f7fb;color:#1e293b}
+.tf-sidebar{width:240px;background:#0f172a;color:white;padding:24px;box-sizing:border-box}
+.tf-sidebar h2{margin-top:0}
+.tf-sidebar div{padding:12px 8px;border-radius:8px;margin:6px 0}
+.tf-main{flex:1;padding:24px;box-sizing:border-box}
+.tf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.tf-card{background:white;border-radius:14px;padding:18px;box-shadow:0 2px 8px #0001}
+.tf-workspace{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:20px}
+.tf-box{background:white;border-radius:14px;padding:20px}
+.tf-tag{display:inline-block;padding:6px 10px;border-radius:20px;background:#fef3c7}
+.tf-progress{height:8px;background:#e2e8f0;border-radius:10px;overflow:hidden}
+.tf-progress span{display:block;width:65%;height:100%;background:#2563eb}
+@media(max-width:900px){.tf-grid,.tf-workspace{grid-template-columns:1fr}.tf-sidebar{display:none}}
+</style>
+</head>
+<body>
+<div class="tf-shell">
+<div class="tf-sidebar">
+<h2>🏦 TaskFlow Pro</h2>
+<div>📊 Dashboard</div>
+<div>📝 Công việc</div>
+<div>🏢 Phòng ban</div>
+<div>📅 Lịch</div>
+<div>📈 Báo cáo</div>
+</div>
+
+<div class="tf-main">
+<h1>Quản trị công việc ngân hàng</h1>
+
+<div class="tf-grid">
+<div class="tf-card"><small>Tổng công việc</small><h2>120</h2></div>
+<div class="tf-card"><small>Đang xử lý</small><h2>35</h2></div>
+<div class="tf-card"><small>Chờ duyệt</small><h2>12</h2></div>
+<div class="tf-card"><small>Quá hạn</small><h2>5</h2></div>
+</div>
+
+<div class="tf-workspace">
+
+<div class="tf-box">
+<h2>Báo cáo kết quả kinh doanh SME tháng 6</h2>
+<span class="tf-tag">🟡 Đang xử lý</span>
+
+<h3>Thông tin</h3>
+<p>Người giao: Minh</p>
+<p>Người thực hiện: Lan</p>
+<p>Đơn vị: Phòng phát triển sản phẩm</p>
+<p>Deadline: 30/06/2026</p>
+
+<h3>Mô tả</h3>
+<p>Tổng hợp dư nợ, khách hàng, thu nhập và đề xuất giải pháp.</p>
+
+<h3>Checklist</h3>
+<p>☑ Thu thập số liệu</p>
+<p>☑ Tổng hợp chi nhánh</p>
+<p>⬜ Phân tích kết quả</p>
+
+<div class="tf-progress"><span></span></div>
+<p>Tiến độ: 65%</p>
+</div>
+
+<div class="tf-box">
+<h3>💬 Trao đổi</h3>
+<p><b>Minh:</b> Bổ sung phần bảo lãnh</p>
+<p><b>Lan:</b> Đã cập nhật số liệu</p>
+
+<h3>📎 Tài liệu</h3>
+<p>Bao_cao_SME.xlsx</p>
+
+<h3>🕒 Lịch sử</h3>
+<p>29/06 đổi deadline</p>
+<p>28/06 upload file</p>
+</div>
+
+</div>
+</div>
+</div>
+
+
+<header class="header">
+  <div class="logo">TaskFlow <span>· Theo dõi công việc</span></div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="toggleDark()" title="Chế độ tối/sáng" id="dark-btn">🌙</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" onclick="switchView('day')"><span class="tab-icon">📅</span> Ngày</div>
+  <div class="tab" onclick="switchView('week')"><span class="tab-icon">📆</span> Tuần</div>
+  <div class="tab" onclick="switchView('month')"><span class="tab-icon">🗓️</span> Tháng</div>
+  <div class="tab" onclick="switchView('year')"><span class="tab-icon">📊</span> Năm</div>
+</nav>
+
+<main class="main">
+
+  <!-- DAY -->
+  <div id="view-day" class="view active">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftDay(-1)">&#8592; Trước</button>
+      <div class="period-label" id="day-label"></div>
+      <button class="nav-btn" onclick="shiftDay(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Hôm nay</button>
+    </div>
+    <div class="stats-row" id="day-stats"></div>
+    <div class="day-progress"><div class="day-prog-fill" id="day-prog" style="width:0%"></div></div>
+    <div class="add-panel">
+      <div class="section-lbl" style="margin-bottom:10px">Thêm công việc mới</div>
+      <div class="add-row">
+        <input class="task-input" id="task-input" placeholder="Tên công việc..." onkeydown="if(event.key==='Enter')addTask()">
+        <select class="pri-select" id="pri-select">
+          <option value="high">🔴 Cao</option>
+          <option value="med" selected>🟡 Trung bình</option>
+          <option value="low">🟢 Thấp</option>
+        </select>
+        <button class="add-btn" onclick="addTask()">+ Thêm</button>
+      </div>
+    </div>
+    <div class="section-lbl">Danh sách hôm nay</div>
+    <div class="task-list" id="task-list"></div>
+  </div>
+
+  <!-- WEEK -->
+  <div id="view-week" class="view">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftWeek(-1)">&#8592; Trước</button>
+      <div class="period-label" id="week-label"></div>
+      <button class="nav-btn" onclick="shiftWeek(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Tuần này</button>
+    </div>
+    <div class="stats-row" id="week-stats"></div>
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+
+  <!-- MONTH -->
+  <div id="view-month" class="view">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftMonth(-1)">&#8592; Trước</button>
+      <div class="period-label" id="month-label"></div>
+      <button class="nav-btn" onclick="shiftMonth(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Tháng này</button>
+    </div>
+    <div class="stats-row" id="month-stats"></div>
+    <div class="month-dow-hdr" id="month-dow-hdr"></div>
+    <div class="month-grid" id="month-grid"></div>
+  </div>
+
+  <!-- YEAR -->
+  <div id="view-year" class="view">
+    <div class="topbar">
+      <button class="nav-btn" onclick="shiftYear(-1)">&#8592; Trước</button>
+      <div class="period-label" id="year-label"></div>
+      <button class="nav-btn" onclick="shiftYear(1)">Sau &#8594;</button>
+      <button class="today-btn" onclick="goToday()">Năm này</button>
+    </div>
+    <div class="stats-row" id="year-stats"></div>
+    <div class="year-grid" id="year-grid"></div>
+  </div>
+
+</main>
+
+<script>
+// ── STORAGE ──
+const SK = 'taskflow_v2';
+let tasks = JSON.parse(localStorage.getItem(SK) || '{}');
+function save(){ localStorage.setItem(SK, JSON.stringify(tasks)); }
+
+// ── STATE ──
+let curDay  = new Date();
+let curWeekOffset = 0;
+let curMonthDate  = new Date();
+let curYear = new Date().getFullYear();
+let curView = 'day';
+
+// ── UTILS ──
+const VN_DOW   = ['CN','T2','T3','T4','T5','T6','T7'];
+const VN_MON   = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const PRIM = {high:'🔴 Cao', med:'🟡 TB', low:'🟢 Thấp'};
+const PCLS = {high:'badge-high', med:'badge-med', low:'badge-low'};
+const DCLS = {high:'dot-high', med:'dot-med', low:'dot-low'};
+
+function dk(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function todayKey(){ return dk(new Date()); }
+function getDay(key){ return tasks[key]||[]; }
+function setDay(key,arr){ tasks[key]=arr; save(); }
+
+// ── DARK MODE ──
+let dark = localStorage.getItem('taskflow_dark')==='1';
+function applyDark(){ document.body.toggleAttribute('data-dark',dark); document.getElementById('dark-btn').textContent=dark?'☀️':'🌙'; }
+function toggleDark(){ dark=!dark; localStorage.setItem('taskflow_dark',dark?'1':'0'); applyDark(); }
+applyDark();
+
+// ── SWITCH VIEW ──
+function switchView(v){
+  curView=v;
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  const idx={'day':0,'week':1,'month':2,'year':3}[v];
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  render(v);
+}
+function render(v){
+  if(v==='day')   renderDay();
+  if(v==='week')  renderWeek();
+  if(v==='month') renderMonth();
+  if(v==='year')  renderYear();
+}
+
+// ── ADD / TOGGLE / DELETE ──
+function addTask(){
+  const inp=document.getElementById('task-input');
+  const name=inp.value.trim(); if(!name)return;
+  const pri=document.getElementById('pri-select').value;
+  const key=dk(curDay);
+  const arr=getDay(key);
+  arr.push({id:Date.now(),name,pri,done:false});
+  setDay(key,arr); inp.value=''; renderDay();
+}
+function toggleTask(key,id){
+  const arr=getDay(key), t=arr.find(x=>x.id===id);
+  if(t)t.done=!t.done; setDay(key,arr); renderDay();
+}
+function deleteTask(key,id){
+  setDay(key,getDay(key).filter(x=>x.id!==id)); renderDay();
+}
+
+// ── STATS HTML ──
+function statsHtml(total,done,extra1Label,extra1,pct){
+  const remaining=total-done;
+  return `
+    <div class="stat-card blue"><div class="stat-num">${total}</div><div class="stat-lbl">Tổng công việc</div></div>
+    <div class="stat-card green"><div class="stat-num">${done}</div><div class="stat-lbl">Hoàn thành</div></div>
+    <div class="stat-card yellow"><div class="stat-num">${remaining}</div><div class="stat-lbl">Còn lại</div></div>
+    <div class="stat-card blue"><div class="stat-num">${pct}%</div><div class="stat-lbl">Tiến độ</div></div>`;
+}
+
+// ── DAY VIEW ──
+function renderDay(){
+  const key=dk(curDay), arr=getDay(key), todK=todayKey();
+  const isToday=key===todK;
+  document.getElementById('day-label').textContent =
+    `${VN_DOW[curDay.getDay()]}, ${curDay.getDate()} ${VN_MON[curDay.getMonth()]} ${curDay.getFullYear()}${isToday?' · Hôm nay':''}`;
+  const done=arr.filter(x=>x.done).length, total=arr.length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('day-stats').innerHTML=statsHtml(total,done,'Ưu tiên cao',arr.filter(x=>x.pri==='high').length,pct);
+  document.getElementById('day-prog').style.width=pct+'%';
+  const listEl=document.getElementById('task-list');
+  if(!arr.length){
+    listEl.innerHTML=`<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Chưa có công việc nào.<br>Thêm việc mới ở ô phía trên!</div></div>`;
+    return;
+  }
+  listEl.innerHTML=arr.map(t=>`
+    <div class="task-item${t.done?' done':''}">
+      <input type="checkbox" class="task-check"${t.done?' checked':''} onchange="toggleTask('${key}',${t.id})">
+      <span class="task-name">${escHtml(t.name)}</span>
+      <span class="pri-badge ${PCLS[t.pri]}">${PRIM[t.pri]}</span>
+      <button class="del-btn" onclick="deleteTask('${key}',${t.id})" title="Xoá">✕</button>
+    </div>`).join('');
+}
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function shiftDay(n){ curDay=new Date(curDay); curDay.setDate(curDay.getDate()+n); renderDay(); }
+function goToday(){ curDay=new Date(); curWeekOffset=0; curMonthDate=new Date(); curYear=new Date().getFullYear(); render(curView); }
+
+// ── WEEK VIEW ──
+function getMonday(offset){
+  const d=new Date(), dow=(d.getDay()+6)%7;
+  d.setDate(d.getDate()-dow+offset*7); d.setHours(0,0,0,0); return d;
+}
+function renderWeek(){
+  const mon=getMonday(curWeekOffset);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  document.getElementById('week-label').textContent=
+    `${mon.getDate()}/${mon.getMonth()+1} – ${sun.getDate()}/${sun.getMonth()+1}/${sun.getFullYear()}`;
+  const todK=todayKey();
+  let total=0,done=0,cols='';
+  for(let i=0;i<7;i++){
+    const d=new Date(mon); d.setDate(mon.getDate()+i);
+    const key=dk(d), arr=getDay(key);
+    total+=arr.length; done+=arr.filter(x=>x.done).length;
+    const isToday=key===todK;
+    const taskHtml=arr.slice(0,5).map(t=>`<div class="day-mini-task${t.done?' done':''}" title="${escHtml(t.name)}" onclick="curDay=new Date('${key}T00:00:00');switchView('day')">${escHtml(t.name)}</div>`).join('');
+    const more=arr.length>5?`<div class="day-mini-more">+${arr.length-5} việc khác</div>`:'';
+    cols+=`<div class="day-col${isToday?' is-today':''}">
+      <div class="day-col-dow">${VN_DOW[(d.getDay())]}</div>
+      <div class="day-col-num">${d.getDate()}</div>
+      ${taskHtml}${more}
+      ${!arr.length?`<div class="empty-text" style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px">Trống</div>`:''}
+    </div>`;
+  }
+  document.getElementById('week-grid').innerHTML=cols;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('week-stats').innerHTML=statsHtml(total,done,'',0,pct);
+}
+function shiftWeek(n){ curWeekOffset+=n; renderWeek(); }
+
+// ── MONTH VIEW ──
+function renderMonth(){
+  const y=curMonthDate.getFullYear(), m=curMonthDate.getMonth();
+  document.getElementById('month-label').textContent=`${VN_MON[m]} ${y}`;
+  const todK=todayKey();
+  const firstDay=new Date(y,m,1), lastDay=new Date(y,m+1,0);
+  const startDow=(firstDay.getDay()+6)%7;
+  const days=['T2','T3','T4','T5','T6','T7','CN'];
+  document.getElementById('month-dow-hdr').innerHTML=days.map(d=>`<div class="month-dow-cell">${d}</div>`).join('');
+  let total=0,done=0,cells='';
+  for(let i=0;i<startDow;i++) cells+=`<div class="month-day other-month" style="visibility:hidden"></div>`;
+  for(let d=1;d<=lastDay.getDate();d++){
+    const date=new Date(y,m,d), key=dk(date), arr=getDay(key);
+    total+=arr.length; done+=arr.filter(x=>x.done).length;
+    const isToday=key===todK;
+    const dots=arr.slice(0,9).map(t=>`<div class="dot ${t.done?'dot-done':DCLS[t.pri]}"></div>`).join('');
+    cells+=`<div class="month-day${isToday?' is-today':''}" onclick="curDay=new Date('${key}T00:00:00');switchView('day')">
+      <div class="month-day-num">${d}</div>
+      <div class="dot-row">${dots}</div>
+    </div>`;
+  }
+  document.getElementById('month-grid').innerHTML=cells;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('month-stats').innerHTML=statsHtml(total,done,'',0,pct);
+}
+function shiftMonth(n){ curMonthDate=new Date(curMonthDate); curMonthDate.setMonth(curMonthDate.getMonth()+n); renderMonth(); }
+
+// ── YEAR VIEW ──
+function renderYear(){
+  document.getElementById('year-label').textContent=`Năm ${curYear}`;
+  const curM=new Date().getMonth(), curY=new Date().getFullYear();
+  let total=0,done=0,activeMon=0,cards='';
+  for(let m=0;m<12;m++){
+    const firstDay=new Date(curYear,m,1), lastDay=new Date(curYear,m+1,0);
+    const startDow=(firstDay.getDay()+6)%7;
+    let mTotal=0,mDone=0,mini='';
+    for(let i=0;i<startDow;i++) mini+=`<div class="mini-cell no-d"></div>`;
+    for(let d=1;d<=lastDay.getDate();d++){
+      const key=dk(new Date(curYear,m,d)), arr=getDay(key);
+      mTotal+=arr.length; mDone+=arr.filter(x=>x.done).length;
+      mini+=`<div class="mini-cell ${arr.length?'has-task':'empty-d'}"></div>`;
+    }
+    total+=mTotal; done+=mDone; if(mTotal>0) activeMon++;
+    const pct=mTotal?Math.round(mDone/mTotal*100):0;
+    const isCurrent=curYear===curY&&m===curM;
+    cards+=`<div class="month-card${isCurrent?' is-current':''}" onclick="curMonthDate=new Date(${curYear},${m},1);switchView('month')">
+      <div class="month-card-name">${VN_MON[m]}</div>
+      <div class="month-mini-cal">${mini}</div>
+      <div class="prog-wrap"><div class="prog-bar" style="width:${pct}%"></div></div>
+      <div class="month-card-meta">${mTotal} việc · ${pct}% xong</div>
+    </div>`;
+  }
+  document.getElementById('year-grid').innerHTML=cards;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('year-stats').innerHTML=statsHtml(total,done,'',0,pct);
+}
+function shiftYear(n){ curYear+=n; renderYear(); }
+
+// ── INIT ──
+renderDay();
+</script>
+</body>
+</html>
