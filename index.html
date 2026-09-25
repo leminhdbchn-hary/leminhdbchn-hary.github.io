@@ -23,7 +23,7 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px);}
 body{margin:0;font-family:"Baloo 2",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
 .screen{display:none;padding:16px;padding-bottom:90px;max-width:520px;margin:0 auto;}
-.screen.active{display:block;}
+.screen.active{display:block;min-height:100vh;min-height:100lvh;}
 .inner{padding:0 16px;}
 .hero{background:linear-gradient(135deg,#2ea6ef,#0e6fb8);border-radius:0 0 24px 24px;padding:20px 16px 26px;color:#fff;padding-top:calc(20px + env(safe-area-inset-top,0px));}
 .hero-top{display:flex;align-items:center;gap:10px;font-weight:700;}
@@ -275,6 +275,7 @@ body{background:radial-gradient(120% 60% at 80% 0%,#2a241d 0%,#0e0d0c 55%) fixed
 .balance-card .label{color:#bfb2a0;}
 .tabbar{background:#1c1916;border-top:1px solid rgba(194,154,92,.25);}
 .tab{color:#8f8576;}.tab.active{color:#e2c28b;}
+.wtype-btn{color:var(--text);}.wtype-btn.selected{background:rgba(194,154,92,.18);border-color:#c29a5c;color:#e2c28b;}
 .tab .fab{background:linear-gradient(145deg,#d6b37a,#9c7640);color:#1a1612;box-shadow:0 3px 12px rgba(194,154,92,.45);}
 .hero-pet{min-height:210px;padding:14px 16px 34px;padding-top:calc(14px + env(safe-area-inset-top,0px));}
 .hero-shade{background:linear-gradient(180deg,rgba(14,13,12,.55) 0%,rgba(14,13,12,0) 28%,rgba(14,13,12,.1) 45%,rgba(14,13,12,.8) 80%,#0e0d0c 100%)!important;}
@@ -446,8 +447,9 @@ html.is-locked body>*:not(.lock-screen):not(script){visibility:hidden;}
       <input id="savNote" type="text" placeholder="Diễn giải (tuỳ chọn)">
     </div>
     <button class="save-btn" onclick="saveAccount()">Lưu ví</button>
+    <button class="save-btn ghost-btn" onclick="cancelAccForm()">Huỷ</button>
   </div>
-  <button class="save-btn ghost-btn" onclick="toggleAccForm()">+ Thêm ví tiền</button>
+  <button class="save-btn ghost-btn" id="accToggleBtn" onclick="toggleAccForm()">+ Thêm ví tiền</button>
   </div>
 </div>
 
@@ -674,7 +676,7 @@ html.is-locked body>*:not(.lock-screen):not(script){visibility:hidden;}
 <!-- KHÁC -->
 <div class="screen" id="screen-more">
   <div class="inner">
-  <h2 class="screen-title">Khác</h2>
+  <h2 class="screen-title">Cài đặt</h2>
   <div class="more-item" onclick="showScreen('reward')" id="more-reward">Nuôi Linh Thú 🐾</div>
   <div class="more-item" onclick="showScreen('budget')" id="more-budget">Ngân sách</div>
   <div class="more-item" onclick="showScreen('recurring')" id="more-recur">Thu chi định kỳ</div>
@@ -696,7 +698,7 @@ html.is-locked body>*:not(.lock-screen):not(script){visibility:hidden;}
   <button class="tab" data-s="accounts" onclick="showScreen('accounts')"><span class="tab-icon" id="nav-accounts"></span><span class="tab-label">Ví tiền</span></button>
   <button class="tab" onclick="showScreen('add')"><span class="fab">+</span></button>
   <button class="tab" data-s="report" onclick="showScreen('report')"><span class="tab-icon" id="nav-report"></span><span class="tab-label">Báo cáo</span></button>
-  <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Khác</span></button>
+  <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
 <script>
@@ -727,6 +729,7 @@ const ICONS={
   wallet:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14" r="1.3"/>',
   home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
   chart:'<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M2 20h20"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   dots:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
   clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
   trash:'<path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m2 0-1 13a2 2 0 01-2 2H9a2 2 0 01-2-2L6 7"/>',
@@ -872,6 +875,7 @@ function showScreen(name,isBack){
   if(name==='add'){resetEditUI();document.getElementById('dateInput').value=todayStr();document.getElementById('timeInput').value=nowTime();renderWalletSelects();renderGroupChips();renderItemGrid();}
   if(name==='home')renderHome();
   if(name==='history')renderHistory();
+  if(name!=='accounts'){const af=document.getElementById('addAccForm');if(af&&af.style.display!=='none')cancelAccForm();}
   if(name==='accounts')renderAccounts();
   if(name==='report')renderReport();
   if(name==='budget')renderBudget();
@@ -913,7 +917,8 @@ function renderDebtSourceWalletSelect(){
 }
 function populateBankSelect(){document.getElementById('bankSelect').innerHTML='<option value="">-- Chọn ngân hàng --</option>'+BANKS.map((b,i)=>'<option value="'+i+'">'+b.name+'</option>').join('');}
 function onBankChange(){}
-function toggleAccForm(){const f=document.getElementById('addAccForm');f.style.display=f.style.display==='none'?'block':'none';if(f.style.display==='block'){renderWTypeGrid('cash');selectWType('cash');}}
+function toggleAccForm(){const f=document.getElementById('addAccForm');const open=f.style.display==='none';f.style.display=open?'block':'none';const tb=document.getElementById('accToggleBtn');if(tb)tb.style.display=open?'none':'block';if(open){renderWTypeGrid('cash');selectWType('cash');}}
+function cancelAccForm(){['accNameInput','accBalInput','savRate','savNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const f=document.getElementById('addAccForm');if(f.style.display!=='none')toggleAccForm();}
 function saveAccount(){
   const bal=parseInt(document.getElementById('accBalInput').value.replace(/\D/g,''))||0;
   let name,code,color;
@@ -1013,7 +1018,7 @@ function renderAccounts(){
       if(w.bankName)name=w.name+' • '+w.bankName;
       sub=(w.rate||0)+'%/năm • '+w.termMonths+' tháng • '+(w.matured?'Đã tất toán/không kỳ hạn':(left<0?'Đã đáo hạn '+Math.abs(left)+' ngày trước':'Đáo hạn sau '+left+' ngày ('+w.maturityDate.split('-').reverse().join('/')+')'));
     }
-    return '<div class="acc-item"><div class="acc-icon" style="background:'+w.color+'22;color:'+w.color+'">'+icon(w.type==='bank'?'bank':(w.type==='saving'?'piggy':'wallet'),w.color,20)+'</div><div><div class="acc-name">'+name+'</div><div class="acc-sub">'+sub+'</div></div><div class="acc-bal">'+fmt(w.balance)+'</div><button class="icon-btn" onclick="openWalletEdit('+w.id+')" style="color:var(--blue);">✎</button><button class="icon-btn" onclick="deleteAccount('+w.id+')" style="color:var(--sub);">✕</button></div>';
+    return '<div class="acc-item"><div class="acc-icon" style="background:rgba(194,154,92,.12);color:#c29a5c">'+icon(w.type==='bank'?'bank':(w.type==='saving'?'piggy':'wallet'),'#c29a5c',20)+'</div><div><div class="acc-name">'+name+'</div><div class="acc-sub">'+sub+'</div></div><div class="acc-bal">'+fmt(w.balance)+'</div><button class="icon-btn" onclick="openWalletEdit('+w.id+')" style="color:var(--blue);">✎</button><button class="icon-btn" onclick="deleteAccount('+w.id+')" style="color:var(--sub);">✕</button></div>';
   }).join('');
 }
 function renderWalletSelects(){
@@ -2244,7 +2249,7 @@ attachThousandFormat(document.getElementById('editWalletBalance'));
 document.getElementById('nav-home').innerHTML=icon('home','currentColor',24);
 document.getElementById('nav-accounts').innerHTML=icon('wallet','currentColor',24);
 document.getElementById('nav-report').innerHTML=icon('chart','currentColor',24);
-document.getElementById('nav-more').innerHTML=icon('dots','currentColor',24);
+document.getElementById('nav-more').innerHTML=icon('gear','currentColor',24);
 document.getElementById('more-budget').innerHTML='<span>'+icon('chart','#c29a5c',20)+'</span><span>Ngân sách</span>';
 document.getElementById('more-recur').innerHTML='<span>'+icon('repeat','#c29a5c',20)+'</span><span>Thu chi định kỳ</span>';
 document.getElementById('more-acc').innerHTML='<span>'+icon('wallet','#c29a5c',20)+'</span><span>Quản lý ví tiền</span>';
