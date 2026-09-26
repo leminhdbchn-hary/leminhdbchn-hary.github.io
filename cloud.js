@@ -56,7 +56,12 @@ function normalizePhoneVN(input) {
 
 function ensureRecaptcha() {
   if (window.__recaptchaVerifier) return window.__recaptchaVerifier;
-  window.__recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+  // Mỗi lần tạo mới dùng 1 thẻ con mới → tránh lỗi "reCAPTCHA has already been rendered in this element"
+  const box = document.getElementById('recaptcha-container');
+  box.innerHTML = '';
+  const el = document.createElement('div');
+  box.appendChild(el);
+  window.__recaptchaVerifier = new RecaptchaVerifier(auth, el, { size: 'invisible' });
   return window.__recaptchaVerifier;
 }
 

@@ -1900,10 +1900,11 @@ function cloudErrMsg(e){
   if(e&&e.message==='CLOUD_TOO_BIG')return'Dữ liệu quá lớn (nhiều ảnh hoá đơn) để sao lưu cloud. Hãy xoá bớt ảnh hoá đơn cũ.';
   if(e&&e.message==='CLOUD_INCONSISTENT')return'Dữ liệu trên cloud đang được máy khác cập nhật, hãy thử lại sau vài giây.';
   if(c==='auth/unauthorized-domain')return'Tên miền web chưa được cho phép trong Firebase Authentication.';
-  if(c==='auth/billing-not-enabled'||c==='auth/operation-not-allowed')return'Dịch vụ gửi SMS chưa sẵn sàng (cần bật trong Firebase).';
+  if(c==='auth/billing-not-enabled')return'Firebase chưa bật thanh toán (gói Blaze) nên chưa gửi được SMS.';
+  if(c==='auth/operation-not-allowed')return'Firebase chưa cho phép gửi SMS tới vùng này.';
   if(c==='auth/network-request-failed'||c==='unavailable')return'Không có mạng hoặc không kết nối được cloud.';
   if(c==='permission-denied')return'Cloud từ chối truy cập, hãy đăng nhập lại.';
-  return'Có lỗi xảy ra: '+(e&&e.message?e.message:'không rõ');
+  return'Có lỗi xảy ra: '+(e&&e.message?e.message:'không rõ')+(c?' ('+c+')':'');
 }
 function renderCloudScreen(){
   const el=document.getElementById('cloudBody');if(!el)return;
@@ -2283,7 +2284,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='25';
+const APP_VERSION='26';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
