@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Mỗi sổ = books/{mã sổ 24 ký tự}. Chỉ ai biết đúng mã mới đọc/ghi được.
+    // Không cho liệt kê (list) nên không ai dò ra được danh sách mã sổ.
+    function validCode(code) {
+      return code.matches('^[A-Z0-9]{24}$');
+    }
+    match /books/{code} {
+      allow get: if validCode(code);
+      allow create, update: if validCode(code)
+        && request.resource.data.keys().hasOnly(['v', 'n', 'rev', 'at', 'dev', 'size'])
+        && request.resource.data.n is int
+        && request.resource.data.n >= 1 && request.resource.data.n <= 40
+        && request.resource.data.rev is string
+        && request.resource.data.rev.size() <= 40;
+      allow list, delete: if false;
+
+      match /chunks/{i} {
+        allow get: if validCode(code);
+        allow create, update: if validCode(code)
+          && i.matches('^[0-9]{1,2}$')
+          && request.resource.data.keys().hasOnly(['d', 'r'])
+          && request.resource.data.d is string
+          && request.resource.data.r is string;
+        allow list, delete: if false;
+      }
+    }
+    // Mọi thứ khác: cấm
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

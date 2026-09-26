@@ -111,6 +111,7 @@ function saveAll(){
   try{localStorage.setItem('tc_reward_profile',JSON.stringify(rewardProfile));}catch(e){}
   try{localStorage.setItem('tc_reward_history',JSON.stringify(rewardHistory));}catch(e){}
   try{localStorage.setItem('tc_user_achievements',JSON.stringify(userAchievements));}catch(e){}
+  if(typeof cloudMarkDirty==='function')cloudMarkDirty(); /* sao lưu cloud chạy nền */
 }
 
 let currentType='chi', selectedGroup=null, selectedItem=null, receiptData=null, editingTxId=null;
@@ -218,7 +219,7 @@ function selectWType(id){
 /* Ngân hàng tự thêm */
 let customBanks=[];try{customBanks=JSON.parse(localStorage.getItem('tc_custom_banks')||'[]');}catch(e){customBanks=[];}
 customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});
-function saveCustomBanks(){try{localStorage.setItem('tc_custom_banks',JSON.stringify(customBanks));}catch(e){}}
+function saveCustomBanks(){try{localStorage.setItem('tc_custom_banks',JSON.stringify(customBanks));}catch(e){}if(typeof cloudMarkDirty==='function')cloudMarkDirty();}
 const NEW_BANK_OPT='<option value="__newbank">＋ Thêm ngân hàng khác...</option>';
 function addCustomBank(name){
   name=(name||'').trim();if(!name)return -1;
@@ -2119,7 +2120,7 @@ updateLockMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='23';
+const APP_VERSION='24';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

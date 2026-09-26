@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=23">
+<link rel="stylesheet" href="app.css?v=24">
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -426,6 +426,7 @@
   <div class="more-item" onclick="showScreen('loans')" id="more-loans">Vay ngân hàng</div>
   <div class="more-item" onclick="showScreen('history')" id="more-hist">Lịch sử giao dịch</div>
   <div class="more-item" onclick="openPinSettings()" id="more-lock">Mật khẩu vào app</div>
+  <div class="more-item" onclick="openCloudSettings()" id="more-cloud">Sao lưu đám mây (Cloud)</div>
   <div class="more-item" onclick="exportCSV()" id="more-exportcsv">Xuất dữ liệu (CSV / Excel)</div>
   <div class="more-item" onclick="exportJSON()" id="more-exportjson">Sao lưu dữ liệu (JSON)</div>
   <div class="more-item" onclick="triggerImport()" id="more-import">Khôi phục dữ liệu (JSON)</div>
@@ -443,6 +444,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script src="app.js?v=23"></script>
+<script src="app.js?v=24"></script>
+<script src="cloud.js?v=24"></script>
 </body>
 </html>
