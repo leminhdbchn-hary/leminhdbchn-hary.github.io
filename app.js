@@ -1267,11 +1267,11 @@ function renderLoans(){
         '<div class="field"><label>Ngày trả</label><input type="date" id="loanPayDate_'+l.id+'" value="'+todayStr()+'"></div>'+
         '<div class="field"><label>Trả nợ gốc (VND)'+(l.type==='consumer'?' — trả nhiều hơn sẽ lùi lịch trả gốc':'')+'</label><input type="tel" inputmode="numeric" id="loanPayPrincipal_'+l.id+'" value="'+(preP?fmtShort(preP):'')+'" placeholder="0" oninput="fmtInput(this)"></div>'+
         '<div class="field"><label>Trả lãi (VND)'+iLbl+'</label><input type="tel" inputmode="numeric" id="loanPayInterest_'+l.id+'" value="'+(preI?fmtShort(preI):'')+'" placeholder="0" oninput="fmtInput(this)"></div>'+
-        '<div class="field"><label>Trả từ ví</label><select id="loanPayWallet_'+l.id+'">'+walletOpts()+'</select></div>'+
+        '<div class="field"><label>Trả từ</label><select id="loanPayWallet_'+l.id+'">'+walletOpts().replace('<option value="">Chưa có ví</option>','')+EXT_OPT+'</select></div>'+
         '<button class="save-btn" style="margin-top:4px;" onclick="submitLoanPayment('+l.id+')">Xác nhận đã trả</button>'+
         '</div>';
     }
-    const histRows=(l.history||[]).map(h=>'<div class="loan-hist-row"><span>'+dmy(h.date)+'</span><span class="lh-txt">Gốc '+fmtShort(h.principal)+' VND • Lãi '+fmtShort(h.interest)+' VND</span><button class="icon-btn" style="color:var(--blue)" onclick="toggleHistEdit(\''+h.id+'\')">✎</button><button class="icon-btn" style="color:var(--sub)" onclick="deleteLoanHist('+l.id+',\''+h.id+'\')">✕</button></div>'+
+    const histRows=(l.history||[]).map(h=>'<div class="loan-hist-row"><span>'+dmy(h.date)+'</span><span class="lh-txt">Gốc '+fmtShort(h.principal)+' VND • Lãi '+fmtShort(h.interest)+' VND'+(h.external?' <span class="fam-tag">người khác trả</span>':'')+'</span><button class="icon-btn" style="color:var(--blue)" onclick="toggleHistEdit(\''+h.id+'\')">✎</button><button class="icon-btn" style="color:var(--sub)" onclick="deleteLoanHist('+l.id+',\''+h.id+'\')">✕</button></div>'+
       '<div class="loan-hist-edit" id="lhe_'+h.id+'"><input type="date" id="lhd_'+h.id+'" value="'+h.date+'"><input type="tel" inputmode="numeric" id="lhp_'+h.id+'" placeholder="Trả gốc" value="'+fmtShort(h.principal)+'" oninput="fmtInput(this)"><input type="tel" inputmode="numeric" id="lhi_'+h.id+'" placeholder="Trả lãi" value="'+fmtShort(h.interest)+'" oninput="fmtInput(this)"><button onclick="saveLoanHist('+l.id+',\''+h.id+'\')">Lưu</button><button style="background:#3a342d;color:var(--text)" onclick="toggleHistEdit(\''+h.id+'\')">Huỷ</button></div>').join('');
     return '<div class="loan-item">'+
       '<div class="loan-top"><div><div class="loan-name">'+l.name+' <span class="loan-type-chip">'+(LOAN_TYPES[l.type]||'')+'</span></div><div class="loan-bank">'+(l.bankName?l.bankName+' • ':'')+(l.termMonths?l.termMonths+' tháng • đáo hạn '+dmy(loanMaturity(l)):'')+'</div></div><div class="loan-bal">'+fmt(l.balance)+'<div style="font-size:11px;font-weight:500;color:var(--sub);">dư nợ</div></div></div>'+
@@ -1291,7 +1291,7 @@ function toggleLoanSched(id){const box=document.getElementById('loanSched_'+id);
 function submitLoanPayment(id){
   const l=loans.find(x=>x.id===id);if(!l)return;
   const principal=num('loanPayPrincipal_'+id),interest=num('loanPayInterest_'+id);
-  const walletId=document.getElementById('loanPayWallet_'+id).value;
+  const walletId=document.getElementById('loanPayWallet_'+id).value;setLastPaySrc(walletId);
   const date=document.getElementById('loanPayDate_'+id).value||todayStr();
   if(principal<=0&&interest<=0){alert('Vui lòng nhập số tiền trả gốc hoặc lãi');return;}
   if(principal>l.balance){alert('Số tiền trả gốc lớn hơn dư nợ còn lại ('+fmt(l.balance)+')');return;}
@@ -1299,15 +1299,22 @@ function submitLoanPayment(id){
   if(!payLoanCore(l,principal,interest,walletId,date))return;
   saveAll();renderLoans();renderHome();
 }
+const EXT_PAY='__ext';
+const EXT_OPT='<option value="__ext">👥 Người khác đã trả (không trừ ví)</option>';
+function lastPaySrc(){try{return localStorage.getItem('tc_last_paysrc')||'';}catch(e){return '';}}
+function setLastPaySrc(v){try{localStorage.setItem('tc_last_paysrc',v);}catch(e){}}
 function payLoanCore(l,principal,interest,walletId,date,coverUntil){
-  const w=wallets.find(x=>String(x.id)===String(walletId));if(!w)return false;
-  w.balance-=principal+interest;
+  const ext=walletId===EXT_PAY;
+  const w=ext?null:wallets.find(x=>String(x.id)===String(walletId));if(!ext&&!w)return false;
+  if(w)w.balance-=principal+interest;
   const hid='h'+Date.now()+Math.floor(Math.random()*1000);
   const sch=loanSchedule(l),ip=l.iPaid||0;let iCount=0;
   if(interest>0){iCount=1;const lim=coverUntil||(ip<sch.length&&sch[ip].due>date?sch[ip].due:date);for(let j=ip+1;j<sch.length&&sch[j].due<=lim;j++)iCount++;iCount=Math.min(iCount,Math.max(1,sch.length-ip));}
-  const h={id:hid,date,principal,interest,walletId,iCount,txP:null,txI:null};
-  if(principal>0){h.txP=Date.now()+Math.random();txs.unshift({id:h.txP,type:'chi',amount:principal,group:'Khác',item:'Trả nợ gốc vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId,note:'Trả gốc: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});}
-  if(interest>0){h.txI=Date.now()+Math.random()+1;txs.unshift({id:h.txI,type:'chi',amount:interest,group:'Khác',item:'Trả lãi vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId,note:'Trả lãi: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});l.iPaid=Math.min(sch.length,ip+iCount);}
+  const h={id:hid,date,principal,interest,walletId:ext?null:walletId,iCount,txP:null,txI:null};
+  if(ext)h.external=true;
+  if(principal>0&&!ext){h.txP=Date.now()+Math.random();txs.unshift({id:h.txP,type:'chi',amount:principal,group:'Khác',item:'Trả nợ gốc vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId,note:'Trả gốc: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});}
+  if(interest>0&&ext){l.iPaid=Math.min(sch.length,ip+iCount);}
+  if(interest>0&&!ext){h.txI=Date.now()+Math.random()+1;txs.unshift({id:h.txI,type:'chi',amount:interest,group:'Khác',item:'Trả lãi vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId,note:'Trả lãi: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});l.iPaid=Math.min(sch.length,ip+iCount);}
   l.history=l.history||[];l.history.unshift(h);
   recalcLoan(l);
   return true;
@@ -1319,6 +1326,7 @@ function findHistTx(l,h,item,txKey){
   return txs.find(t=>t.loanId===l.id&&t.item===item&&t.date===h.date&&!t.loanHistId&&t.amount===(item==='Trả nợ gốc vay'?h.principal:h.interest));
 }
 function setHistTx(l,h,item,txKey,amount,date){
+  if(h.external)return; // người khác trả: không có giao dịch ví
   let t=findHistTx(l,h,item,txKey);
   const w=wallets.find(x=>String(x.id)===String(h.walletId));
   if(t){if(w)w.balance+=t.amount;
@@ -1948,14 +1956,17 @@ function openRemindPay(k){
   document.getElementById('appModalBody').innerHTML='<h3>Xác nhận đã trả khoản vay</h3>'+
     '<div class="rp-list">'+g.loans.map(x=>'<div class="rp-row"><span>'+x.name+'</span><span>'+(x.p?'Gốc '+fmtShort(x.p):'')+(x.p&&x.i?' • ':'')+(x.i?'Lãi '+fmtShort(x.i):'')+'</span></div>').join('')+
     '<div class="rp-row rp-tot"><span>Tổng</span><b>'+fmt(tot)+'</b></div></div>'+
-    '<label>Trả từ ví</label>'+(wl.length?'<select id="rpWallet" class="rp-select">'+wl.map(x=>'<option value="'+x.id+'">'+x.name+' ('+fmtShort(x.balance)+')</option>').join('')+'</select>':'<div class="loan-hint">Chưa có ví chi tiêu. Hãy thêm ví trước.</div>')+
-    '<div class="loan-hint" style="margin:8px 0 12px;">App sẽ ghi khoản chi vào ví, trừ số dư và đánh dấu kỳ này đã trả. Lãi dùng số ước tính — nếu số thực tế khác, bạn sửa lại trong mục Khoản vay.</div>'+
-    '<div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Huỷ</button>'+(wl.length?'<button class="edit-modal-save" onclick="confirmRemindPay()">Đã trả</button>':'')+'</div>';
-  document.getElementById('appModal').classList.add('show');
+    '<label>Trả từ</label><select id="rpWallet" class="rp-select" onchange="rpHintUpd()">'+wl.map(x=>'<option value="'+x.id+'"'+(String(x.id)===lastPaySrc()?' selected':'')+'>'+x.name+' ('+fmtShort(x.balance)+')</option>').join('')+EXT_OPT.replace('value="__ext"','value="__ext"'+(lastPaySrc()===EXT_PAY||!wl.length?' selected':''))+'</select>'+
+    '<div class="loan-hint" id="rpHint" style="margin:8px 0 4px;"></div>'+
+    '<div class="loan-hint" style="margin:0 0 12px;opacity:.8">Lãi dùng số ước tính — nếu số thực tế khác, bạn sửa lại trong mục Khoản vay.</div>'+
+    '<div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Huỷ</button><button class="edit-modal-save" onclick="confirmRemindPay()">Đã trả</button></div>';
+  document.getElementById('appModal').classList.add('show');rpHintUpd();
 }
+function rpHintUpd(){const s=document.getElementById('rpWallet'),h=document.getElementById('rpHint');if(!s||!h)return;
+  h.textContent=s.value===EXT_PAY?'Chỉ đánh dấu kỳ này đã trả và giảm dư nợ. Không trừ tiền ví nào, không ghi vào khoản Chi của bạn.':'App sẽ ghi khoản chi vào ví, trừ số dư và đánh dấu kỳ này đã trả.';}
 function confirmRemindPay(){
   const g=remindDays[remindPayKey];if(!g)return;
-  const walletId=document.getElementById('rpWallet').value;const today=todayStr();
+  const walletId=document.getElementById('rpWallet').value;setLastPaySrc(walletId);const today=todayStr();
   g.loans.forEach(x=>{const l=loans.find(y=>y.id===x.id);if(!l)return;
     const p=Math.min(x.p,l.balance);payLoanCore(l,p,x.i,walletId,today,x.until);});
   saveAll();closeAppModal();renderHome();try{renderLoans();}catch(e){}
@@ -2108,7 +2119,7 @@ updateLockMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='21';
+const APP_VERSION='22';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
