@@ -37,16 +37,16 @@ const ICONS={
   trophy:'<path d="M7 4h10v3a5 5 0 01-10 0V4z"/><path d="M7 5H4a3 3 0 003 3"/><path d="M17 5h3a3 3 0 01-3 3"/><path d="M10 14h4v3h-4z"/><path d="M8 20h8"/><path d="M12 17v3"/>'
 };
 function icon(name,color,size){return '<svg viewBox="0 0 24 24" width="'+(size||20)+'" height="'+(size||20)+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||ICONS.khac)+'</svg>';}
-function fmt(n){return Number(n||0).toLocaleString('en-US')+' VND';}
-function fmtBig(n){return Number(n||0).toLocaleString('en-US')+'<sup class="cur">VND</sup>';}
+function fmt(n){return Number(n||0).toLocaleString('vi-VN')+' VND';}
+function fmtBig(n){return Number(n||0).toLocaleString('vi-VN')+'<sup class="cur">VND</sup>';}
 let hideBal=false;try{hideBal=localStorage.getItem('tc_hide_bal')==='1';}catch(e){}
 const EYE_ON='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_OFF='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.5 10.5 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.2M6.6 6.6A17 17 0 002 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
 function balHtml(n){return hideBal?'******<sup class="cur">VND</sup>':fmtBig(n);}
 function toggleHideBal(ev){if(ev)ev.stopPropagation();hideBal=!hideBal;try{localStorage.setItem('tc_hide_bal',hideBal?'1':'0');}catch(e){}renderHome();try{renderAccounts();}catch(e){}}
 function eyeBtn(){return '<button class="eye-btn" onclick="toggleHideBal(event)" aria-label="Ẩn/hiện số dư">'+(hideBal?EYE_OFF:EYE_ON)+'</button>';}
-function fmtShort(n){return Number(n||0).toLocaleString('en-US');}
-function attachThousandFormat(el){el.addEventListener('input',()=>{const d=el.value.replace(/\D/g,'');el.value=d?Number(d).toLocaleString('en-US'):'';});}
+function fmtShort(n){return Number(n||0).toLocaleString('vi-VN');}
+function attachThousandFormat(el){el.addEventListener('input',()=>{const d=el.value.replace(/\D/g,'');el.value=d?Number(d).toLocaleString('vi-VN'):'';});}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function nowTime(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 function ym(dateStr){return dateStr.slice(0,7);}
@@ -671,7 +671,7 @@ function repRenderGroup(inRange,type,elId,emptyMsg){
   if(!rows.length){list.innerHTML='<div class="empty">'+emptyMsg+'</div>';return;}
   const total=rows.reduce((s,r)=>s+r[1].sum,0);
   const maxSum=rows[0][1].sum;
-  list.innerHTML=rows.map(([name,d])=>'<div class="cat-row"><div class="cat-row-top"><span style="display:flex;align-items:center;gap:8px;">'+icon(d.icon,d.accent,18)+name+'</span><span>'+fmt(d.sum)+' <small style="color:var(--sub)">'+Math.round(d.sum/total*100)+'%</small></span></div><div class="bar-bg"><div class="bar-fill" style="width:'+Math.round(d.sum/maxSum*100)+'%;background:'+d.accent+'"></div></div>'+(Object.keys(d.items).length>1?'<div style="font-size:12.5px;color:var(--sub);margin-top:4px;">'+Object.entries(d.items).sort((a,b)=>b[1]-a[1]).map(([n,v])=>n+': '+fmt(v)).join(' · ')+'</div>':'')+'</div>').join('');
+  list.innerHTML=rows.map(([name,d])=>'<div class="cat-row"><div class="cat-row-top"><span style="display:flex;align-items:center;gap:8px;">'+icon(d.icon,d.accent,18)+name+'</span><span>'+fmt(d.sum)+' <small style="color:var(--sub)">'+Math.round(d.sum/total*100)+'%</small></span></div><div class="bar-bg"><div class="bar-fill" style="width:'+Math.round(d.sum/maxSum*100)+'%;background:'+d.accent+'"></div></div>'+(Object.keys(d.items).length>1?'<div style="font-size:11.5px;color:var(--sub);margin-top:4px;">'+Object.entries(d.items).sort((a,b)=>b[1]-a[1]).map(([n,v])=>n+': '+fmt(v)).join(' · ')+'</div>':'')+'</div>').join('');
 }
 
 /* ---------- BUDGET ---------- */
@@ -688,8 +688,8 @@ function renderBudget(){
     const color=pct>=90?'var(--red)':pct>=70?'var(--yellow)':'var(--green)';
     const statusEmoji=pct>=90?'🔴':pct>=70?'🟡':'🟢';
     return '<div class="cat-row"><div class="cat-row-top"><span style="display:flex;align-items:center;gap:8px;">'+icon(g.icon,g.accent,18)+g.name+'</span><span>'+(bud>0?statusEmoji+' '+pct+'%':'')+'</span></div>'+
-      (bud>0?'<div class="bar-bg" style="margin-bottom:8px;"><div class="bar-fill" style="width:'+Math.min(pct,100)+'%;background:'+color+'"></div></div><div style="font-size:14px;color:var(--sub);">Đã dùng '+fmt(spent)+' / '+fmt(bud)+' — còn lại '+fmt(Math.max(bud-spent,0))+'</div>':'<div style="font-size:14px;color:var(--sub);margin-bottom:6px;">Chưa đặt ngân sách</div>')+
-      '<input type="tel" inputmode="numeric" placeholder="Đặt ngân sách/tháng (VND)" value="'+(bud?fmtShort(bud):'')+'" style="width:100%;border:1px solid #d8e4ec;border-radius:8px;padding:8px 10px;margin-top:8px;font-family:inherit;font-size:14.5px;" onchange="setBudget(\''+g.name+'\',this.value)">'+
+      (bud>0?'<div class="bar-bg" style="margin-bottom:8px;"><div class="bar-fill" style="width:'+Math.min(pct,100)+'%;background:'+color+'"></div></div><div style="font-size:12.5px;color:var(--sub);">Đã dùng '+fmt(spent)+' / '+fmt(bud)+' — còn lại '+fmt(Math.max(bud-spent,0))+'</div>':'<div style="font-size:12.5px;color:var(--sub);margin-bottom:6px;">Chưa đặt ngân sách</div>')+
+      '<input type="tel" inputmode="numeric" placeholder="Đặt ngân sách/tháng (VND)" value="'+(bud?fmtShort(bud):'')+'" style="width:100%;border:1px solid #d8e4ec;border-radius:8px;padding:8px 10px;margin-top:8px;font-family:inherit;font-size:13px;" onchange="setBudget(\''+g.name+'\',this.value)">'+
       itemBudgetHtml(g,monthChi)+'</div>';
   }).join('');
 }
@@ -731,7 +731,7 @@ function deleteRecurring(id){recurring=recurring.filter(r=>r.id!==id);saveAll();
 function renderRecurring(){
   const list=document.getElementById('recurList');
   if(!recurring.length){list.innerHTML='<div class="empty">Chưa có khoản định kỳ nào. VD: Lương ngày 25, Tiền nhà ngày 5...</div>';return;}
-  list.innerHTML=recurring.map(r=>'<div class="acc-item"><div class="acc-icon" style="background:'+(r.type==='thu'?'#dcefe4':'#fbdfe0')+';color:'+(r.type==='thu'?'var(--green)':'var(--red)')+'">'+icon('repeat',r.type==='thu'?'var(--green)':'var(--red)',18)+'</div><div><div class="acc-name">'+r.name+'</div><div class="acc-sub">Ngày '+r.day+' hàng tháng • '+r.item+'</div></div><div class="acc-bal">'+fmt(r.amount)+'</div><button onclick="deleteRecurring('+r.id+')" style="background:none;border:none;color:var(--sub);font-size:16.5px;">✕</button></div>').join('');
+  list.innerHTML=recurring.map(r=>'<div class="acc-item"><div class="acc-icon" style="background:'+(r.type==='thu'?'#dcefe4':'#fbdfe0')+';color:'+(r.type==='thu'?'var(--green)':'var(--red)')+'">'+icon('repeat',r.type==='thu'?'var(--green)':'var(--red)',18)+'</div><div><div class="acc-name">'+r.name+'</div><div class="acc-sub">Ngày '+r.day+' hàng tháng • '+r.item+'</div></div><div class="acc-bal">'+fmt(r.amount)+'</div><button onclick="deleteRecurring('+r.id+')" style="background:none;border:none;color:var(--sub);font-size:15px;">✕</button></div>').join('');
 }
 function checkDueRecurring(){
   const now=new Date();const curYm=todayStr().slice(0,7);const curDay=now.getDate();
@@ -1135,7 +1135,7 @@ function renderLoans(){
     const histRows=(l.history||[]).map(h=>'<div class="loan-hist-row"><span>'+dmy(h.date)+'</span><span class="lh-txt">Gốc '+fmtShort(h.principal)+' VND • Lãi '+fmtShort(h.interest)+' VND</span><button class="icon-btn" style="color:var(--blue)" onclick="toggleHistEdit(\''+h.id+'\')">✎</button><button class="icon-btn" style="color:var(--sub)" onclick="deleteLoanHist('+l.id+',\''+h.id+'\')">✕</button></div>'+
       '<div class="loan-hist-edit" id="lhe_'+h.id+'"><input type="date" id="lhd_'+h.id+'" value="'+h.date+'"><input type="tel" inputmode="numeric" id="lhp_'+h.id+'" placeholder="Trả gốc" value="'+fmtShort(h.principal)+'" oninput="fmtInput(this)"><input type="tel" inputmode="numeric" id="lhi_'+h.id+'" placeholder="Trả lãi" value="'+fmtShort(h.interest)+'" oninput="fmtInput(this)"><button onclick="saveLoanHist('+l.id+',\''+h.id+'\')">Lưu</button><button style="background:#3a342d;color:var(--text)" onclick="toggleHistEdit(\''+h.id+'\')">Huỷ</button></div>').join('');
     return '<div class="loan-item">'+
-      '<div class="loan-top"><div><div class="loan-name">'+l.name+' <span class="loan-type-chip">'+(LOAN_TYPES[l.type]||'')+'</span></div><div class="loan-bank">'+(l.bankName?l.bankName+' • ':'')+(l.termMonths?l.termMonths+' tháng • đáo hạn '+dmy(loanMaturity(l)):'')+'</div></div><div class="loan-bal">'+fmt(l.balance)+'<div style="font-size:12px;font-weight:600;color:var(--sub);">dư nợ</div></div></div>'+
+      '<div class="loan-top"><div><div class="loan-name">'+l.name+' <span class="loan-type-chip">'+(LOAN_TYPES[l.type]||'')+'</span></div><div class="loan-bank">'+(l.bankName?l.bankName+' • ':'')+(l.termMonths?l.termMonths+' tháng • đáo hạn '+dmy(loanMaturity(l)):'')+'</div></div><div class="loan-bal">'+fmt(l.balance)+'<div style="font-size:11px;font-weight:500;color:var(--sub);">dư nợ</div></div></div>'+
       '<div class="loan-grid"><div><span>Số tiền vay ban đầu</span><b>'+fmt(l.principal)+'</b></div><div><span>Đã trả nợ gốc</span><b>'+fmt(paid)+' ('+pctPaid+'%)</b></div>'+
       '<div><span>Lãi suất</span><b>'+(l.rate||0)+'%/năm</b></div><div><span>'+(l.type==='consumer'?'Gốc mỗi tháng':'Ngày trả lãi')+'</span><b>'+(l.type==='consumer'?fmt(loanMonthlyPrincipal(l)):'Ngày '+l.interestDay+' hàng tháng')+'</b></div></div>'+
       '<div class="bar-bg" style="margin-top:8px;"><div class="bar-fill" style="width:'+pctPaid+'%;background:var(--blue)"></div></div>'+
@@ -1173,7 +1173,7 @@ function payLoanCore(l,principal,interest,walletId,date,coverUntil){
   recalcLoan(l);
   return true;
 }
-function fmtInput(el){const d=el.value.replace(/\D/g,'');el.value=d?Number(d).toLocaleString('en-US'):'';}
+function fmtInput(el){const d=el.value.replace(/\D/g,'');el.value=d?Number(d).toLocaleString('vi-VN'):'';}
 function toggleHistEdit(hid){const e=document.getElementById('lhe_'+hid);if(e)e.style.display=e.style.display==='block'?'none':'block';}
 function findHistTx(l,h,item,txKey){
   if(h[txKey])return txs.find(t=>t.id===h[txKey]);
@@ -1861,7 +1861,7 @@ function renderChars(){
 function openCharView(id){
   const c=CHARACTERS.find(x=>x.id===id);if(!c)return;const ok=charOwned(c),comp=companionId()===c.id;
   document.getElementById('cvSheet').innerHTML=(ok?'<video src="'+c.video+'" poster="'+c.poster+'" autoplay muted loop playsinline></video>':'<img src="'+c.poster+'" style="filter:brightness(0) drop-shadow(0 0 2px #c29a5c)">')+
-    '<div class="cv-name">'+(ok?c.name:'Nhân vật bí ẩn')+'</div><div class="cc-rar" style="font-weight:800;color:'+(RARITY_COLOR[c.rarity]||'#a99d8d')+'">'+c.rarity+'</div>'+
+    '<div class="cv-name">'+(ok?c.name:'Nhân vật bí ẩn')+'</div><div class="cc-rar" style="font-weight:700;color:'+(RARITY_COLOR[c.rarity]||'#a99d8d')+'">'+c.rarity+'</div>'+
     '<div class="cv-desc">'+(ok?c.desc:'Tích luỹ đủ <b>'+c.need+' ✨ linh lực</b> để mở khoá (hiện có '+(rewardProfile.total_points||0)+').')+'</div>'+
     (ok?(comp?'<button class="save-btn ghost-btn" disabled>✓ Đang là bạn đồng hành</button>':'<button class="save-btn" onclick="setCompanion(\''+c.id+'\')">Chọn làm bạn đồng hành</button>'):'')+
     '<button class="save-btn ghost-btn" onclick="closeCharView()">Đóng</button>';
@@ -1949,7 +1949,7 @@ function openPinSettings(){
   const c=prompt('Đăng nhập đang BẬT'+(userIsSet()?'':' (chưa có tên đăng nhập)')+'.\nGõ 1 để đổi mật khẩu\nGõ 2 để '+(userIsSet()?'đổi':'đặt')+' tên đăng nhập\nGõ 3 để tắt đăng nhập','1');
   if(c==='1')pinShow('verifyChange');else if(c==='2')pinShow('verifyChangeUser');else if(c==='3')pinShow('verifyOff');
 }
-function updateLockMenu(){const e=document.getElementById('more-lock');if(e)e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Tên đăng nhập & mật khẩu</span><span style="margin-left:auto;font-size:14px;color:'+(pinIsSet()?'var(--green)':'var(--sub)')+'">'+(pinIsSet()?(userIsSet()?'Đang bật':'Chưa có tên'):'Chưa bật')+'</span>';}
+function updateLockMenu(){const e=document.getElementById('more-lock');if(e)e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Tên đăng nhập & mật khẩu</span><span style="margin-left:auto;font-size:12.5px;color:'+(pinIsSet()?'var(--green)':'var(--sub)')+'">'+(pinIsSet()?(userIsSet()?'Đang bật':'Chưa có tên'):'Chưa bật')+'</span>';}
 // Khoá lại khi rời app quá 1 phút
 document.addEventListener('visibilitychange',()=>{if(!pinIsSet())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>60000){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
 if(pinIsSet())pinShow('unlock');
