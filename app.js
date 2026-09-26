@@ -1886,72 +1886,56 @@ function onImportFile(e){
   e.target.value='';
 }
 
-/* ---------- ĐỒNG BỘ CLOUD (đăng nhập tài khoản Google) ---------- */
+/* ---------- ĐỒNG BỘ CLOUD (đăng nhập bằng Google) ---------- */
 function cloudFmtTime(ms){if(!ms)return'';const d=new Date(ms);return d.toLocaleString('vi-VN');}
 function cloudErrMsg(e){
   const c=(e&&e.code)||'';
-  if(c==='auth/popup-blocked')return'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy cho phép cửa sổ bật lên (pop-up) rồi thử lại.';
-  if(c==='auth/unauthorized-domain')return'Tên miền web chưa được cho phép trong Firebase Authentication.';
-  if(c==='auth/operation-not-allowed')return'Đăng nhập Google chưa được bật trong Firebase.';
-  if(c==='auth/too-many-requests')return'Bạn thử quá nhiều lần, hãy đợi một lúc rồi thử lại.';
-  if(c==='auth/user-disabled')return'Tài khoản này đã bị khoá.';
-  if(c==='auth/network-request-failed'||c==='unavailable')return'Không có mạng hoặc không kết nối được cloud.';
-  if(c==='permission-denied')return'Cloud từ chối truy cập, hãy đăng nhập lại.';
-  if(e&&e.message==='CLOUD_TOO_BIG')return'Dữ liệu quá lớn (nhiều ảnh hoá đơn) để sao lưu cloud. Hãy xoá bớt ảnh hoá đơn cũ.';
-  if(e&&e.message==='CLOUD_INCONSISTENT')return'Dữ liệu trên cloud đang được máy khác cập nhật, hãy thử lại sau vài giây.';
-  return'Có lỗi xảy ra: '+(e&&e.message?e.message:'không rõ')+(c?' ('+c+')':'');
+  if(c==='auth/popup-blocked')return'Trình duyệt chặn cửa sổ đăng nhập. Hãy cho phép popup rồi thử lại.';
+  if(c==='auth/network-request-failed')return'Không có mạng hoặc mất kết nối, thử lại nhé.';
+  if(c==='auth/unauthorized-domain')return'Domain này chưa được cho phép đăng nhập Google (cần thêm vào Firebase Console).';
+  return'Có lỗi xảy ra: '+(e&&e.message?e.message:'không rõ');
 }
-function cloudIsCancel(e){const c=(e&&e.code)||'';return c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'||c==='auth/user-cancelled';}
 function renderCloudScreen(){
   const el=document.getElementById('cloudBody');if(!el)return;
   if(!window.Cloud){el.innerHTML='<div class="more-item">Đang tải dịch vụ cloud, thử lại sau vài giây…</div>';return;}
   if(window.Cloud.isLoggedIn()){
     let last=0;try{last=+localStorage.getItem('tc_cloud_last_sync')||0;}catch(e){}
     el.innerHTML=
-      '<div class="field"><label>Tài khoản Google đang đăng nhập</label><div class="more-item" style="margin-bottom:0;word-break:break-all;">'+window.Cloud.currentEmail()+'</div></div>'+
+      '<div class="field"><label>Đang đăng nhập</label><div class="more-item" style="margin-bottom:0;">'+(window.Cloud.currentName()||window.Cloud.currentEmail())+'</div></div>'+
       '<div class="field"><label>Đồng bộ lần gần nhất</label><div class="more-item" id="cloudLastSync" style="margin-bottom:0;">'+(last?cloudFmtTime(last):'Chưa đồng bộ lần nào')+'</div></div>'+
       '<button class="save-btn" onclick="cloudManualPush()">☁️ Sao lưu ngay</button>'+
       '<button class="save-btn" style="background:var(--card2,#333);color:var(--text,#fff);margin-top:10px;" onclick="cloudManualPull()">⬇️ Khôi phục từ cloud</button>'+
       '<button class="save-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:10px;" onclick="cloudLogoutUI()">Đăng xuất</button>';
   }else{
-    el.innerHTML=
-      '<button class="save-btn" id="cloudGoogleBtn" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;" onclick="cloudGoogleLoginUI()"><svg width="20" height="20" viewBox="0 0 48 48" style="vertical-align:-4px;margin-right:8px"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Đăng nhập bằng Google</button>'+
-      '<p style="color:var(--sub);font-size:12.5px;margin:12px 2px 0;">Dùng cùng 1 tài khoản Gmail trên các máy để dùng chung dữ liệu.</p>';
+    el.innerHTML='<button class="save-btn" id="cloudGoogleBtn" onclick="cloudSignInUI()">Đăng nhập bằng Google</button>';
   }
 }
-function cloudGoogleLoginUI(){
+async function cloudSignInUI(){
   const btn=document.getElementById('cloudGoogleBtn');
-  if(btn){btn.disabled=true;btn.style.opacity='.6';}
-  cloudLoggingIn=true;
-  // gọi ngay trong lúc bấm để trình duyệt không chặn cửa sổ đăng nhập
-  window.Cloud.signInGoogle().then(async u=>{
-    if(u)await cloudPostLogin();
-  }).catch(e=>{if(!cloudIsCancel(e))alert(cloudErrMsg(e));})
-  .finally(()=>{cloudLoggingIn=false;if(btn){btn.disabled=false;btn.style.opacity='';}});
+  if(btn){btn.disabled=true;btn.textContent='Đang mở đăng nhập Google...';}
+  try{localStorage.setItem('tc_cloud_logging_in','1');}catch(e){}
+  try{
+    const user=await window.Cloud.signIn();
+    if(user)await cloudPostLogin(); /* luồng popup: đã có user ngay. Luồng redirect: trang sẽ tải lại và cloud-auth-changed tự lo. */
+  }catch(e){try{localStorage.removeItem('tc_cloud_logging_in');}catch(e2){}alert(cloudErrMsg(e));}
+  if(btn){btn.disabled=false;btn.textContent='Đăng nhập bằng Google';}
 }
 async function cloudPostLogin(){
   let cloudData=null;
   try{cloudData=await window.Cloud.pullState();}catch(e){}
-  const hasLocal=txs.length||wallets.length;
   if(cloudData&&Array.isArray(cloudData.txs)){
     const when=cloudData.updatedAtClient?cloudFmtTime(cloudData.updatedAtClient):'không rõ thời gian';
-    if(!hasLocal||confirm('Tìm thấy dữ liệu đã sao lưu trên cloud (cập nhật lúc '+when+').\n\nBấm OK để khôi phục dữ liệu này về máy (ghi đè dữ liệu hiện tại trên máy).\nBấm Huỷ để giữ dữ liệu hiện tại của máy và tải lên cloud (ghi đè dữ liệu trên cloud).')){
-      cloudApply(cloudData);showMiniToast('✓ Đã khôi phục dữ liệu từ cloud');
+    if(confirm('Tìm thấy dữ liệu đã sao lưu trên cloud (cập nhật lúc '+when+').\n\nBấm OK để khôi phục dữ liệu này về máy (ghi đè dữ liệu hiện tại trên máy).\nBấm Huỷ để giữ dữ liệu hiện tại trên máy và tải nó lên cloud.')){
+      applyCloudPayload(cloudData);saveAll();renderHome();showMiniToast('✓ Đã khôi phục dữ liệu từ cloud');
     }else{
-      try{await window.Cloud.pushState(buildCloudPayload(),{force:true});showMiniToast('✓ Đã tải dữ liệu máy này lên cloud');}catch(e){alert(cloudErrMsg(e));}
+      try{await window.Cloud.pushState(buildCloudPayload());try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));}catch(e){}}catch(e){}
+      showMiniToast('✓ Đã tải dữ liệu máy này lên cloud');
     }
   }else{
-    try{await window.Cloud.pushState(buildCloudPayload(),{force:true});showMiniToast('✓ Đăng nhập thành công, đã sao lưu dữ liệu');}catch(e){alert(cloudErrMsg(e));}
+    try{await window.Cloud.pushState(buildCloudPayload());try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));}catch(e){}}catch(e){}
+    showMiniToast('✓ Đăng nhập thành công, đã sao lưu dữ liệu');
   }
   renderCloudScreen();updateCloudMenu();
-}
-/* Áp dụng dữ liệu từ cloud vào máy mà không kích hoạt sao lưu ngược lại */
-function cloudApply(data){
-  window.Cloud.applying=true;
-  try{applyCloudPayload(data);saveAll();}finally{window.Cloud.applying=false;}
-  window.Cloud.markApplied(data);
-  try{renderHome();}catch(e){}
-  try{const s=currentScreen();if(s&&s!=='home')showScreen(s);}catch(e){}
 }
 function cloudLogoutUI(){
   if(!confirm('Đăng xuất khỏi đồng bộ cloud trên máy này?'))return;
@@ -1959,8 +1943,8 @@ function cloudLogoutUI(){
 }
 async function cloudManualPush(){
   if(!window.Cloud||!window.Cloud.isLoggedIn())return;
-  try{await window.Cloud.pushState(buildCloudPayload());showMiniToast('✓ Đã sao lưu lên cloud');renderCloudScreen();}
-  catch(e){if(e&&e.message==='CLOUD_CONFLICT')cloudShowConflict(e.meta);else alert(cloudErrMsg(e));}
+  try{await window.Cloud.pushState(buildCloudPayload());try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));}catch(e){}showMiniToast('✓ Đã sao lưu lên cloud');renderCloudScreen();}
+  catch(e){alert(cloudErrMsg(e));}
 }
 async function cloudManualPull(){
   if(!window.Cloud||!window.Cloud.isLoggedIn())return;
@@ -1968,55 +1952,22 @@ async function cloudManualPull(){
     const data=await window.Cloud.pullState();
     if(!data||!Array.isArray(data.txs)){alert('Chưa có dữ liệu sao lưu nào trên cloud.');return;}
     if(!confirm('Khôi phục sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại trên máy này bằng dữ liệu trên cloud. Tiếp tục?'))return;
-    cloudApply(data);showMiniToast('✓ Đã khôi phục dữ liệu từ cloud');renderCloudScreen();
+    applyCloudPayload(data);saveAll();renderHome();showMiniToast('✓ Đã khôi phục dữ liệu từ cloud');
   }catch(e){alert(cloudErrMsg(e));}
 }
-/* Máy này và cloud đều có thay đổi khác nhau → hỏi giữ bản nào */
-let cloudConflictOpen=false;
-function cloudShowConflict(meta){
-  if(cloudConflictOpen)return;cloudConflictOpen=true;
-  whenUnlocked(()=>{
-    const when=meta&&meta.at?cloudFmtTime(meta.at):'gần đây';
-    document.getElementById('appModalBody').innerHTML='<h3>☁️ Dữ liệu khác nhau</h3>'+
-      '<p class="bk-p">Dữ liệu trên cloud vừa được cập nhật từ <b>'+((meta&&meta.dev)||'thiết bị khác')+'</b> lúc <b>'+when+'</b>, trong khi máy này cũng có thay đổi chưa sao lưu.</p>'+
-      '<p class="bk-p">Chọn bản muốn giữ (bản còn lại sẽ bị ghi đè):</p>'+
-      '<div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="cloudResolve(\'cloud\')">Lấy bản cloud</button><button class="edit-modal-save" onclick="cloudResolve(\'local\')">Giữ bản máy này</button></div>';
-    document.getElementById('appModal').classList.add('show');
-  });
-}
-async function cloudResolve(which){
-  closeAppModal();cloudConflictOpen=false;
+window.addEventListener('cloud-sync-done',()=>{try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));const el=document.getElementById('cloudLastSync');if(el)el.textContent=cloudFmtTime(Date.now());}catch(e){}});
+window.addEventListener('cloud-auth-changed',()=>{
   try{
-    if(which==='cloud'){const d=await window.Cloud.pullState();if(d)cloudApply(d);showMiniToast('✓ Đã lấy dữ liệu từ cloud');}
-    else{await window.Cloud.pushState(buildCloudPayload(),{force:true});showMiniToast('✓ Đã sao lưu bản của máy này');}
-  }catch(e){alert(cloudErrMsg(e));}
-  renderCloudScreen();updateCloudMenu();
-}
-/* Mở app / quay lại app: lấy bản mới hơn từ máy khác, hoặc đẩy thay đổi còn chờ */
-let cloudLoggingIn=false,cloudLastAuto=0,cloudAutoBusy=false;
-async function cloudAutoSync(force){
-  const C=window.Cloud;if(!C||!C.isLoggedIn()||cloudLoggingIn||cloudAutoBusy||!navigator.onLine)return;
-  if(!force&&Date.now()-cloudLastAuto<20000)return;cloudLastAuto=Date.now();cloudAutoBusy=true;
-  try{
-    const m=await C.readMeta();const dirty=C.isDirty();const mine=C.localRev();
-    if(!m){if(dirty||txs.length||wallets.length)await C.pushState(buildCloudPayload(),{force:true});return;}
-    if(m.rev&&m.rev===mine){if(dirty)await C.flushPush();return;}
-    if(mine&&!dirty){const d=await C.pullState();if(d){cloudApply(d);showMiniToast('🔄 Đã đồng bộ dữ liệu mới từ '+(d.dev||'thiết bị khác'));}return;}
-    cloudShowConflict(m);
-  }catch(e){console.warn('cloudAutoSync',e);}
-  finally{cloudAutoBusy=false;try{updateCloudMenu();if(currentScreen()==='cloud')renderCloudScreen();}catch(e){}}
-}
-window.addEventListener('cloud-sync-done',()=>{try{const el=document.getElementById('cloudLastSync');if(el)el.textContent=cloudFmtTime(Date.now());updateCloudMenu();}catch(e){}});
-window.addEventListener('cloud-conflict',ev=>cloudShowConflict(ev.detail&&ev.detail.meta));
-window.addEventListener('cloud-sync-error',ev=>{const d=ev.detail||{};if(d.error&&d.error.message==='CLOUD_TOO_BIG')showMiniToast(cloudErrMsg(d.error),true);try{updateCloudMenu();}catch(e){}});
-window.addEventListener('cloud-resume',()=>cloudAutoSync());
-window.addEventListener('cloud-auth-changed',()=>{try{if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
-  let redir=null;try{redir=localStorage.getItem('tc_cloud_redirect');}catch(e){}
-  if(!redir)setTimeout(()=>cloudAutoSync(true),800);});
-window.addEventListener('cloud-redirect-login',async()=>{
-  cloudLoggingIn=true;try{await cloudPostLogin();}finally{cloudLoggingIn=false;try{localStorage.removeItem('tc_cloud_redirect');}catch(e){}}
+    const wasLoggingIn=localStorage.getItem('tc_cloud_logging_in')==='1';
+    if(wasLoggingIn&&window.Cloud&&window.Cloud.isLoggedIn()){
+      localStorage.removeItem('tc_cloud_logging_in');
+      cloudPostLogin();return;
+    }
+    if(currentScreen()==='cloud')renderCloudScreen();
+    updateCloudMenu();
+  }catch(e){}
 });
-window.addEventListener('cloud-login-error',ev=>{const e=ev.detail&&ev.detail.error;if(e&&!cloudIsCancel(e))alert(cloudErrMsg(e));});
+window.addEventListener('cloud-signin-error',(ev)=>{try{const e=ev.detail&&ev.detail.error;if(e)alert(cloudErrMsg(e));localStorage.removeItem('tc_cloud_logging_in');}catch(e2){}});
 
 /* ---------- TIỆN ÍCH: THÔNG BÁO NHỎ ---------- */
 let _mtT=null;
@@ -2269,7 +2220,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='27';
+const APP_VERSION='25';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
