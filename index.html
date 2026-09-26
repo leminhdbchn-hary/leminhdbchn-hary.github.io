@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=17">
+<link rel="stylesheet" href="app.css?v=18">
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -54,7 +54,7 @@
     <div class="bal-links"><button onclick="showScreen('history')"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Lịch sử giao dịch</button><span class="bl-sep"></span><button onclick="showScreen('accounts')"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Ví tiền</button></div></div>
     <video class="bal-char" id="balChar" onclick="showScreen('chars')" src="characters/char1.mp4" poster="characters/char1.jpg" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
   </div>
-  <div class="inner">
+  <div class="inner"><div class="nw-row" id="homeNet"></div>
     <div class="backup-warn" id="backupWarn" style="display:none"><span id="backupWarnTxt">💾 Đã lâu chưa sao lưu dữ liệu</span><button onclick="event.stopPropagation();exportJSON()">Sao lưu</button><button class="bw-x" onclick="event.stopPropagation();snoozeBackup()">✕</button></div>
     <div class="install-tip" id="installTip" style="display:none"><span>📲 Hãy <b>Thêm vào Màn hình chính</b> (nút Chia sẻ của Safari) và mở app từ icon — nếu không, iPhone có thể tự xoá dữ liệu sau vài ngày không dùng.</span><button onclick="snoozeInstallTip()">✕</button></div>
     <div class="remind-card" id="remindCard" style="display:none"></div>
@@ -83,7 +83,8 @@
 <div class="screen" id="screen-accounts">
   <div class="inner">
   <h2 class="screen-title">Ví tiền</h2>
-  <div class="total-card"><div class="tc-l">Tổng số dư tài sản <span id="walletCount"></span></div><div class="tc-v" id="walletTotal">0</div></div>
+  <div class="total-card"><div class="tc-l">Tổng số dư các ví <span id="walletCount"></span></div><div class="tc-v" id="walletTotal">0</div></div>
+  <div class="nw-row" id="accNet"></div>
   <div id="accList"></div>
   <div id="addAccForm" class="add-acc-form" style="display:none;">
     <div class="wtype-grid" id="wtypeGrid"></div>
@@ -439,6 +440,6 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>
