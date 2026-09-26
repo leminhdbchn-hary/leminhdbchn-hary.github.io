@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=20">
+<link rel="stylesheet" href="app.css?v=21">
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -121,10 +121,12 @@
       </select>
       <div style="padding:8px 2px 6px;font-size:12px;color:var(--sub);">Khi đến hạn</div>
       <select id="savMaturityAction">
-        <option value="renew_all" selected>Tái tục gốc và lãi</option>
-        <option value="renew_principal">Tái tục gốc, rút lãi ra ví</option>
-        <option value="no_renew">Không tái tục - chuyển hết về ví</option>
+        <option value="no_renew" selected>Tất toán: gốc về tài khoản, lãi ghi Thu nhập</option>
+        <option value="renew_principal">Tái tục gốc, lãi về tài khoản</option>
+        <option value="renew_all">Tái tục cả gốc và lãi</option>
       </select>
+      <div style="padding:8px 2px 6px;font-size:12px;color:var(--sub);">Khi đáo hạn, chuyển tiền về tài khoản</div>
+      <select id="savPayoutWallet"><option value="">-- Hỏi tôi khi đáo hạn --</option></select>
       <div style="padding:8px 2px 6px;font-size:12px;color:var(--sub);">Tiền gửi được chuyển từ tài khoản (tuỳ chọn)</div>
       <select id="savSourceWallet"><option value="">-- Không chọn --</option></select>
       <input id="savNote" type="text" placeholder="Diễn giải (tuỳ chọn)">
@@ -148,7 +150,7 @@
   </div>
   <div class="amount-card">
     <div class="label">Số tiền</div>
-    <input id="amountInput" type="tel" inputmode="numeric" placeholder="0" value="">
+    <input id="amountInput" autocomplete="off" type="tel" inputmode="numeric" placeholder="0" value="">
   </div>
 
   <div id="normalFields">
@@ -441,6 +443,6 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

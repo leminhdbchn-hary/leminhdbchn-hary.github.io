@@ -9,7 +9,7 @@ const GROUPS={
     {name:'Cá nhân',icon:'user',accent:'#7b2d8e',bg:'#efe0f7',items:['Quần áo','Mỹ phẩm','Giải trí','Du lịch','Thể thao','Sức khỏe']},
     {name:'Khác',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',items:['Khác']}
   ],
-  thu:[{name:'Thu nhập',icon:'luong',accent:'#22a765',bg:'#dcefe4',items:['Lương','Thưởng','Được cho/tặng','Thu hồi nợ','Khác']}]
+  thu:[{name:'Thu nhập',icon:'luong',accent:'#22a765',bg:'#dcefe4',items:['Lương','Thưởng','Lãi tiết kiệm','Được cho/tặng','Thu hồi nợ','Khác']}]
 };
 const ICONS={
   handshake:'<path d="M11 17l2 2a1.4 1.4 0 002-2"/><path d="M14 14l2.5 2.5a1.4 1.4 0 002-2l-3.9-3.9a2.8 2.8 0 00-4 0l-.9.9a1.4 1.4 0 01-2-2l2.8-2.8a4 4 0 015.2-.4l.5.4"/><path d="M21 11l-2 1"/><path d="M3 11l5 5 1 1a1.4 1.4 0 002-2"/><path d="M3 5l3 3 3-2"/><path d="M21 5l-3 3"/>',
@@ -179,7 +179,7 @@ function showScreen(name,isBack){
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   const t=document.querySelector('.tab[data-s="'+name+'"]');if(t)t.classList.add('active');
-  if(name==='add'){resetEditUI();document.getElementById('dateInput').value=todayStr();document.getElementById('timeInput').value=nowTime();renderWalletSelects();renderGroupChips();renderItemGrid();}
+  if(name==='add'){resetEditUI();{const ai=document.getElementById('amountInput');ai.value='';ai.setAttribute('autocomplete','off');}document.getElementById('dateInput').value=todayStr();document.getElementById('timeInput').value=nowTime();renderWalletSelects();renderGroupChips();renderItemGrid();}
   if(name==='home')renderHome();
   if(name==='history')renderHistory();
   if(name==='family')renderFamily();
@@ -215,16 +215,40 @@ function selectWType(id){
   }
   else{sf.style.display='none';}
 }
-function populateSavBankSelect(){document.getElementById('savBank').innerHTML='<option value="">-- Không chọn --</option>'+BANKS.map((b,i)=>'<option value="'+i+'">'+b.name+'</option>').join('');}
+/* Ngân hàng tự thêm */
+let customBanks=[];try{customBanks=JSON.parse(localStorage.getItem('tc_custom_banks')||'[]');}catch(e){customBanks=[];}
+customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});
+function saveCustomBanks(){try{localStorage.setItem('tc_custom_banks',JSON.stringify(customBanks));}catch(e){}}
+const NEW_BANK_OPT='<option value="__newbank">＋ Thêm ngân hàng khác...</option>';
+function addCustomBank(name){
+  name=(name||'').trim();if(!name)return -1;
+  const ex=BANKS.findIndex(b=>b.name.toLowerCase()===name.toLowerCase());if(ex>=0)return ex;
+  const b={code:'C'+Date.now().toString(36).toUpperCase(),name,color:'#7c8b98',custom:true};
+  BANKS.push(b);customBanks.push(b);saveCustomBanks();return BANKS.length-1;
+}
+document.addEventListener('change',e=>{
+  const el=e.target;if(!el||el.tagName!=='SELECT'||el.value!=='__newbank')return;
+  e.stopImmediatePropagation();
+  const idx=addCustomBank(prompt('Tên ngân hàng muốn thêm (VD: Cake, Timo, Kienlongbank...)')||'');
+  ['bankSelect','savBank','loanBank'].forEach(id=>{const s=document.getElementById(id);if(!s)return;const v=s.value;
+    if(id==='bankSelect')populateBankSelect();else if(id==='savBank')populateSavBankSelect();else if(typeof populateLoanBankSelect==='function')populateLoanBankSelect();
+    if(s!==el&&v!=='__newbank')s.value=v;});
+  if(el.id==='weBank'){if(idx>=0&&!el.querySelector('option[value="'+idx+'"]')){const o=document.createElement('option');o.value=idx;o.textContent=BANKS[idx].name;el.insertBefore(o,el.lastElementChild);}}
+  el.value=idx>=0?String(idx):'';
+  if(el.id==='bankSelect'&&typeof onBankChange==='function')onBankChange();
+  if(idx>=0)showMiniToast('✓ Đã thêm ngân hàng "'+BANKS[idx].name+'"');
+},true);
+function populateSavBankSelect(){document.getElementById('savBank').innerHTML='<option value="">-- Không chọn --</option>'+BANKS.map((b,i)=>'<option value="'+i+'">'+b.name+'</option>').join('')+NEW_BANK_OPT;}
 function renderSavSourceWalletSelect(){
   const opts='<option value="">-- Không chọn --</option>'+getSpendableWallets().map(w=>'<option value="'+w.id+'">'+w.name+' ('+fmt(w.balance)+')</option>').join('');
   document.getElementById('savSourceWallet').innerHTML=opts;
+  {const pw=document.getElementById('savPayoutWallet');if(pw)pw.innerHTML=opts.replace('-- Không chọn --','-- Hỏi tôi khi đáo hạn --');}
 }
 function renderDebtSourceWalletSelect(){
   const opts='<option value="">-- Không trừ ví nào --</option>'+getSpendableWallets().map(w=>'<option value="'+w.id+'">'+w.name+' ('+fmt(w.balance)+')</option>').join('');
   document.getElementById('debtSourceWallet').innerHTML=opts;
 }
-function populateBankSelect(){document.getElementById('bankSelect').innerHTML='<option value="">-- Chọn ngân hàng --</option>'+BANKS.map((b,i)=>'<option value="'+i+'">'+b.name+'</option>').join('');}
+function populateBankSelect(){document.getElementById('bankSelect').innerHTML='<option value="">-- Chọn ngân hàng --</option>'+BANKS.map((b,i)=>'<option value="'+i+'">'+b.name+'</option>').join('')+NEW_BANK_OPT;}
 function onBankChange(){}
 function toggleAccForm(){const f=document.getElementById('addAccForm');const open=f.style.display==='none';f.style.display=open?'block':'none';const tb=document.getElementById('accToggleBtn');if(tb)tb.style.display=open?'none':'block';if(open){renderWTypeGrid('cash');selectWType('cash');}}
 function cancelAccForm(){['accNameInput','accBalInput','savRate','savNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const f=document.getElementById('addAccForm');if(f.style.display!=='none')toggleAccForm();}
@@ -251,11 +275,12 @@ function saveAccount(){
     const payTiming=document.getElementById('savPayTiming').value;
     const maturityAction=document.getElementById('savMaturityAction').value;
     const sourceWalletId=document.getElementById('savSourceWallet').value||null;
+    const payoutWalletId=document.getElementById('savPayoutWallet').value||null;
     const note=document.getElementById('savNote').value.trim();
     if(bankIdx!==''){const b=BANKS[parseInt(bankIdx)];w.bankCode=b.code;w.bankName=b.name;w.color=b.color;}
     w.depositDate=depositDate;w.termMonths=term;w.rate=rate;w.rateNoTerm=rateNoTerm;
     w.dayBasis=dayBasis;w.payTiming=payTiming;w.maturityAction=maturityAction;
-    w.sourceWalletId=sourceWalletId;w.note=note;
+    w.sourceWalletId=sourceWalletId;w.payoutWalletId=payoutWalletId;w.note=note;
     w.maturityDate=addMonths(depositDate,term);w.matured=false;w.lastAccrualYm=null;
 
     if(sourceWalletId){
@@ -302,7 +327,7 @@ function openWalletEdit(id){
   const w=wallets.find(x=>String(x.id)===String(id));if(!w)return;
   editingWalletId=id;
   const sav=w.type==='saving';
-  const bankOpts='<option value="">-- Không chọn --</option>'+BANKS.map((b,i)=>'<option value="'+i+'"'+((sav?w.bankCode:w.code)===b.code&&(sav?w.bankName:true)?' selected':'')+'>'+b.name+'</option>').join('');
+  const bankOpts='<option value="">-- Không chọn --</option>'+BANKS.map((b,i)=>'<option value="'+i+'"'+((sav?w.bankCode:w.code)===b.code&&(sav?w.bankName:true)?' selected':'')+'>'+b.name+'</option>').join('')+NEW_BANK_OPT;
   const typeOpts=WTYPES.filter(t=>sav?t.id==='saving':t.id!=='saving').map(t=>'<option value="'+t.id+'"'+(t.id===w.type?' selected':'')+'>'+t.name+'</option>').join('');
   const sel=(id,opts,v)=>'<select id="'+id+'" class="we-in">'+opts.map(o=>'<option value="'+o[0]+'"'+(String(o[0])===String(v)?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
   const txCount=txs.filter(t=>String(t.walletId)===String(w.id)||t.fromName===w.name||t.toName===w.name).length;
@@ -318,8 +343,8 @@ function openWalletEdit(id){
       '<label>Lãi suất (%/năm)</label><input id="weRate" class="we-in" type="number" step="0.01" inputmode="decimal" value="'+(w.rate||'')+'">'+
       '<label>Lãi không kỳ hạn (%/năm)</label><input id="weRateNT" class="we-in" type="number" step="0.01" inputmode="decimal" value="'+(w.rateNoTerm!=null?w.rateNoTerm:0.1)+'">'+
       '<label>Trả lãi</label>'+sel('wePay',[['end','Cuối kỳ'],['start','Đầu kỳ'],['monthly','Hàng tháng']],w.payTiming||'end')+
-      '<label>Khi đến hạn</label>'+sel('weMat',[['renew_all','Tái tục gốc và lãi'],['renew_principal','Tái tục gốc, rút lãi ra ví'],['no_renew','Không tái tục - chuyển hết về ví']],w.maturityAction||'renew_all')+
-      '<label>Ví nhận tiền/lãi</label><select id="weSrc" class="we-in"><option value="">-- Không chọn --</option>'+getSpendableWallets().map(x=>'<option value="'+x.id+'"'+(String(x.id)===String(w.sourceWalletId)?' selected':'')+'>'+x.name+'</option>').join('')+'</select>'+
+      '<label>Khi đến hạn</label>'+sel('weMat',[['no_renew','Tất toán: gốc về tài khoản, lãi ghi Thu nhập'],['renew_principal','Tái tục gốc, lãi về tài khoản'],['renew_all','Tái tục cả gốc và lãi']],w.maturityAction||'renew_all')+
+      '<label>Khi đáo hạn, chuyển tiền về tài khoản</label><select id="wePayout" class="we-in"><option value="">-- Hỏi tôi khi đáo hạn --</option>'+getSpendableWallets().map(x=>'<option value="'+x.id+'"'+(String(x.id)===String(w.payoutWalletId||w.sourceWalletId)?' selected':'')+'>'+x.name+'</option>').join('')+'</select>'+
       '<label>Ghi chú</label><input id="weNote" class="we-in" type="text" value="'+(w.note||'').replace(/"/g,'&quot;')+'">';
   }
   h+='</div><div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Huỷ</button><button class="edit-modal-save" onclick="saveWalletEdit()">Lưu thay đổi</button></div>'+
@@ -349,7 +374,7 @@ function saveWalletEdit(){
     if(changedDates){w.maturityDate=addMonths(dep,term);w.matured=false;}
     w.rate=parseFloat(v('weRate'))||0;w.rateNoTerm=parseFloat(v('weRateNT'))||0;
     w.payTiming=v('wePay')||w.payTiming;w.maturityAction=v('weMat')||w.maturityAction;
-    w.sourceWalletId=v('weSrc')||null;w.note=v('weNote').trim();
+    w.payoutWalletId=v('wePayout')||null;w.note=v('weNote').trim();
   }
   saveAll();closeWalletEdit();renderAccounts();renderHome();
   showMiniToast('✓ Đã lưu ví "'+name+'"');
@@ -923,7 +948,7 @@ function renderDebts(){
     return '<div class="debt-item"><div class="debt-top"><div><div class="debt-person">'+d.person+'</div><div class="debt-sub">Cho vay ngày '+d.date.split('-').reverse().join('/')+(d.note?' • '+d.note:'')+'</div></div><div class="debt-amt">'+fmt(d.amount)+'</div></div>'+
       '<span class="debt-badge '+st.cls+'">'+st.label+'</span>'+
       payRow+
-      '<div class="debt-actions"><button onclick="deleteDebt('+d.id+')">Xoá khoản vay</button></div></div>';
+      '<div class="debt-actions"><button onclick="openDebtEdit('+d.id+')">Sửa</button>'+(d.status==='paid'?'<button onclick="undoDebtPaid('+d.id+')">Đánh dấu chưa trả</button>':'')+'<button onclick="deleteDebt('+d.id+')">Xoá</button></div></div>';
   }).join('');
 }
 function markDebtPaid(id){
@@ -982,7 +1007,7 @@ function nextWorkday(s){let x=s,n=0;while(!isWorkday(x)&&n<30){x=addDays(x,1);n+
 
 /* ---------- VAY NGÂN HÀNG ---------- */
 const LOAN_TYPES={overdraft:'Thấu chi',consumer:'Vay tiêu dùng'};
-function populateLoanBankSelect(){document.getElementById('loanBank').innerHTML='<option value="">-- Không chọn --</option>'+BANKS.map((b,i)=>'<option value="'+i+'">'+b.name+'</option>').join('');}
+function populateLoanBankSelect(){document.getElementById('loanBank').innerHTML='<option value="">-- Không chọn --</option>'+BANKS.map((b,i)=>'<option value="'+i+'">'+b.name+'</option>').join('')+NEW_BANK_OPT;}
 function renderLoanDisburseWalletSelect(){
   const opts='<option value="">-- Không chọn --</option>'+getSpendableWallets().map(w=>'<option value="'+w.id+'">'+w.name+' ('+fmt(w.balance)+')</option>').join('');
   document.getElementById('loanDisburseWallet').innerHTML=opts;
@@ -1622,8 +1647,13 @@ function renderReward(){
 /* ---------- SỔ TIẾT KIỆM: TỰ ĐỘNG CỘNG LÃI / TẤT TOÁN KHI ĐÁO HẠN ---------- */
 function checkMaturedSavings(){
   const today=todayStr();
-  const dueWallets=wallets.filter(w=>w.type==='saving'&&!w.matured&&w.maturityDate&&w.maturityDate<=today);
+  const payoutOf=w=>{const id=w.payoutWalletId||w.sourceWalletId;return id?wallets.find(x=>String(x.id)===String(id)&&x.type!=='saving'):null;};
+  const allDue=wallets.filter(w=>w.type==='saving'&&!w.matured&&w.maturityDate&&w.maturityDate<=today);
+  const needPick=allDue.filter(w=>(w.maturityAction||'renew_all')!=='renew_all'&&!payoutOf(w));
+  if(needPick.length)askPayoutWallet(needPick);
+  const dueWallets=allDue.filter(w=>!needPick.includes(w));
   if(!dueWallets.length)return;
+  const summary=[];
   let changed=false;
   dueWallets.forEach(w=>{
     let guard=0;
@@ -1636,8 +1666,8 @@ function checkMaturedSavings(){
       const action=w.maturityAction||(w.autoRenew===false?'no_renew':'renew_all');
       changed=true;
       if(action==='renew_principal'){
-        const target=w.sourceWalletId?wallets.find(x=>String(x.id)===String(w.sourceWalletId)):null;
-        if(interest>0){
+        const target=payoutOf(w);
+        if(interest>0){summary.push(w.name+': lãi '+fmt(interest)+(target?' → '+target.name:''));
           if(target){target.balance+=interest;txs.unshift(mkSavTx('thu',interest,'Rút lãi tiết kiệm: '+w.name,target.id,w.maturityDate));}
           else txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm (chưa gán ví nhận): '+w.name,null,w.maturityDate));
         }
@@ -1651,17 +1681,19 @@ function checkMaturedSavings(){
           }
         }
       }else if(action==='no_renew'){
-        w.balance+=interest;
-        if(interest>0)txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm đáo hạn: '+w.name,w.id,w.maturityDate));
-        const target=w.sourceWalletId?wallets.find(x=>String(x.id)===String(w.sourceWalletId)):null;
-        if(target&&w.balance>0){
-          txs.unshift({id:Date.now()+Math.random(),type:'transfer',amount:w.balance,fromName:w.name,toName:target.name,note:'Tất toán sổ tiết kiệm',date:w.maturityDate,time:nowTime()});
-          target.balance+=w.balance;w.balance=0;
+        const target=payoutOf(w);
+        /* Lãi → Thu nhập "Lãi tiết kiệm" vào tài khoản nhận; Gốc → chuyển về tài khoản nhận */
+        if(interest>0){target.balance+=interest;txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm đáo hạn: '+w.name,target.id,w.maturityDate));}
+        const principal=w.balance;
+        if(principal>0){
+          txs.unshift({id:Date.now()+Math.random(),type:'transfer',amount:principal,fromName:w.name,toName:target.name,note:'Tất toán sổ tiết kiệm (gốc)',date:w.maturityDate,time:nowTime()});
+          target.balance+=principal;w.balance=0;
         }
+        summary.push(w.name+': gốc '+fmt(principal)+(interest>0?' + lãi '+fmt(interest):'')+' → '+target.name);
         w.matured=true;break;
       }else{ // renew_all
         w.balance+=interest;
-        if(interest>0)txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm tự động: '+w.name,w.id,w.maturityDate));
+        if(interest>0){txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm tự động: '+w.name,w.id,w.maturityDate));summary.push(w.name+': lãi '+fmt(interest)+' (tái tục vào sổ)');}
         w.depositDate=w.maturityDate;w.maturityDate=addMonths(w.depositDate,w.termMonths);
         if(w.payTiming==='start'&&w.rate>0){
           const newDays=daysBetween(w.depositDate,w.maturityDate);
@@ -1673,7 +1705,7 @@ function checkMaturedSavings(){
   });
   if(changed){
     saveAll();
-    alert('Đã cập nhật lãi/tất toán cho '+dueWallets.length+' sổ tiết kiệm đến hạn. Kiểm tra ở tab Ví tiền.');
+    alert('Sổ tiết kiệm đến hạn đã được xử lý:\n• '+(summary.join('\n• ')||dueWallets.map(w=>w.name).join(', '))+'\nLãi đã ghi vào Thu nhập › Lãi tiết kiệm.');
     renderHome();
   }
 }
@@ -1809,7 +1841,7 @@ function updateBackupInfo(){
 }
 function snoozeBackup(){try{localStorage.setItem('tc_backup_snooze',String(Date.now()+864e5));}catch(e){}checkBackupReminder();}
 async function exportJSON(){
-  const data={txs,wallets,budgets,recurring,debts,loans,rewardProfile,rewardHistory,userAchievements,exportedAt:new Date().toISOString()};
+  const data={txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,exportedAt:new Date().toISOString()};
   const ok=await downloadFile(JSON.stringify(data,null,2),'so-thu-chi-backup-'+todayStr()+'.json','application/json');
   if(ok!==false){try{localStorage.setItem('tc_last_backup',String(Date.now()));}catch(e){}checkBackupReminder();}
 }
@@ -1824,6 +1856,7 @@ function onImportFile(e){
       if(!confirm('Nhập dữ liệu sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại trên máy này. Tiếp tục?'))return;
       txs=data.txs||[];wallets=data.wallets||[];budgets=data.budgets||{};recurring=data.recurring||[];
       debts=data.debts||debts||[];loans=data.loans||[];
+      if(Array.isArray(data.customBanks)){customBanks=data.customBanks;saveCustomBanks();customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});}
       rewardProfile=data.rewardProfile||{total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};
       rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
       saveAll();renderHome();alert('Đã khôi phục dữ liệu thành công.');
@@ -2075,7 +2108,7 @@ updateLockMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='20';
+const APP_VERSION='21';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -2203,4 +2236,63 @@ function renderFamily(){
   const open=all.filter(t=>t.repay&&!t.settled&&!t.settleOf);
   document.getElementById('famOpen').innerHTML=open.length?'<div class="section-title">Khoản mượn / cho mượn chưa trả</div>'+open.map(t=>'<div class="fam-open"><div><b>'+(t.dir==='in'?'Mượn của ':'Cho ')+t.person+(t.dir==='out'?' mượn':'')+'</b> — '+fmt(t.amount)+'<div class="fo-sub">Từ '+dmy(t.date)+(t.dueDate?' • hẹn trả '+dmy(t.dueDate):'')+'</div></div><button class="rc-pay" onclick="settleFam('+t.id+')">'+(t.dir==='in'?'Đã trả lại':'Đã nhận lại')+'</button></div>').join(''):'';
   el.innerHTML='<div class="section-title">Lịch sử</div>'+(list.length?list.map(txItemHTML).join(''):'<div class="empty">Không có giao dịch trong tháng này.</div>');
+}
+
+/* ---------- SỬA KHOẢN CHO VAY ---------- */
+let editingDebtId=null;
+function openDebtEdit(id){
+  const d=debts.find(x=>x.id===id);if(!d)return;editingDebtId=id;
+  const wl=getSpendableWallets();
+  document.getElementById('appModalBody').innerHTML='<h3>Sửa khoản cho vay</h3><div class="we-form">'+
+    '<label>Người vay</label><input id="deP" class="we-in" type="text" value="'+d.person.replace(/"/g,'&quot;')+'">'+
+    '<label>Số tiền (VND)</label><input id="deA" class="we-in" type="tel" inputmode="numeric" value="'+fmtShort(d.amount)+'" oninput="fmtInput(this)">'+
+    '<label>Ngày cho vay</label><input id="deD" class="we-in" type="date" value="'+d.date+'">'+
+    '<label>Ngày hẹn trả</label><input id="deDue" class="we-in" type="date" value="'+(d.dueDate||'')+'">'+
+    '<label>Xuất tiền từ ví</label><select id="deW" class="we-in"><option value="">-- Không trừ ví nào --</option>'+wl.map(x=>'<option value="'+x.id+'"'+(String(x.id)===String(d.sourceWalletId)?' selected':'')+'>'+x.name+'</option>').join('')+'</select>'+
+    '<label>Ghi chú</label><input id="deN" class="we-in" type="text" value="'+(d.note||'').replace(/"/g,'&quot;')+'">'+
+    '</div><div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Huỷ</button><button class="edit-modal-save" onclick="saveDebtEdit()">Lưu thay đổi</button></div>'+
+    '<button class="we-del" onclick="closeAppModal();deleteDebt('+d.id+')">'+icon('trash','#e0766c',17)+' Xoá khoản cho vay</button>';
+  document.getElementById('appModal').classList.add('show');
+}
+function saveDebtEdit(){
+  const d=debts.find(x=>x.id===editingDebtId);if(!d)return;
+  const person=document.getElementById('deP').value.trim(),amount=parseInt(document.getElementById('deA').value.replace(/\D/g,''))||0;
+  if(!person){alert('Vui lòng nhập tên người vay');return;}if(amount<=0){alert('Số tiền không hợp lệ');return;}
+  const date=document.getElementById('deD').value||d.date,dueDate=document.getElementById('deDue').value||date;
+  const wid=document.getElementById('deW').value||null,note=document.getElementById('deN').value.trim();
+  // cập nhật giao dịch chi "Cho vay"
+  let out=d.outTxId?txs.find(x=>x.id===d.outTxId):null;
+  if(out){reverseTxBalance(out);}
+  if(wid){
+    if(!out){out={id:Date.now()+Math.random(),type:'chi',group:'Khác',item:'Cho vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',time:nowTime(),debtId:d.id};txs.unshift(out);d.outTxId=out.id;}
+    Object.assign(out,{amount,walletId:wid,person,date,note:'Cho vay: '+person+(note?' — '+note:'')});applyTxBalance(out);
+  }else if(out){txs=txs.filter(x=>x!==out);d.outTxId=null;}
+  // khoản đã trả: cập nhật giao dịch thu hồi
+  if(d.status==='paid'&&d.inTxId){const t=txs.find(x=>x.id===d.inTxId);if(t){reverseTxBalance(t);t.amount=amount;t.person=person;t.note='Thu hồi nợ: '+person;applyTxBalance(t);}}
+  Object.assign(d,{person,amount,date,dueDate,sourceWalletId:wid,note});
+  saveAll();closeAppModal();renderDebts();renderHome();showMiniToast('✓ Đã lưu khoản cho vay');
+}
+function undoDebtPaid(id){
+  const d=debts.find(x=>x.id===id);if(!d||d.status!=='paid')return;
+  if(!confirm('Đánh dấu khoản của '+d.person+' là CHƯA trả? Giao dịch thu hồi nợ sẽ bị xoá và trừ lại ví.'))return;
+  if(d.inTxId){const t=txs.find(x=>x.id===d.inTxId);if(t){reverseTxBalance(t);txs=txs.filter(x=>x!==t);}}
+  d.status='pending';d.paidDate=null;d.paidWalletId=null;d.inTxId=null;
+  saveAll();renderDebts();renderHome();
+}
+
+/* Chọn tài khoản nhận tiền khi sổ tiết kiệm đáo hạn */
+function whenUnlocked(fn){const l=document.getElementById('lockScreen');if(!l||getComputedStyle(l).display==='none')fn();else setTimeout(()=>whenUnlocked(fn),800);}
+function askPayoutWallet(list){
+  whenUnlocked(()=>{
+    const wl=getSpendableWallets();
+    if(!wl.length){alert('Có sổ tiết kiệm đã đáo hạn nhưng chưa có tài khoản nào để nhận tiền. Hãy thêm ví/tài khoản trước.');return;}
+    document.getElementById('appModalBody').innerHTML='<h3>🏦 Sổ tiết kiệm đã đáo hạn</h3><p class="bk-p">Chọn tài khoản nhận tiền. Gốc sẽ chuyển về tài khoản này, lãi được ghi vào <b>Thu nhập › Lãi tiết kiệm</b>.</p><div class="we-form">'+
+      list.map(w=>'<label>'+w.name+' — gốc '+fmt(w.balance)+' (đáo hạn '+dmy(w.maturityDate)+')</label><select class="we-in" data-sav="'+w.id+'">'+wl.map(x=>'<option value="'+x.id+'">'+x.name+' ('+fmtShort(x.balance)+')</option>').join('')+'</select>').join('')+
+      '</div><div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Để sau</button><button class="edit-modal-save" onclick="confirmPayoutWallet()">Nhận tiền</button></div>';
+    document.getElementById('appModal').classList.add('show');
+  });
+}
+function confirmPayoutWallet(){
+  document.querySelectorAll('#appModalBody select[data-sav]').forEach(sel=>{const w=wallets.find(x=>String(x.id)===sel.dataset.sav);if(w)w.payoutWalletId=sel.value;});
+  saveAll();closeAppModal();checkMaturedSavings();renderHome();try{renderAccounts();}catch(e){}
 }
