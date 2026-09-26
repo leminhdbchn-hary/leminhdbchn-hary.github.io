@@ -1948,15 +1948,20 @@ function cloudGateUpdate(){
   document.getElementById('gateSkipBtn').style.display='block';
   gate.classList.remove('hidden');
 }
-/* Nếu sau vài giây vẫn chưa tải được dịch vụ cloud (mất mạng/CDN chặn) → cho phép dùng tạm, không khoá cứng người dùng */
-setTimeout(()=>{
+/* Dự phòng: nếu màn hình cổng vào vẫn còn kẹt ở "đang kiểm tra" (window.Cloud đã tải xong
+   nhưng vì lý do gì đó sự kiện cloud-auth-changed chưa kịp bắn ra, hoặc mất mạng nên cloud.js
+   không tải được) → chủ động cập nhật lại, không để khoá cứng người dùng mãi mãi.
+   Thử sớm ở 1.5s (trường hợp thường gặp: Cloud tải xong nhưng lỡ mất sự kiện đầu),
+   rồi mới tới mốc 5s hiện thông báo mất mạng nếu vẫn chưa tải được. */
+[1500,5000].forEach((ms,i)=>setTimeout(()=>{
   const gate=document.getElementById('cloudGateScreen');if(!gate||gate.classList.contains('hidden'))return;
-  if(window.Cloud)return;
+  if(window.Cloud){cloudGateUpdate();return;} /* Cloud đã sẵn sàng → thử cập nhật lại ngay */
+  if(i===0)return; /* mốc đầu: Cloud chưa tải xong thì chờ tiếp, chưa vội báo lỗi mạng */
   document.getElementById('gateSub').textContent='Không tải được dịch vụ đăng nhập (kiểm tra mạng). Bạn có thể dùng tạm, dữ liệu chỉ lưu trên máy này.';
   document.getElementById('gateGoogleBtn').style.display='none';
   document.getElementById('gateBtnWrap').style.display='block';
   document.getElementById('gateSkipBtn').style.display='block';
-},5000);
+},ms));
 async function cloudPostLogin(){
   let cloudData=null;
   try{cloudData=await window.Cloud.pullState();}catch(e){}
@@ -2299,7 +2304,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='28';
+const APP_VERSION='29';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
