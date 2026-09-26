@@ -426,15 +426,25 @@
   <div class="more-item" onclick="showScreen('loans')" id="more-loans">Vay ngân hàng</div>
   <div class="more-item" onclick="showScreen('history')" id="more-hist">Lịch sử giao dịch</div>
   <div class="more-item" onclick="openPinSettings()" id="more-lock">Mật khẩu vào app</div>
-  <div class="more-item" onclick="openCloudSettings()" id="more-cloud">Sao lưu đám mây (Cloud)</div>
   <div class="more-item" onclick="exportCSV()" id="more-exportcsv">Xuất dữ liệu (CSV / Excel)</div>
   <div class="more-item" onclick="exportJSON()" id="more-exportjson">Sao lưu dữ liệu (JSON)</div>
   <div class="more-item" onclick="triggerImport()" id="more-import">Khôi phục dữ liệu (JSON)</div>
   <input type="file" id="importFileInput" accept="application/json" style="display:none" onchange="onImportFile(event)">
+  <div class="more-item" onclick="showScreen('cloud')" id="more-cloud">☁️ Đồng bộ nhiều thiết bị (Cloud)</div>
   <div class="more-item" onclick="checkUpdate(true)" id="more-update">Cập nhật app</div>
   <div class="more-item" onclick="clearAll()" id="more-trash" style="color:var(--red);">Xoá toàn bộ dữ liệu</div>
   </div>
 </div>
+
+<!-- ĐỒNG BỘ CLOUD -->
+<div class="screen" id="screen-cloud">
+  <div class="inner">
+  <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Đồng bộ nhiều thiết bị</h2></div>
+  <p style="color:var(--sub);font-size:13px;margin:0 0 16px;">Đăng nhập bằng số điện thoại để dữ liệu được tự động sao lưu lên cloud. Mỗi số điện thoại có một dữ liệu riêng — dùng chung 1 số để đồng bộ giữa các thiết bị, hoặc mỗi người dùng số của mình để có dữ liệu riêng.</p>
+  <div id="cloudBody"></div>
+  </div>
+</div>
+<div id="recaptcha-container"></div>
 
 <div class="tabbar">
   <button class="tab active" data-s="home" onclick="showScreen('home')"><span class="tab-icon" id="nav-home"></span><span class="tab-label">Tổng quan</span></button>
@@ -444,7 +454,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
+<script type="module" src="cloud.js?v=24"></script>
 <script src="app.js?v=24"></script>
-<script src="cloud.js?v=24"></script>
 </body>
 </html>

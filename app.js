@@ -111,7 +111,17 @@ function saveAll(){
   try{localStorage.setItem('tc_reward_profile',JSON.stringify(rewardProfile));}catch(e){}
   try{localStorage.setItem('tc_reward_history',JSON.stringify(rewardHistory));}catch(e){}
   try{localStorage.setItem('tc_user_achievements',JSON.stringify(userAchievements));}catch(e){}
-  if(typeof cloudMarkDirty==='function')cloudMarkDirty(); /* sao lưu cloud chạy nền */
+  try{if(window.Cloud)window.Cloud.queuePush(buildCloudPayload);}catch(e){}
+}
+function buildCloudPayload(){
+  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements};
+}
+function applyCloudPayload(data){
+  txs=data.txs||[];wallets=data.wallets||[];budgets=data.budgets||{};recurring=data.recurring||[];
+  debts=data.debts||[];loans=data.loans||[];
+  if(Array.isArray(data.customBanks)){customBanks=data.customBanks;saveCustomBanks();customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});}
+  rewardProfile=data.rewardProfile||{total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};
+  rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
 }
 
 let currentType='chi', selectedGroup=null, selectedItem=null, receiptData=null, editingTxId=null;
@@ -194,6 +204,7 @@ function showScreen(name,isBack){
   if(name==='reward')renderReward();
   if(name==='more')updateLockMenu();
   if(name==='chars')renderChars();
+  if(name==='cloud')renderCloudScreen();
 }
 
 /* ---------- WALLETS ---------- */
@@ -219,7 +230,7 @@ function selectWType(id){
 /* Ngân hàng tự thêm */
 let customBanks=[];try{customBanks=JSON.parse(localStorage.getItem('tc_custom_banks')||'[]');}catch(e){customBanks=[];}
 customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});
-function saveCustomBanks(){try{localStorage.setItem('tc_custom_banks',JSON.stringify(customBanks));}catch(e){}if(typeof cloudMarkDirty==='function')cloudMarkDirty();}
+function saveCustomBanks(){try{localStorage.setItem('tc_custom_banks',JSON.stringify(customBanks));}catch(e){}}
 const NEW_BANK_OPT='<option value="__newbank">＋ Thêm ngân hàng khác...</option>';
 function addCustomBank(name){
   name=(name||'').trim();if(!name)return -1;
@@ -1875,6 +1886,101 @@ function onImportFile(e){
   e.target.value='';
 }
 
+/* ---------- ĐỒNG BỘ CLOUD (đăng nhập số điện thoại) ---------- */
+let cloudOtpPhone='';
+function cloudFmtTime(ms){if(!ms)return'';const d=new Date(ms);return d.toLocaleString('vi-VN');}
+function cloudErrMsg(e){
+  const c=(e&&e.code)||'';
+  if(c==='auth/invalid-phone-number')return'Số điện thoại không hợp lệ.';
+  if(c==='auth/too-many-requests')return'Bạn thử quá nhiều lần, hãy đợi một lúc rồi thử lại.';
+  if(c==='auth/code-expired')return'Mã OTP đã hết hạn, hãy gửi lại mã mới.';
+  if(c==='auth/invalid-verification-code')return'Mã OTP không đúng.';
+  if(c==='auth/quota-exceeded')return'Đã hết hạn mức gửi SMS hôm nay, hãy thử lại sau.';
+  if(e&&e.message==='SDT_INVALID')return'Vui lòng nhập đúng số điện thoại.';
+  return'Có lỗi xảy ra: '+(e&&e.message?e.message:'không rõ');
+}
+function renderCloudScreen(){
+  const el=document.getElementById('cloudBody');if(!el)return;
+  if(!window.Cloud){el.innerHTML='<div class="more-item">Đang tải dịch vụ cloud, thử lại sau vài giây…</div>';return;}
+  if(window.Cloud.isLoggedIn()){
+    let last=0;try{last=+localStorage.getItem('tc_cloud_last_sync')||0;}catch(e){}
+    el.innerHTML=
+      '<div class="field"><label>Số điện thoại đang đăng nhập</label><div class="more-item" style="margin-bottom:0;">'+window.Cloud.currentPhone()+'</div></div>'+
+      '<div class="field"><label>Đồng bộ lần gần nhất</label><div class="more-item" id="cloudLastSync" style="margin-bottom:0;">'+(last?cloudFmtTime(last):'Chưa đồng bộ lần nào')+'</div></div>'+
+      '<button class="save-btn" onclick="cloudManualPush()">☁️ Sao lưu ngay</button>'+
+      '<button class="save-btn" style="background:var(--card2,#333);color:var(--text,#fff);margin-top:10px;" onclick="cloudManualPull()">⬇️ Khôi phục từ cloud</button>'+
+      '<button class="save-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:10px;" onclick="cloudLogoutUI()">Đăng xuất</button>';
+  }else{
+    el.innerHTML=
+      '<div class="field"><label>Số điện thoại</label><input id="cloudPhoneInput" type="tel" placeholder="09xxxxxxxx" autocomplete="tel"></div>'+
+      '<button class="save-btn" id="cloudSendBtn" onclick="cloudSendOtpUI()">Gửi mã OTP</button>'+
+      '<div id="cloudOtpWrap" style="display:none;margin-top:14px;">'+
+        '<div class="field"><label>Nhập mã OTP đã nhận qua SMS</label><input id="cloudOtpInput" type="tel" placeholder="123456" autocomplete="one-time-code"></div>'+
+        '<button class="save-btn" id="cloudVerifyBtn" onclick="cloudVerifyOtpUI()">Xác nhận</button>'+
+      '</div>';
+  }
+}
+async function cloudSendOtpUI(){
+  const inp=document.getElementById('cloudPhoneInput');const phone=inp?inp.value:'';
+  const btn=document.getElementById('cloudSendBtn');
+  if(!phone||!phone.trim()){alert('Vui lòng nhập số điện thoại.');return;}
+  if(btn){btn.disabled=true;btn.textContent='Đang gửi...';}
+  try{
+    cloudOtpPhone=await window.Cloud.sendOtp(phone);
+    document.getElementById('cloudOtpWrap').style.display='block';
+    showMiniToast('✓ Đã gửi mã OTP tới '+cloudOtpPhone);
+  }catch(e){alert(cloudErrMsg(e));}
+  if(btn){btn.disabled=false;btn.textContent='Gửi lại mã OTP';}
+}
+async function cloudVerifyOtpUI(){
+  const inp=document.getElementById('cloudOtpInput');const code=inp?inp.value:'';
+  const btn=document.getElementById('cloudVerifyBtn');
+  if(!code||!code.trim()){alert('Vui lòng nhập mã OTP.');return;}
+  if(btn){btn.disabled=true;btn.textContent='Đang xác nhận...';}
+  try{
+    await window.Cloud.verifyOtp(code);
+    await cloudPostLogin();
+  }catch(e){alert(cloudErrMsg(e));}
+  if(btn){btn.disabled=false;btn.textContent='Xác nhận';}
+}
+async function cloudPostLogin(){
+  let cloudData=null;
+  try{cloudData=await window.Cloud.pullState();}catch(e){}
+  if(cloudData&&Array.isArray(cloudData.txs)){
+    const when=cloudData.updatedAtClient?cloudFmtTime(cloudData.updatedAtClient):'không rõ thời gian';
+    if(confirm('Tìm thấy dữ liệu đã sao lưu trên cloud (cập nhật lúc '+when+').\n\nBấm OK để khôi phục dữ liệu này về máy (ghi đè dữ liệu hiện tại trên máy).\nBấm Huỷ để giữ dữ liệu hiện tại trên máy và tải nó lên cloud.')){
+      applyCloudPayload(cloudData);saveAll();renderHome();showMiniToast('✓ Đã khôi phục dữ liệu từ cloud');
+    }else{
+      try{await window.Cloud.pushState(buildCloudPayload());try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));}catch(e){}}catch(e){}
+      showMiniToast('✓ Đã tải dữ liệu máy này lên cloud');
+    }
+  }else{
+    try{await window.Cloud.pushState(buildCloudPayload());try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));}catch(e){}}catch(e){}
+    showMiniToast('✓ Đăng nhập thành công, đã sao lưu dữ liệu');
+  }
+  renderCloudScreen();updateCloudMenu();
+}
+function cloudLogoutUI(){
+  if(!confirm('Đăng xuất khỏi đồng bộ cloud trên máy này?'))return;
+  window.Cloud.logout();renderCloudScreen();updateCloudMenu();
+}
+async function cloudManualPush(){
+  if(!window.Cloud||!window.Cloud.isLoggedIn())return;
+  try{await window.Cloud.pushState(buildCloudPayload());try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));}catch(e){}showMiniToast('✓ Đã sao lưu lên cloud');renderCloudScreen();}
+  catch(e){alert(cloudErrMsg(e));}
+}
+async function cloudManualPull(){
+  if(!window.Cloud||!window.Cloud.isLoggedIn())return;
+  try{
+    const data=await window.Cloud.pullState();
+    if(!data||!Array.isArray(data.txs)){alert('Chưa có dữ liệu sao lưu nào trên cloud.');return;}
+    if(!confirm('Khôi phục sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại trên máy này bằng dữ liệu trên cloud. Tiếp tục?'))return;
+    applyCloudPayload(data);saveAll();renderHome();showMiniToast('✓ Đã khôi phục dữ liệu từ cloud');
+  }catch(e){alert(cloudErrMsg(e));}
+}
+window.addEventListener('cloud-sync-done',()=>{try{localStorage.setItem('tc_cloud_last_sync',String(Date.now()));const el=document.getElementById('cloudLastSync');if(el)el.textContent=cloudFmtTime(Date.now());}catch(e){}});
+window.addEventListener('cloud-auth-changed',()=>{try{if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}});
+
 /* ---------- TIỆN ÍCH: THÔNG BÁO NHỎ ---------- */
 let _mtT=null;
 function showMiniToast(msg,warn){const t=document.getElementById('miniToast');if(!t)return;t.textContent=msg;t.classList.toggle('warn',!!warn);t.classList.add('show');clearTimeout(_mtT);_mtT=setTimeout(()=>t.classList.remove('show'),warn?4200:2600);}
@@ -2113,10 +2219,16 @@ function openPinSettings(){
   if(c==='1')pinShow('verifyChange');else if(c==='2')pinShow('verifyChangeUser');else if(c==='3')pinShow('verifyOff');
 }
 function updateLockMenu(){const e=document.getElementById('more-lock');if(e)e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Tên đăng nhập & mật khẩu</span><span style="margin-left:auto;font-size:12.5px;color:'+(pinIsSet()?'var(--green)':'var(--sub)')+'">'+(pinIsSet()?(userIsSet()?'Đang bật':'Chưa có tên'):'Chưa bật')+'</span>';}
+function updateCloudMenu(){
+  const e=document.getElementById('more-cloud');if(!e)return;
+  const on=window.Cloud&&window.Cloud.isLoggedIn();
+  e.innerHTML='<span>☁️</span><span>Đồng bộ nhiều thiết bị (Cloud)</span><span style="margin-left:auto;font-size:12.5px;color:'+(on?'var(--green)':'var(--sub)')+'">'+(on?'Đang bật':'Chưa bật')+'</span>';
+}
 // Khoá lại khi rời app quá 1 phút
 document.addEventListener('visibilitychange',()=>{if(!pinIsSet())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>60000){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
 if(pinIsSet())pinShow('unlock');
 updateLockMenu();
+updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
