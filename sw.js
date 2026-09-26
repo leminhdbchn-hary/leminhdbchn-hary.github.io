@@ -1,6 +1,6 @@
 /* Sổ Thu Chi – service worker: chạy khi mất mạng, tải nhanh hơn */
-const CACHE='stc-v24';
-const CORE=['./','index.html','app.css?v=24','app.js?v=24','cloud.js?v=24','manifest.json','icon-192.png','icon-512.png','pets/stage1.jpg','characters/char1.jpg'];
+const CACHE='stc-v25';
+const CORE=['./','index.html','app.css?v=25','app.js?v=25','cloud.js?v=25','manifest.json','icon-192.png','icon-512.png','pets/stage1.jpg','characters/char1.jpg'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))));

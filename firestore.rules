@@ -5,6 +5,12 @@ service cloud.firestore {
     // Chỉ chính chủ (đã đăng nhập đúng số điện thoại đó) mới đọc/ghi được sổ của mình.
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Dữ liệu được chia nhỏ thành nhiều phần (mỗi phần < 1MB)
+      match /chunks/{chunkId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId
+                           && chunkId.matches('^[0-9]{1,2}$');
+      }
     }
     // Mọi thứ khác: cấm
     match /{document=**} {
