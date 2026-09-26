@@ -5,8 +5,8 @@ const GROUPS={
   chi:[
     {name:'Ăn uống',icon:'anuong',accent:'#22a765',bg:'#dcefe4',items:['Ăn sáng','Ăn trưa','Ăn tối','Cà phê']},
     {name:'Di chuyển',icon:'dichuyen',accent:'#c9860b',bg:'#fdf1cf',items:['Xăng xe','Taxi','Grab','Gửi xe']},
-    {name:'Gia đình',icon:'house',accent:'#1487d8',bg:'#dceeff',items:['Điện','Nước','Internet','Mua sắm']},
-    {name:'Cá nhân',icon:'user',accent:'#7b2d8e',bg:'#efe0f7',items:['Quần áo','Mỹ phẩm','Giải trí','Du lịch']},
+    {name:'Gia đình',icon:'house',accent:'#1487d8',bg:'#dceeff',items:['Điện','Nước','Internet','Mua sắm','Y tế','Giáo dục']},
+    {name:'Cá nhân',icon:'user',accent:'#7b2d8e',bg:'#efe0f7',items:['Quần áo','Mỹ phẩm','Giải trí','Du lịch','Thể thao','Sức khỏe']},
     {name:'Khác',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',items:['Khác']}
   ],
   thu:[{name:'Thu nhập',icon:'luong',accent:'#22a765',bg:'#dcefe4',items:['Lương','Thưởng','Được cho/tặng','Thu hồi nợ','Khác']}]
@@ -1670,12 +1670,14 @@ function renderInstallTip(){
 }
 function snoozeInstallTip(){try{localStorage.setItem('tc_install_snooze',String(Date.now()+7*864e5));}catch(e){}renderInstallTip();}
 
-/* ---------- NHẮC HẠN (3 NGÀY TỚI) ---------- */
+/* ---------- NHẮC HẠN (7 NGÀY TỚI) ---------- */
 function renderReminders(){
   const el=document.getElementById('remindCard');if(!el)return;
-  const today=todayStr(),lim=addDays(today,3),items=[];
+  const today=todayStr(),lim=addDays(today,7),items=[];
+  let lp=0,li=0,ld=null;
   loans.forEach(l=>{if(typeof ensureLoanV2==='function')ensureLoanV2(l);if(l.status==='closed'||!l.termMonths)return;
-    const d=loanDueUntil(l,lim);Object.keys(d.items).forEach(dt=>{const it=d.items[dt];const parts=[];if(it.p)parts.push('gốc '+fmtShort(it.p));if(it.i)parts.push('lãi ~'+fmtShort(it.i));items.push({date:dt,txt:'🏦 '+l.name+': trả '+parts.join(' + '),go:'loans'});});});
+    const d=loanDueUntil(l,lim);Object.keys(d.items).forEach(dt=>{const it=d.items[dt];if(!it.p&&!it.i)return;lp+=it.p||0;li+=it.i||0;if(!ld||dt<ld)ld=dt;});});
+  if(ld){const parts=[];if(lp)parts.push('Tổng gốc <b>'+fmtShort(lp)+'</b>');if(li)parts.push('Tổng lãi <b>~'+fmtShort(li)+'</b>');items.push({date:ld,txt:'🏦 Khoản vay: '+parts.join(' • '),go:'loans'});}
   const cur=today.slice(0,7);
   recurring.forEach(r=>{
     const nom=(ym)=>{const y=+ym.slice(0,4),m=+ym.slice(5,7)-1;const dim=new Date(y,m+1,0).getDate();return ymd(new Date(y,m,Math.min(r.day,dim)));};
@@ -1686,7 +1688,7 @@ function renderReminders(){
   if(!items.length){el.style.display='none';return;}
   items.sort((a,b)=>a.date.localeCompare(b.date));
   const when=d=>{const k=daysBetween(today,d);return k<0?'Quá hạn':k===0?'Hôm nay':k===1?'Ngày mai':dmy(d).slice(0,5);};
-  el.innerHTML='<div class="rc-title">🔔 Sắp đến hạn (3 ngày tới)</div>'+items.map(i=>'<div class="rc-row" onclick="showScreen(\''+i.go+'\')"><span class="rc-when'+(i.date<today?' od':'')+'">'+when(i.date)+'</span><span class="rc-txt">'+i.txt+'</span></div>').join('');
+  el.innerHTML='<div class="rc-title">🔔 Sắp đến hạn (7 ngày tới)</div>'+items.map(i=>'<div class="rc-row" onclick="showScreen(\''+i.go+'\')"><span class="rc-when'+(i.date<today?' od':'')+'">'+when(i.date)+'</span><span class="rc-txt">'+i.txt+'</span></div>').join('');
   el.style.display='block';
 }
 
@@ -1869,3 +1871,11 @@ checkMonthlyInterestAccrual();
 checkNoTermAccrual();
 repairLoanTxAmounts();
 checkLoanPaymentsDue();
+
+/* Chặn phóng to bằng 2 ngón (iOS Safari bỏ qua user-scalable=no) */
+(function(){
+  ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+  document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
+  document.addEventListener('wheel',e=>{if(e.ctrlKey)e.preventDefault();},{passive:false});
+  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].includes(e.key))e.preventDefault();});
+})();
