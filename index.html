@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=16">
+<link rel="stylesheet" href="app.css?v=17">
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -68,6 +68,7 @@
       <div class="month-box"><div class="l">Chi</div><div class="v" style="color:var(--red)" id="mChi">0</div></div>
       <div class="month-box"><div class="l">Còn lại</div><div class="v" id="mNet">0</div></div>
     </div>
+    <div class="fam-support" id="homeFam" style="display:none"></div>
     <div class="minibar-wrap" id="minibarWrap"></div>
     <div class="section-title">Chi tiêu lớn nhất</div>
     <div id="topSpendList"></div>
@@ -141,7 +142,8 @@
   <div class="type-tabs">
     <button id="tabChi" class="active chi" onclick="setType('chi')">Chi</button>
     <button id="tabThu" class="thu" onclick="setType('thu')">Thu</button>
-    <button id="tabXfer" class="xfer" onclick="setType('transfer')">Chuyển tiền</button>
+    <button id="tabXfer" class="xfer" onclick="setType('transfer')">Chuyển ví</button>
+    <button id="tabFam" class="fam" onclick="setType('family')">Gia đình</button>
   </div>
   <div class="amount-card">
     <div class="label">Số tiền</div>
@@ -160,6 +162,15 @@
       <div class="field"><label>Từ ví</label><select id="xferFrom"></select></div>
       <div class="field"><label>Đến ví</label><select id="xferTo"></select></div>
     </div>
+  </div>
+
+  <div id="famFields" style="display:none;">
+    <div class="fam-dir"><button id="famDirIn" class="active" onclick="setFamDir('in')">⬇ Nhận từ</button><button id="famDirOut" onclick="setFamDir('out')">⬆ Đưa cho</button></div>
+    <div class="chip-row fam-people" id="famPeople"></div>
+    <div class="field"><label id="famWalletLbl">Tiền vào ví</label><select id="famWallet"></select></div>
+    <label class="fam-check"><input type="checkbox" id="famRepay" onchange="onFamRepay()"><span id="famRepayLbl">Đây là tiền mượn, mình phải trả lại</span></label>
+    <div class="field" id="famDueWrap" style="display:none;"><label>Hẹn trả ngày (tuỳ chọn)</label><input id="famDue" type="date"></div>
+    <div class="fam-hint">Tiền gia đình không tính vào Thu/Chi. Báo cáo sẽ hiện riêng dòng "Gia đình hỗ trợ".</div>
   </div>
 
   <div class="row2">
@@ -191,7 +202,7 @@
   <div id="historyFilters" class="hf">
     <input id="hfQ" class="hf-q" type="search" placeholder="🔍 Tìm theo tên, ghi chú, người, số tiền..." oninput="setHistF('q',this.value)" autocomplete="off">
     <div class="hf-row">
-      <select id="hfType" onchange="setHistF('type',this.value)"><option value="">Tất cả</option><option value="chi">Chi</option><option value="thu">Thu</option><option value="transfer">Chuyển tiền</option></select>
+      <select id="hfType" onchange="setHistF('type',this.value)"><option value="">Tất cả</option><option value="chi">Chi</option><option value="thu">Thu</option><option value="transfer">Chuyển ví</option><option value="family">Gia đình</option></select>
       <select id="hfMonth" onchange="setHistF('month',this.value)"></select>
       <select id="hfGroup" onchange="setHistF('group',this.value)"></select>
     </div>
@@ -218,6 +229,7 @@
     <div class="summary-box"><div class="l">Chi</div><div class="v" style="color:var(--red)" id="repChi">0</div></div>
     <div class="summary-box"><div class="l">Chênh lệch</div><div class="v" id="repNet">0</div></div>
   </div>
+  <div class="fam-support" id="repFam" style="display:none"></div>
   <div id="repCompare" class="rep-compare"></div>
   <div class="rep-card"><div class="rep-card-t">Cơ cấu chi tiêu</div><div id="repDonut"></div></div>
   <div class="rep-card"><div class="rep-card-t">Thu – Chi 6 tháng gần nhất</div><div id="repTrend"></div></div>
@@ -259,6 +271,18 @@
 </div>
 
 <!-- VAY NỢ -->
+<div class="screen" id="screen-family">
+  <div class="inner">
+  <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Tiền gia đình</h2></div>
+  <div class="fam-hint" style="margin-bottom:10px;">Tiền nhận từ / đưa cho người thân. Không tính là Thu hay Chi.</div>
+  <select id="famMonth" class="fam-month" onchange="famMonth=this.value;renderFamily()"></select>
+  <div id="famPeopleSum"></div>
+  <div id="famOpen"></div>
+  <div id="famList"></div>
+  <button class="save-btn" onclick="showScreen('add');setType('family')">+ Ghi tiền gia đình</button>
+  </div>
+</div>
+
 <div class="screen" id="screen-debts">
   <div class="inner">
   <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Theo dõi vay nợ</h2></div>
@@ -394,6 +418,7 @@
   <div class="more-item" onclick="showScreen('budget')" id="more-budget">Ngân sách</div>
   <div class="more-item" onclick="showScreen('recurring')" id="more-recur">Thu chi định kỳ</div>
   <div class="more-item" onclick="showScreen('accounts')" id="more-acc">Quản lý ví tiền</div>
+  <div class="more-item" onclick="showScreen('family')" id="more-family">Tiền gia đình</div>
   <div class="more-item" onclick="showScreen('debts')" id="more-debts">Theo dõi vay nợ</div>
   <div class="more-item" onclick="showScreen('loans')" id="more-loans">Vay ngân hàng</div>
   <div class="more-item" onclick="showScreen('history')" id="more-hist">Lịch sử giao dịch</div>
@@ -414,6 +439,6 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script src="app.js?v=16"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
