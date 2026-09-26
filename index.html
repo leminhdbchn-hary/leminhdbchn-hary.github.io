@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=13">
+<link rel="stylesheet" href="app.css?v=14">
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -187,6 +187,15 @@
 <div class="screen" id="screen-history">
   <div class="inner">
   <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Lịch sử giao dịch</h2></div>
+  <div id="historyFilters" class="hf">
+    <input id="hfQ" class="hf-q" type="search" placeholder="🔍 Tìm theo tên, ghi chú, người, số tiền..." oninput="setHistF('q',this.value)" autocomplete="off">
+    <div class="hf-row">
+      <select id="hfType" onchange="setHistF('type',this.value)"><option value="">Tất cả</option><option value="chi">Chi</option><option value="thu">Thu</option><option value="transfer">Chuyển tiền</option></select>
+      <select id="hfMonth" onchange="setHistF('month',this.value)"></select>
+      <select id="hfGroup" onchange="setHistF('group',this.value)"></select>
+    </div>
+    <div id="historySum" class="hf-sum"></div>
+  </div>
   <div id="historyList"></div>
   </div>
 </div>
@@ -346,6 +355,9 @@
   </div>
 </div>
 
+<!-- HỘP THOẠI CHUNG -->
+<div id="appModal" onclick="if(event.target===this)closeAppModal()"><div class="edit-modal-card" id="appModalBody"></div></div>
+
 <!-- SỬA VÍ / TÀI KHOẢN -->
 <div id="walletEditModal" onclick="if(event.target===this)closeWalletEdit()">
   <div class="edit-modal-card">
@@ -400,6 +412,6 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

@@ -421,3 +421,36 @@ html,body{overflow-x:hidden;max-width:100%;}
 .rc-sum{font-size:13.5px;color:var(--sub);}
 .rc-sum b{color:var(--text);font-size:15px;}
 .rc-line{font-size:13.5px;padding:2px 0 2px 4px;cursor:pointer;touch-action:manipulation;}
+
+/* Hộp thoại chung */
+#appModal{position:fixed;inset:0;background:rgba(10,14,20,.6);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s ease;padding:20px;}
+#appModal.show{opacity:1;pointer-events:auto;}
+.bk-p{font-size:14.5px;line-height:1.5;color:var(--text);margin:0 0 10px;}
+.rp-list{background:var(--bg);border-radius:12px;padding:8px 12px;margin-bottom:12px;}
+.rp-row{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:4px 0;}
+.rp-tot{border-top:1px dashed rgba(255,255,255,.12);margin-top:4px;padding-top:6px;font-weight:700;}
+.rp-select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(194,154,92,.35);background:var(--bg);color:var(--text);font-family:inherit;font-size:16px;}
+/* Nhắc hạn: nút Đã trả + tổng tuần */
+.rc-line{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.rc-pay{flex-shrink:0;border:none;border-radius:10px;padding:7px 12px;font-family:inherit;font-weight:800;font-size:13px;background:linear-gradient(145deg,#d6b37a,#9c7640);color:#1a1612;touch-action:manipulation;}
+.rc-week{background:rgba(226,194,139,.08);border-radius:10px;padding:8px 10px;margin:4px 0 6px;}
+.rc-week>div:first-child{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;}
+.rc-week b{font-size:16px;}
+.rc-short{font-size:13px;color:var(--red);margin-top:3px;}
+.rc-ok{font-size:13px;color:var(--green);margin-top:3px;}
+/* Lịch sử: tìm kiếm, lọc */
+.hf{margin-bottom:10px;}
+.hf-q{width:100%;box-sizing:border-box;padding:11px 14px;border-radius:12px;border:1px solid rgba(194,154,92,.3);background:var(--card);color:var(--text);font-family:inherit;font-size:16px;margin-bottom:8px;}
+.hf-row{display:flex;gap:6px;}
+.hf-row select{flex:1;min-width:0;padding:9px 8px;border-radius:10px;border:1px solid rgba(194,154,92,.25);background:var(--card);color:var(--text);font-family:inherit;font-size:14px;}
+.hf-sum{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13.5px;color:var(--sub);margin-top:8px;}
+.hf-sum .hs-thu{color:var(--green);font-weight:700;}.hf-sum .hs-chi{color:var(--red);font-weight:700;}
+.hf-sum button{margin-left:auto;border:none;background:none;color:#e2c28b;font-family:inherit;font-weight:700;font-size:13.5px;}
+/* Ngân sách theo mục */
+.ib-toggle{display:block;margin-top:8px;border:none;background:none;color:#e2c28b;font-family:inherit;font-weight:700;font-size:14px;padding:4px 0;}
+.ib-list{margin-top:4px;border-left:2px solid rgba(194,154,92,.25);padding-left:10px;}
+.ib-row{padding:6px 0;}
+.ib-top{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;}
+.ib-row .bar-bg{height:5px;margin-bottom:4px;}
+.ib-row input{width:100%;box-sizing:border-box;border:1px solid rgba(194,154,92,.25);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:14px;background:transparent;color:var(--text);}
+.more-sub{display:block;font-size:12px;color:var(--sub);font-weight:500;}
