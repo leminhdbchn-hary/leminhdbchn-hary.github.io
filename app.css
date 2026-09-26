@@ -592,3 +592,7 @@ button,input,select,textarea{font-family:inherit;}
 .tx-info .cat{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tx-item .rw-badge{width:36px;height:36px;}
 .tx-item .icon-btn+.icon-btn{margin-left:0;}
+
+.nw-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.nw-cell small{display:block;font-size:10.5px;color:var(--sub);opacity:.75;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nw-cell b{font-size:15px;}

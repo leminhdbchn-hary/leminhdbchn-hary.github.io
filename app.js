@@ -334,9 +334,9 @@ function saveWalletEdit(){
   const v=id=>{const e=document.getElementById(id);return e?e.value:'';};
   const name=v('weName').trim();
   if(!name){alert('Vui lòng nhập tên ví');return;}
-  if(wallets.some(x=>x!==w&&x.name===name)){alert('Đã có ví khác cùng tên, hãy đặt tên khác');return;}
   const oldName=w.name;
-  if(name!==oldName)txs.forEach(t=>{if(t.fromName===oldName)t.fromName=name;if(t.toName===oldName)t.toName=name;});
+  /* Đổi tên: cập nhật tên trong các giao dịch chuyển ví cũ (chỉ khi không có ví khác trùng tên cũ) */
+  if(name!==oldName&&!wallets.some(x=>x!==w&&x.name===oldName))txs.forEach(t=>{if(t.fromName===oldName)t.fromName=name;if(t.toName===oldName)t.toName=name;});
   w.name=name;w.balance=parseInt(v('weBal').replace(/[^\d-]/g,''))||0;
   if(w.type!=='saving'){
     const nt=v('weType');if(nt){w.type=nt;const wt=WTYPES.find(t=>t.id===nt);if(wt&&nt!=='bank')w.color=wt.color;}
@@ -371,19 +371,21 @@ function netWorth(){
   const famLent=txs.filter(t=>t.type==='family'&&t.repay&&!t.settled&&!t.settleOf&&t.dir==='out').reduce((s,t)=>s+t.amount,0);
   const lent=(debts||[]).filter(d=>d.status==='pending').reduce((s,d)=>s+(d.amount||0),0)+famLent;
   const owe=loanDebt+famOwe+negW;
-  return {have,owe,lent,net:have+lent-owe,loanDebt,famOwe,negW};
+  const saving=wallets.filter(w=>w.type==='saving').reduce((s,w)=>s+Math.max(0,w.balance||0),0);
+  return {have,owe,lent,net:have+lent-owe,loanDebt,famOwe,negW,saving,ready:have-saving};
 }
 function renderNetWorth(elId){
   const el=document.getElementById(elId);if(!el)return;const n=netWorth();
   const v=x=>hideBal?'******':fmtShort(x);
-  el.innerHTML='<div class="nw-cell" onclick="showScreen(\'accounts\')"><span>Đang có</span><b>'+v(n.have)+'</b></div>'+
-    '<div class="nw-cell" onclick="showScreen(\'loans\')"><span>Đang nợ</span><b class="neg">'+v(n.owe)+'</b></div>'+
-    '<div class="nw-cell" onclick="openNetWorthInfo()"><span>Tài sản ròng</span><b class="'+(n.net>=0?'pos':'neg')+'">'+v(n.net)+'</b></div>';
+  el.innerHTML='<div class="nw-cell" onclick="showScreen(\'accounts\')"><span>Tiền sẵn dùng</span><b>'+v(n.ready)+'</b><small>không gồm tiết kiệm</small></div>'+
+    '<div class="nw-cell" onclick="showScreen(\'accounts\')"><span>Tiết kiệm</span><b>'+v(n.saving)+'</b><small>sổ tiết kiệm</small></div>'+
+    '<div class="nw-cell" onclick="showScreen(\'loans\')"><span>Đang nợ</span><b class="neg">'+v(n.owe)+'</b><small>vay, mượn, thẻ âm</small></div>'+
+    '<div class="nw-cell" onclick="openNetWorthInfo()"><span>Tài sản ròng</span><b class="'+(n.net>=0?'pos':'neg')+'">'+v(n.net)+'</b><small>bấm xem chi tiết</small></div>';
 }
 function openNetWorthInfo(){
   const n=netWorth();const r=(l,x,c)=>'<div class="rp-row"><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+x+'</b></div>';
   document.getElementById('appModalBody').innerHTML='<h3>Tài sản ròng</h3><div class="rp-list">'+
-    r('Tiền trong các ví',fmtShort(n.have))+(n.lent?r('+ Người khác đang nợ bạn',fmtShort(n.lent),'pos'):'')+
+    r('Tiền sẵn dùng (tiền mặt, tài khoản, ví)',fmtShort(n.ready))+r('Tiết kiệm',fmtShort(n.saving))+(n.lent?r('+ Người khác đang nợ bạn',fmtShort(n.lent),'pos'):'')+
     (n.loanDebt?r('− Dư nợ vay ngân hàng',fmtShort(n.loanDebt),'neg'):'')+(n.famOwe?r('− Đang mượn người thân',fmtShort(n.famOwe),'neg'):'')+(n.negW?r('− Ví/thẻ đang âm',fmtShort(n.negW),'neg'):'')+
     '<div class="rp-row rp-tot"><span>Tài sản ròng</span><b class="'+(n.net>=0?'pos':'neg')+'">'+fmt(n.net)+'</b></div></div>'+
     '<div class="loan-hint" style="margin-bottom:12px;">Tài sản ròng = tiền đang có + khoản người khác nợ bạn − các khoản bạn đang nợ.</div>'+
