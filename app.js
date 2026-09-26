@@ -1673,22 +1673,30 @@ function snoozeInstallTip(){try{localStorage.setItem('tc_install_snooze',String(
 /* ---------- NHẮC HẠN (7 NGÀY TỚI) ---------- */
 function renderReminders(){
   const el=document.getElementById('remindCard');if(!el)return;
-  const today=todayStr(),lim=addDays(today,7),items=[];
-  let lp=0,li=0,ld=null;
+  const today=todayStr(),lim=addDays(today,7),days={};
+  const day=dt=>days[dt]||(days[dt]={p:0,i:0,rec:[],debt:[]});
   loans.forEach(l=>{if(typeof ensureLoanV2==='function')ensureLoanV2(l);if(l.status==='closed'||!l.termMonths)return;
-    const d=loanDueUntil(l,lim);Object.keys(d.items).forEach(dt=>{const it=d.items[dt];if(!it.p&&!it.i)return;lp+=it.p||0;li+=it.i||0;if(!ld||dt<ld)ld=dt;});});
-  if(ld){const parts=[];if(lp)parts.push('Tổng gốc <b>'+fmtShort(lp)+'</b>');if(li)parts.push('Tổng lãi <b>~'+fmtShort(li)+'</b>');items.push({date:ld,txt:'🏦 Khoản vay: '+parts.join(' • '),go:'loans'});}
+    const d=loanDueUntil(l,lim);Object.keys(d.items).forEach(dt=>{const it=d.items[dt];if(!it.p&&!it.i)return;const g=day(dt);g.p+=it.p||0;g.i+=it.i||0;});});
   const cur=today.slice(0,7);
   recurring.forEach(r=>{
     const nom=(ym)=>{const y=+ym.slice(0,4),m=+ym.slice(5,7)-1;const dim=new Date(y,m+1,0).getDate();return ymd(new Date(y,m,Math.min(r.day,dim)));};
     let dt=r.lastLoggedYm!==cur?nom(cur):nom(addMonths(today.slice(0,7)+'-01',1).slice(0,7));
-    if(dt<=lim)items.push({date:dt,txt:'🔁 '+r.name+': '+(r.type==='thu'?'thu ':'chi ')+fmtShort(r.amount),go:'recurring'});
+    if(dt<=lim)day(dt).rec.push(r);
   });
-  (debts||[]).forEach(d=>{if(d.status==='pending'&&d.dueDate&&d.dueDate<=lim)items.push({date:d.dueDate,txt:'🤝 '+d.person+' hẹn trả '+fmtShort(d.amount),go:'debts'});});
-  if(!items.length){el.style.display='none';return;}
-  items.sort((a,b)=>a.date.localeCompare(b.date));
-  const when=d=>{const k=daysBetween(today,d);return k<0?'Quá hạn':k===0?'Hôm nay':k===1?'Ngày mai':dmy(d).slice(0,5);};
-  el.innerHTML='<div class="rc-title">🔔 Sắp đến hạn (7 ngày tới)</div>'+items.map(i=>'<div class="rc-row" onclick="showScreen(\''+i.go+'\')"><span class="rc-when'+(i.date<today?' od':'')+'">'+when(i.date)+'</span><span class="rc-txt">'+i.txt+'</span></div>').join('');
+  (debts||[]).forEach(d=>{if(d.status==='pending'&&d.dueDate&&d.dueDate<=lim)day(d.dueDate).debt.push(d);});
+  const keys=Object.keys(days).sort();
+  if(!keys.length){el.style.display='none';return;}
+  const when=d=>{const k=daysBetween(today,d);return k<0?'Quá hạn':k===0?'Hôm nay':k===1?'Ngày mai':'';};
+  el.innerHTML='<div class="rc-title">🔔 Sắp đến hạn (7 ngày tới)</div>'+keys.map(dt=>{
+    const g=days[dt],recChi=g.rec.filter(r=>r.type!=='thu').reduce((s,r)=>s+(r.amount||0),0);
+    const total=g.p+g.i+recChi,w=when(dt),od=dt<today;
+    let lines='';
+    if(g.p||g.i){const parts=[];if(g.p)parts.push('gốc '+fmtShort(g.p));if(g.i)parts.push('lãi ~'+fmtShort(g.i));lines+='<div class="rc-line" onclick="showScreen(\'loans\')">🏦 Khoản vay: '+parts.join(' • ')+'</div>';}
+    g.rec.forEach(r=>{lines+='<div class="rc-line" onclick="showScreen(\'recurring\')">🔁 '+r.name+': '+(r.type==='thu'?'thu ':'chi ')+fmtShort(r.amount)+'</div>';});
+    g.debt.forEach(d=>{lines+='<div class="rc-line" onclick="showScreen(\'debts\')">🤝 '+d.person+' hẹn trả bạn '+fmtShort(d.amount)+'</div>';});
+    return '<div class="rc-day'+(od?' od':'')+'"><div class="rc-head"><span class="rc-date">'+dmy(dt)+(w?' <small>('+w+')</small>':'')+'</span>'+
+      (total?'<span class="rc-sum">Tổng phải trả <b>'+fmtShort(total)+' 💎</b></span>':'')+'</div>'+lines+'</div>';
+  }).join('');
   el.style.display='block';
 }
 
@@ -1845,10 +1853,10 @@ attachThousandFormat(document.getElementById('accBalInput'));
 attachThousandFormat(document.getElementById('recAmount'));
 attachThousandFormat(document.getElementById('editWalletBalance'));
 ['loanPrincipal','loanBalanceEdit','debtAmount'].forEach(id=>{const e=document.getElementById(id);if(e)attachThousandFormat(e);});
-document.getElementById('nav-home').innerHTML=icon('home','currentColor',24);
-document.getElementById('nav-accounts').innerHTML=icon('wallet','currentColor',24);
-document.getElementById('nav-report').innerHTML=icon('chart','currentColor',24);
-document.getElementById('nav-more').innerHTML=icon('gear','currentColor',24);
+document.getElementById('nav-home').innerHTML=icon('home','currentColor',30);
+document.getElementById('nav-accounts').innerHTML=icon('wallet','currentColor',30);
+document.getElementById('nav-report').innerHTML=icon('chart','currentColor',30);
+document.getElementById('nav-more').innerHTML=icon('gear','currentColor',30);
 document.getElementById('more-budget').innerHTML='<span>'+icon('chart','#c29a5c',20)+'</span><span>Ngân sách</span>';
 document.getElementById('more-recur').innerHTML='<span>'+icon('repeat','#c29a5c',20)+'</span><span>Thu chi định kỳ</span>';
 document.getElementById('more-acc').innerHTML='<span>'+icon('wallet','#c29a5c',20)+'</span><span>Quản lý ví tiền</span>';

@@ -396,3 +396,28 @@ html.is-locked body>*:not(.lock-screen):not(script){visibility:hidden;}
 html,body{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior-y:none;}
 button,a,.chip,.cat-btn,.rc-row{touch-action:manipulation;}
 @supports (-webkit-touch-callout:none){input,select,textarea{font-size:16px!important;}}
+
+/* Thanh công cụ dưới: to hơn, dễ bấm */
+.screen{padding-bottom:calc(118px + env(safe-area-inset-bottom,0px));}
+.tabbar{padding:8px 4px calc(10px + env(safe-area-inset-bottom,0px));align-items:flex-end;z-index:50;}
+.tab{flex:1;width:auto;min-height:60px;gap:4px;padding:6px 0;justify-content:center;border-radius:14px;-webkit-tap-highlight-color:transparent;}
+.tab:active{background:rgba(226,194,139,.1);}
+.tab-icon svg{width:30px;height:30px;}
+.tab-label{font-size:14px;font-weight:700;}
+.tab .fab{width:66px;height:66px;font-size:42px;margin-top:-34px;}
+.mini-toast{bottom:calc(112px + env(safe-area-inset-bottom,0px));}
+/* Không cho trang trượt ngang */
+html,body{overflow-x:hidden;max-width:100%;}
+.screen{overflow-x:hidden;}
+#screen-add .chip-row{flex-wrap:wrap;overflow-x:visible;}
+#screen-add input,#screen-add select,#screen-add textarea{max-width:100%;box-sizing:border-box;}
+/* Sắp đến hạn theo từng ngày */
+.rc-day{padding:8px 0;border-top:1px dashed rgba(255,255,255,.1);}
+.rc-day:first-of-type{border-top:none;padding-top:2px;}
+.rc-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:3px;}
+.rc-date{font-weight:800;color:#e2c28b;font-size:15px;}
+.rc-date small{font-weight:600;color:var(--sub);font-size:12.5px;}
+.rc-day.od .rc-date{color:var(--red);}
+.rc-sum{font-size:13.5px;color:var(--sub);}
+.rc-sum b{color:var(--text);font-size:15px;}
+.rc-line{font-size:13.5px;padding:2px 0 2px 4px;cursor:pointer;touch-action:manipulation;}
