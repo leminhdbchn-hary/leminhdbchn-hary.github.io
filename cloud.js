@@ -1,10 +1,10 @@
-/* Sổ Thu Chi – Cloud sync qua Firebase (đăng nhập số điện thoại, mỗi số 1 dữ liệu riêng)
+/* Sổ Thu Chi – Cloud sync qua Firebase (đăng nhập tài khoản Google, mỗi tài khoản 1 dữ liệu riêng)
    Lưu trữ: users/{uid} (thông tin phiên bản) + users/{uid}/chunks/{0..n-1} (JSON chia nhỏ, mỗi doc < 1MB)
    Chống ghi đè: mỗi lần lưu có 1 mã phiên bản (rev). Máy nào có rev cũ hơn cloud sẽ không được ghi đè
    mà phải lấy bản mới về (hoặc người dùng chọn bản giữ lại). */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import {
-  getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged
+  getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, writeBatch
@@ -27,7 +27,6 @@ const CHUNK = 300000;      // ký tự / chunk (tối đa ~900KB kể cả chữ
 const MAX_SIZE = 9000000;  // giới hạn 1 lần ghi của Firestore ~10MB
 
 let currentUser = null;
-let confirmationResult = null;
 let pushTimer = null;
 let payloadGetter = null;
 let pushing = null;
@@ -45,45 +44,28 @@ function devName() {
   return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'thiết bị khác';
 }
 
-function normalizePhoneVN(input) {
-  let s = String(input || '').trim().replace(/[\s.\-()]/g, '');
-  if (!s) return '';
-  if (s.startsWith('+')) return s;
-  if (s.startsWith('0')) return '+84' + s.slice(1);
-  if (s.startsWith('84')) return '+' + s;
-  return '+84' + s;
-}
-
-function ensureRecaptcha() {
-  if (window.__recaptchaVerifier) return window.__recaptchaVerifier;
-  // Mỗi lần tạo mới dùng 1 thẻ con mới → tránh lỗi "reCAPTCHA has already been rendered in this element"
-  const box = document.getElementById('recaptcha-container');
-  box.innerHTML = '';
-  const el = document.createElement('div');
-  box.appendChild(el);
-  window.__recaptchaVerifier = new RecaptchaVerifier(auth, el, { size: 'invisible' });
-  return window.__recaptchaVerifier;
-}
-
-async function sendOtp(phoneRaw) {
-  const phone = normalizePhoneVN(phoneRaw);
-  if (!/^\+\d{9,15}$/.test(phone)) throw new Error('SDT_INVALID');
-  const verifier = ensureRecaptcha();
+/* Đăng nhập Google: thử cửa sổ popup trước, trình duyệt chặn popup thì chuyển trang (redirect) */
+async function signInGoogle() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
   try {
-    confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
+    const r = await signInWithPopup(auth, provider);
+    return r.user;
   } catch (e) {
-    try { verifier.clear(); } catch (x) {}
-    window.__recaptchaVerifier = null; // cho phép thử lại
+    const c = e && e.code;
+    if (c === 'auth/popup-blocked' || c === 'auth/operation-not-supported-in-this-environment' || c === 'auth/web-storage-unsupported') {
+      ls.set('tc_cloud_redirect', '1');
+      await signInWithRedirect(auth, provider);
+      return null; // trang sẽ chuyển sang Google rồi quay lại
+    }
     throw e;
   }
-  return phone;
 }
-
-async function verifyOtp(code) {
-  if (!confirmationResult) throw new Error('NO_OTP_SENT');
-  const cred = await confirmationResult.confirm(String(code || '').trim());
-  return cred.user;
-}
+// Quay lại từ trang đăng nhập Google (kiểu redirect)
+getRedirectResult(auth).then(r => {
+  if (r && r.user) emit('cloud-redirect-login');
+  else ls.set('tc_cloud_redirect', null);
+}).catch(e => { ls.set('tc_cloud_redirect', null); emit('cloud-login-error', { error: e }); });
 
 async function logout() {
   clearTimeout(pushTimer);
@@ -119,7 +101,7 @@ async function pushState(payload, opts) {
   const b = writeBatch(db);
   for (let i = 0; i < n; i++) b.set(chunkRef(uid, i), { d: json.slice(i * CHUNK, (i + 1) * CHUNK), r: rev });
   // set() không merge → xoá sạch các trường của định dạng cũ (nếu có)
-  b.set(metaRef(uid), { v: 2, n, rev, at: Date.now(), dev: devName(), size: json.length, phone: currentUser.phoneNumber || '' });
+  b.set(metaRef(uid), { v: 2, n, rev, at: Date.now(), dev: devName(), size: json.length, who: currentUser.email || '' });
   await b.commit();
   ls.set(revKey(), rev);
   ls.set('tc_cloud_dirty', null);
@@ -182,7 +164,7 @@ function queuePush(getPayloadFn) {
 
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
-  emit('cloud-auth-changed', { phone: user ? user.phoneNumber : null });
+  emit('cloud-auth-changed', { email: user ? user.email : null });
 });
 window.addEventListener('online', () => { flushPush(); emit('cloud-resume'); });
 document.addEventListener('visibilitychange', () => {
@@ -191,10 +173,9 @@ document.addEventListener('visibilitychange', () => {
 });
 
 const Cloud = window.Cloud = {
-  sendOtp, verifyOtp, logout, pushState, pullState, queuePush, flushPush, readMeta, markApplied,
+  signInGoogle, logout, pushState, pullState, queuePush, flushPush, readMeta, markApplied,
   applying: false,
   isLoggedIn: () => !!currentUser,
-  currentPhone: () => (currentUser ? currentUser.phoneNumber : ''),
-  localRev, isDirty,
-  normalizePhoneVN
+  currentEmail: () => (currentUser ? (currentUser.email || currentUser.displayName || '') : ''),
+  localRev, isDirty
 };

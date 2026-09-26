@@ -1886,69 +1886,48 @@ function onImportFile(e){
   e.target.value='';
 }
 
-/* ---------- ĐỒNG BỘ CLOUD (đăng nhập số điện thoại) ---------- */
-let cloudOtpPhone='';
+/* ---------- ĐỒNG BỘ CLOUD (đăng nhập tài khoản Google) ---------- */
 function cloudFmtTime(ms){if(!ms)return'';const d=new Date(ms);return d.toLocaleString('vi-VN');}
 function cloudErrMsg(e){
   const c=(e&&e.code)||'';
-  if(c==='auth/invalid-phone-number')return'Số điện thoại không hợp lệ.';
-  if(c==='auth/too-many-requests')return'Bạn thử quá nhiều lần, hãy đợi một lúc rồi thử lại.';
-  if(c==='auth/code-expired')return'Mã OTP đã hết hạn, hãy gửi lại mã mới.';
-  if(c==='auth/invalid-verification-code')return'Mã OTP không đúng.';
-  if(c==='auth/quota-exceeded')return'Đã hết hạn mức gửi SMS hôm nay, hãy thử lại sau.';
-  if(e&&e.message==='SDT_INVALID')return'Vui lòng nhập đúng số điện thoại.';
-  if(e&&e.message==='CLOUD_TOO_BIG')return'Dữ liệu quá lớn (nhiều ảnh hoá đơn) để sao lưu cloud. Hãy xoá bớt ảnh hoá đơn cũ.';
-  if(e&&e.message==='CLOUD_INCONSISTENT')return'Dữ liệu trên cloud đang được máy khác cập nhật, hãy thử lại sau vài giây.';
+  if(c==='auth/popup-blocked')return'Trình duyệt đã chặn cửa sổ đăng nhập. Hãy cho phép cửa sổ bật lên (pop-up) rồi thử lại.';
   if(c==='auth/unauthorized-domain')return'Tên miền web chưa được cho phép trong Firebase Authentication.';
-  if(c==='auth/billing-not-enabled')return'Firebase chưa bật thanh toán (gói Blaze) nên chưa gửi được SMS.';
-  if(c==='auth/operation-not-allowed')return'Firebase chưa cho phép gửi SMS tới vùng này.';
+  if(c==='auth/operation-not-allowed')return'Đăng nhập Google chưa được bật trong Firebase.';
+  if(c==='auth/too-many-requests')return'Bạn thử quá nhiều lần, hãy đợi một lúc rồi thử lại.';
+  if(c==='auth/user-disabled')return'Tài khoản này đã bị khoá.';
   if(c==='auth/network-request-failed'||c==='unavailable')return'Không có mạng hoặc không kết nối được cloud.';
   if(c==='permission-denied')return'Cloud từ chối truy cập, hãy đăng nhập lại.';
+  if(e&&e.message==='CLOUD_TOO_BIG')return'Dữ liệu quá lớn (nhiều ảnh hoá đơn) để sao lưu cloud. Hãy xoá bớt ảnh hoá đơn cũ.';
+  if(e&&e.message==='CLOUD_INCONSISTENT')return'Dữ liệu trên cloud đang được máy khác cập nhật, hãy thử lại sau vài giây.';
   return'Có lỗi xảy ra: '+(e&&e.message?e.message:'không rõ')+(c?' ('+c+')':'');
 }
+function cloudIsCancel(e){const c=(e&&e.code)||'';return c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request'||c==='auth/user-cancelled';}
 function renderCloudScreen(){
   const el=document.getElementById('cloudBody');if(!el)return;
   if(!window.Cloud){el.innerHTML='<div class="more-item">Đang tải dịch vụ cloud, thử lại sau vài giây…</div>';return;}
   if(window.Cloud.isLoggedIn()){
     let last=0;try{last=+localStorage.getItem('tc_cloud_last_sync')||0;}catch(e){}
     el.innerHTML=
-      '<div class="field"><label>Số điện thoại đang đăng nhập</label><div class="more-item" style="margin-bottom:0;">'+window.Cloud.currentPhone()+'</div></div>'+
+      '<div class="field"><label>Tài khoản Google đang đăng nhập</label><div class="more-item" style="margin-bottom:0;word-break:break-all;">'+window.Cloud.currentEmail()+'</div></div>'+
       '<div class="field"><label>Đồng bộ lần gần nhất</label><div class="more-item" id="cloudLastSync" style="margin-bottom:0;">'+(last?cloudFmtTime(last):'Chưa đồng bộ lần nào')+'</div></div>'+
       '<button class="save-btn" onclick="cloudManualPush()">☁️ Sao lưu ngay</button>'+
       '<button class="save-btn" style="background:var(--card2,#333);color:var(--text,#fff);margin-top:10px;" onclick="cloudManualPull()">⬇️ Khôi phục từ cloud</button>'+
       '<button class="save-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:10px;" onclick="cloudLogoutUI()">Đăng xuất</button>';
   }else{
     el.innerHTML=
-      '<div class="field"><label>Số điện thoại</label><input id="cloudPhoneInput" type="tel" placeholder="09xxxxxxxx" autocomplete="tel"></div>'+
-      '<button class="save-btn" id="cloudSendBtn" onclick="cloudSendOtpUI()">Gửi mã OTP</button>'+
-      '<div id="cloudOtpWrap" style="display:none;margin-top:14px;">'+
-        '<div class="field"><label>Nhập mã OTP đã nhận qua SMS</label><input id="cloudOtpInput" type="tel" placeholder="123456" autocomplete="one-time-code"></div>'+
-        '<button class="save-btn" id="cloudVerifyBtn" onclick="cloudVerifyOtpUI()">Xác nhận</button>'+
-      '</div>';
+      '<button class="save-btn" id="cloudGoogleBtn" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;" onclick="cloudGoogleLoginUI()"><svg width="20" height="20" viewBox="0 0 48 48" style="vertical-align:-4px;margin-right:8px"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Đăng nhập bằng Google</button>'+
+      '<p style="color:var(--sub);font-size:12.5px;margin:12px 2px 0;">Dùng cùng 1 tài khoản Gmail trên các máy để dùng chung dữ liệu.</p>';
   }
 }
-async function cloudSendOtpUI(){
-  const inp=document.getElementById('cloudPhoneInput');const phone=inp?inp.value:'';
-  const btn=document.getElementById('cloudSendBtn');
-  if(!phone||!phone.trim()){alert('Vui lòng nhập số điện thoại.');return;}
-  if(btn){btn.disabled=true;btn.textContent='Đang gửi...';}
-  try{
-    cloudOtpPhone=await window.Cloud.sendOtp(phone);
-    document.getElementById('cloudOtpWrap').style.display='block';
-    showMiniToast('✓ Đã gửi mã OTP tới '+cloudOtpPhone);
-  }catch(e){alert(cloudErrMsg(e));}
-  if(btn){btn.disabled=false;btn.textContent='Gửi lại mã OTP';}
-}
-async function cloudVerifyOtpUI(){
-  const inp=document.getElementById('cloudOtpInput');const code=inp?inp.value:'';
-  const btn=document.getElementById('cloudVerifyBtn');
-  if(!code||!code.trim()){alert('Vui lòng nhập mã OTP.');return;}
-  if(btn){btn.disabled=true;btn.textContent='Đang xác nhận...';}
-  try{
-    cloudLoggingIn=true;
-    try{await window.Cloud.verifyOtp(code);await cloudPostLogin();}finally{cloudLoggingIn=false;}
-  }catch(e){alert(cloudErrMsg(e));}
-  if(btn){btn.disabled=false;btn.textContent='Xác nhận';}
+function cloudGoogleLoginUI(){
+  const btn=document.getElementById('cloudGoogleBtn');
+  if(btn){btn.disabled=true;btn.style.opacity='.6';}
+  cloudLoggingIn=true;
+  // gọi ngay trong lúc bấm để trình duyệt không chặn cửa sổ đăng nhập
+  window.Cloud.signInGoogle().then(async u=>{
+    if(u)await cloudPostLogin();
+  }).catch(e=>{if(!cloudIsCancel(e))alert(cloudErrMsg(e));})
+  .finally(()=>{cloudLoggingIn=false;if(btn){btn.disabled=false;btn.style.opacity='';}});
 }
 async function cloudPostLogin(){
   let cloudData=null;
@@ -2031,7 +2010,13 @@ window.addEventListener('cloud-sync-done',()=>{try{const el=document.getElementB
 window.addEventListener('cloud-conflict',ev=>cloudShowConflict(ev.detail&&ev.detail.meta));
 window.addEventListener('cloud-sync-error',ev=>{const d=ev.detail||{};if(d.error&&d.error.message==='CLOUD_TOO_BIG')showMiniToast(cloudErrMsg(d.error),true);try{updateCloudMenu();}catch(e){}});
 window.addEventListener('cloud-resume',()=>cloudAutoSync());
-window.addEventListener('cloud-auth-changed',()=>{try{if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}setTimeout(()=>cloudAutoSync(true),800);});
+window.addEventListener('cloud-auth-changed',()=>{try{if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
+  let redir=null;try{redir=localStorage.getItem('tc_cloud_redirect');}catch(e){}
+  if(!redir)setTimeout(()=>cloudAutoSync(true),800);});
+window.addEventListener('cloud-redirect-login',async()=>{
+  cloudLoggingIn=true;try{await cloudPostLogin();}finally{cloudLoggingIn=false;try{localStorage.removeItem('tc_cloud_redirect');}catch(e){}}
+});
+window.addEventListener('cloud-login-error',ev=>{const e=ev.detail&&ev.detail.error;if(e&&!cloudIsCancel(e))alert(cloudErrMsg(e));});
 
 /* ---------- TIỆN ÍCH: THÔNG BÁO NHỎ ---------- */
 let _mtT=null;
@@ -2284,7 +2269,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='26';
+const APP_VERSION='27';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
