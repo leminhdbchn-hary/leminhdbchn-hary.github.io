@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=19">
+<link rel="stylesheet" href="app.css?v=20">
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -428,6 +428,7 @@
   <div class="more-item" onclick="exportJSON()" id="more-exportjson">Sao lưu dữ liệu (JSON)</div>
   <div class="more-item" onclick="triggerImport()" id="more-import">Khôi phục dữ liệu (JSON)</div>
   <input type="file" id="importFileInput" accept="application/json" style="display:none" onchange="onImportFile(event)">
+  <div class="more-item" onclick="checkUpdate(true)" id="more-update">Cập nhật app</div>
   <div class="more-item" onclick="clearAll()" id="more-trash" style="color:var(--red);">Xoá toàn bộ dữ liệu</div>
   </div>
 </div>
@@ -440,6 +441,6 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script src="app.js?v=19"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>

@@ -2074,7 +2074,29 @@ if(pinIsSet())pinShow('unlock');
 updateLockMenu();
 
 /* ---------- INIT ---------- */
-if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+/* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
+const APP_VERSION='20';
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
+async function hardUpdate(){
+  try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
+  try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()));}}catch(e){}
+  location.replace(location.pathname+'?u='+Date.now());
+}
+async function checkUpdate(manual){
+  try{
+    const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;
+    const j=await r.json();
+    if(String(j.v)!==APP_VERSION){
+      let last=null;try{last=sessionStorage.getItem('tc_upd_to');}catch(e){}
+      if(last===String(j.v)&&!manual)return; // tránh tải lại liên tục
+      try{sessionStorage.setItem('tc_upd_to',String(j.v));}catch(e){}
+      showMiniToast('⬇ Đang cập nhật phiên bản mới...');setTimeout(hardUpdate,600);
+    }else if(manual)showMiniToast('✓ Bạn đang dùng bản mới nhất (v'+APP_VERSION+')');
+  }catch(e){if(manual)showMiniToast('Không kiểm tra được — hãy thử lại khi có mạng',true);}
+}
+window.addEventListener('load',()=>setTimeout(()=>checkUpdate(false),1500));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate(false);});
+(function(){const el=document.getElementById('more-update');if(el)el.innerHTML='<span>'+icon('download','#c29a5c',20)+'</span><span>Cập nhật app<small class="more-sub">Phiên bản '+APP_VERSION+' — bấm để kiểm tra</small></span>';})();
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});}catch(e){}
 populateBankSelect();
 renderWTypeGrid('cash');
