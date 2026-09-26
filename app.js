@@ -1887,6 +1887,7 @@ function onImportFile(e){
 }
 
 /* ---------- ĐỒNG BỘ CLOUD (đăng nhập tài khoản Google) ---------- */
+const GOOGLE_ICON_SVG='<svg width="20" height="20" viewBox="0 0 48 48" style="vertical-align:-4px;margin-right:8px"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
 function cloudFmtTime(ms){if(!ms)return'';const d=new Date(ms);return d.toLocaleString('vi-VN');}
 function cloudErrMsg(e){
   const c=(e&&e.code)||'';
@@ -1915,20 +1916,47 @@ function renderCloudScreen(){
       '<button class="save-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:10px;" onclick="cloudLogoutUI()">Đăng xuất</button>';
   }else{
     el.innerHTML=
-      '<button class="save-btn" id="cloudGoogleBtn" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;" onclick="cloudGoogleLoginUI()"><svg width="20" height="20" viewBox="0 0 48 48" style="vertical-align:-4px;margin-right:8px"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Đăng nhập bằng Google</button>'+
+      '<button class="save-btn" id="cloudGoogleBtn" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;" onclick="cloudGoogleLoginUI()">'+GOOGLE_ICON_SVG+'Đăng nhập bằng Google</button>'+
       '<p style="color:var(--sub);font-size:12.5px;margin:12px 2px 0;">Dùng cùng 1 tài khoản Gmail trên các máy để dùng chung dữ liệu.</p>';
   }
 }
-function cloudGoogleLoginUI(){
-  const btn=document.getElementById('cloudGoogleBtn');
+/* Đăng nhập Google dùng chung cho nút trong Cài đặt và màn hình cổng vào ban đầu */
+async function cloudDoGoogleLogin(btn){
   if(btn){btn.disabled=true;btn.style.opacity='.6';}
   cloudLoggingIn=true;
-  // gọi ngay trong lúc bấm để trình duyệt không chặn cửa sổ đăng nhập
-  window.Cloud.signInGoogle().then(async u=>{
-    if(u)await cloudPostLogin();
-  }).catch(e=>{if(!cloudIsCancel(e))alert(cloudErrMsg(e));})
-  .finally(()=>{cloudLoggingIn=false;if(btn){btn.disabled=false;btn.style.opacity='';}});
+  try{
+    const u=await window.Cloud.signInGoogle();
+    if(u){await cloudPostLogin();try{cloudGateUpdate();}catch(e){}}
+  }catch(e){if(!cloudIsCancel(e))alert(cloudErrMsg(e));}
+  cloudLoggingIn=false;if(btn){btn.disabled=false;btn.style.opacity='';}
 }
+function cloudGoogleLoginUI(){cloudDoGoogleLogin(document.getElementById('cloudGoogleBtn'));}
+function cloudGateLoginUI(){cloudDoGoogleLogin(document.getElementById('gateGoogleBtn'));}
+/* ---- Màn hình "cổng vào" bắt đăng nhập Google ngay khi mở app ---- */
+function cloudGateSkip(){
+  try{localStorage.setItem('tc_cloud_gate_skip','1');}catch(e){}
+  const gate=document.getElementById('cloudGateScreen');if(gate)gate.classList.add('hidden');
+}
+function cloudGateUpdate(){
+  const gate=document.getElementById('cloudGateScreen');if(!gate)return;
+  if(!window.Cloud)return; /* chưa tải xong dịch vụ cloud, giữ nguyên màn hình "đang kiểm tra" */
+  let skipped=false;try{skipped=localStorage.getItem('tc_cloud_gate_skip')==='1';}catch(e){}
+  if(window.Cloud.isLoggedIn()||skipped){gate.classList.add('hidden');return;}
+  const btn=document.getElementById('gateGoogleBtn');if(btn)btn.innerHTML=GOOGLE_ICON_SVG+'Đăng nhập bằng Google';
+  document.getElementById('gateSub').textContent='Đăng nhập để dữ liệu được tự động sao lưu lên cloud và dùng chung nhiều thiết bị.';
+  document.getElementById('gateBtnWrap').style.display='block';
+  document.getElementById('gateSkipBtn').style.display='block';
+  gate.classList.remove('hidden');
+}
+/* Nếu sau vài giây vẫn chưa tải được dịch vụ cloud (mất mạng/CDN chặn) → cho phép dùng tạm, không khoá cứng người dùng */
+setTimeout(()=>{
+  const gate=document.getElementById('cloudGateScreen');if(!gate||gate.classList.contains('hidden'))return;
+  if(window.Cloud)return;
+  document.getElementById('gateSub').textContent='Không tải được dịch vụ đăng nhập (kiểm tra mạng). Bạn có thể dùng tạm, dữ liệu chỉ lưu trên máy này.';
+  document.getElementById('gateGoogleBtn').style.display='none';
+  document.getElementById('gateBtnWrap').style.display='block';
+  document.getElementById('gateSkipBtn').style.display='block';
+},5000);
 async function cloudPostLogin(){
   let cloudData=null;
   try{cloudData=await window.Cloud.pullState();}catch(e){}
@@ -1955,7 +1983,9 @@ function cloudApply(data){
 }
 function cloudLogoutUI(){
   if(!confirm('Đăng xuất khỏi đồng bộ cloud trên máy này?'))return;
-  window.Cloud.logout();renderCloudScreen();updateCloudMenu();
+  window.Cloud.logout();
+  try{localStorage.setItem('tc_cloud_gate_skip','1');}catch(e){} /* vừa chủ động đăng xuất, không bắt đăng nhập lại ngay */
+  renderCloudScreen();updateCloudMenu();
 }
 async function cloudManualPush(){
   if(!window.Cloud||!window.Cloud.isLoggedIn())return;
@@ -2010,11 +2040,11 @@ window.addEventListener('cloud-sync-done',()=>{try{const el=document.getElementB
 window.addEventListener('cloud-conflict',ev=>cloudShowConflict(ev.detail&&ev.detail.meta));
 window.addEventListener('cloud-sync-error',ev=>{const d=ev.detail||{};if(d.error&&d.error.message==='CLOUD_TOO_BIG')showMiniToast(cloudErrMsg(d.error),true);try{updateCloudMenu();}catch(e){}});
 window.addEventListener('cloud-resume',()=>cloudAutoSync());
-window.addEventListener('cloud-auth-changed',()=>{try{if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
+window.addEventListener('cloud-auth-changed',()=>{try{cloudGateUpdate();if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
   let redir=null;try{redir=localStorage.getItem('tc_cloud_redirect');}catch(e){}
   if(!redir)setTimeout(()=>cloudAutoSync(true),800);});
 window.addEventListener('cloud-redirect-login',async()=>{
-  cloudLoggingIn=true;try{await cloudPostLogin();}finally{cloudLoggingIn=false;try{localStorage.removeItem('tc_cloud_redirect');}catch(e){}}
+  cloudLoggingIn=true;try{await cloudPostLogin();}finally{cloudLoggingIn=false;try{localStorage.removeItem('tc_cloud_redirect');}catch(e){}try{cloudGateUpdate();}catch(e){}}
 });
 window.addEventListener('cloud-login-error',ev=>{const e=ev.detail&&ev.detail.error;if(e&&!cloudIsCancel(e))alert(cloudErrMsg(e));});
 
@@ -2269,7 +2299,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='27';
+const APP_VERSION='28';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
