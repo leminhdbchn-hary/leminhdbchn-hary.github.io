@@ -310,6 +310,23 @@ input[type=date]::-webkit-date-and-time-value{text-align:left;}
 .add-acc-form label.fl{display:block;padding:6px 2px 6px;font-size:12px;color:var(--sub);}
 .loan-due{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
 .loan-due .loan-badge{margin-top:0;align-self:flex-start;}
+.qr-btn{width:100%;margin:0 0 12px;padding:12px;border-radius:12px;border:1px dashed #c29a5c;background:rgba(194,154,92,.1);color:#e2c28b;font-weight:700;font-size:14px;font-family:inherit;}
+.qr-pay{background:var(--card);border:1px solid rgba(194,154,92,.35);border-radius:14px;padding:12px;margin-bottom:12px;font-size:13px;}
+.qr-pay .qp-row{display:flex;justify-content:space-between;gap:10px;padding:3px 0;}.qr-pay .qp-row span{color:var(--sub);}.qr-pay .qp-row b{text-align:right;word-break:break-all;}
+.qr-pay select{width:100%;margin:8px 0;padding:10px;border-radius:10px;background:#0e0d0c;color:var(--text);border:1px solid rgba(194,154,92,.3);font-family:inherit;}
+.qr-pay .qp-btns{display:flex;gap:8px;}.qr-pay .qp-btns button{flex:1;padding:11px 6px;border-radius:10px;border:none;font-weight:700;font-family:inherit;font-size:13px;}
+.qp-main{background:linear-gradient(145deg,#d6b37a,#9c7640);color:#1a1612;}.qp-sub{background:#0e0d0c;color:#e2c28b;border:1px solid rgba(194,154,92,.35)!important;}
+.qr-modal{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center;}
+.qr-modal.show{display:flex;}
+.qr-sheet{background:#1c1916;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));}
+.qr-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--text);}
+.qr-head button{background:none;border:none;color:var(--sub);font-size:20px;}
+.qr-cam{position:relative;width:100%;aspect-ratio:1;background:#000;border-radius:14px;overflow:hidden;}
+.qr-cam video{width:100%;height:100%;object-fit:cover;}
+.qr-frame{position:absolute;inset:18%;border:3px solid #e2c28b;border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35);}
+.qr-msg{text-align:center;color:var(--sub);font-size:13px;margin:10px 0;}
+.qr-file{display:block;text-align:center;padding:12px;border-radius:12px;background:#0e0d0c;color:#e2c28b;font-weight:700;font-size:13.5px;border:1px solid rgba(194,154,92,.3);}
+.qr-file input{display:none;}
 .loan-summary{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid rgba(194,154,92,.18);}
 .ls-top{display:flex;justify-content:space-between;font-weight:800;font-size:15px;}
 .ls-top span:last-child{color:var(--red);}
@@ -489,6 +506,8 @@ html.is-locked body>*:not(.lock-screen):not(script){visibility:hidden;}
     <button id="tabThu" class="thu" onclick="setType('thu')">Thu</button>
     <button id="tabXfer" class="xfer" onclick="setType('transfer')">Chuyển tiền</button>
   </div>
+  <button class="qr-btn" onclick="openQrScan()">📷 Quét mã QR thanh toán</button>
+  <div id="qrPayBox" class="qr-pay" style="display:none;"></div>
   <div class="amount-card">
     <div class="label">Số tiền</div>
     <input id="amountInput" type="tel" inputmode="numeric" placeholder="0" value="">
@@ -728,6 +747,14 @@ html.is-locked body>*:not(.lock-screen):not(script){visibility:hidden;}
   </div>
 </div>
 
+<div id="qrModal" class="qr-modal" onclick="if(event.target===this)closeQrScan()">
+  <div class="qr-sheet">
+    <div class="qr-head"><b>Quét mã QR thanh toán</b><button onclick="closeQrScan()">✕</button></div>
+    <div class="qr-cam"><video id="qrVideo" playsinline muted autoplay></video><div class="qr-frame"></div></div>
+    <div id="qrMsg" class="qr-msg">Đưa mã QR vào giữa khung</div>
+    <label class="qr-file">🖼 Chọn ảnh QR có sẵn trong máy<input type="file" accept="image/*" onchange="qrFromFile(event)"></label>
+  </div>
+</div>
 <div class="tabbar">
   <button class="tab active" data-s="home" onclick="showScreen('home')"><span class="tab-icon" id="nav-home"></span><span class="tab-label">Tổng quan</span></button>
   <button class="tab" data-s="accounts" onclick="showScreen('accounts')"><span class="tab-icon" id="nav-accounts"></span><span class="tab-label">Ví tiền</span></button>
@@ -907,7 +934,7 @@ function showScreen(name,isBack){
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   const t=document.querySelector('.tab[data-s="'+name+'"]');if(t)t.classList.add('active');
-  if(name==='add'){resetEditUI();document.getElementById('dateInput').value=todayStr();document.getElementById('timeInput').value=nowTime();renderWalletSelects();renderGroupChips();renderItemGrid();}
+  if(name==='add'){qrPending=null;renderQrPayBox();resetEditUI();document.getElementById('dateInput').value=todayStr();document.getElementById('timeInput').value=nowTime();renderWalletSelects();renderGroupChips();renderItemGrid();}
   if(name==='home')renderHome();
   if(name==='history')renderHistory();
   if(name!=='accounts'){const af=document.getElementById('addAccForm');if(af&&af.style.display!=='none')cancelAccForm();}
@@ -1263,7 +1290,7 @@ function renderHome(){
   if(activeLoans.length){
     loanMini.style.display='flex';
     document.getElementById('loanMiniAmt').textContent=fmtShort(activeLoans.reduce((s,l)=>s+l.balance,0))+' 💎';
-    {const ms=loanMonthSummary();document.getElementById('loanMiniCount').textContent=activeLoans.length+' khoản'+((ms.p+ms.i)>0?' • tháng này '+fmtShort(ms.p+ms.i):'');}
+    {const ms=loanNextSummary();document.getElementById('loanMiniCount').textContent=activeLoans.length+' khoản'+((ms.p+ms.i)>0?' • kỳ tới '+fmtShort(ms.p+ms.i):'');}
   }else{loanMini.style.display='none';}
   const now=new Date(); const curYm=now.toISOString().slice(0,7);
   document.getElementById('monthTitle').textContent='Tháng '+(now.getMonth()+1)+'/'+now.getFullYear();
@@ -1521,6 +1548,96 @@ function deleteDebt(id){
   saveAll();renderDebts();renderHome();renderHistory();
 }
 
+
+/* ---------- QUÉT QR THANH TOÁN (VietQR / NAPAS) ---------- */
+const VQ_BANKS={'970415':['ICB','VietinBank','icb'],'970436':['VCB','Vietcombank','vcb'],'970418':['BIDV','BIDV','bidv'],'970405':['VBA','Agribank','vba'],'970448':['OCB','OCB','ocb'],'970422':['MB','MBBank','mb'],'970407':['TCB','Techcombank','tcb'],'970416':['ACB','ACB','acb'],'970432':['VPB','VPBank','vpb'],'970423':['TPB','TPBank','tpb'],'970403':['STB','Sacombank',''],'970437':['HDB','HDBank','hdb'],'970454':['VCCB','Bản Việt',''],'970429':['SCB','SCB','scb'],'970441':['VIB','VIB','vib'],'970443':['SHB','SHB','shb'],'970431':['EIB','Eximbank','eib'],'970426':['MSB','MSB',''],'546034':['CAKE','CAKE','cake'],'546035':['Ubank','Ubank',''],'971005':['VTLMONEY','Viettel Money',''],'963388':['TIMO','Timo','timo'],'971011':['VNPTMONEY','VNPT Money',''],'970400':['SGICB','Saigonbank','sgicb'],'970409':['BAB','Bac A Bank',''],'971025':['MOMO','MoMo',''],'970412':['PVCB','PVcomBank','pvcb'],'970419':['NCB','NCB','ncb'],'970424':['SHBVN','Shinhan Bank','shbvn'],'970425':['ABB','ABBANK','abb'],'970427':['VAB','VietABank','vab'],'970428':['NAB','Nam A Bank','nab'],'970430':['PGB','PGBank',''],'970433':['VIETBANK','Vietbank','vietbank'],'970438':['BVB','BaoViet Bank','bvb'],'970440':['SEAB','SeABank','seab'],'970446':['COOPBANK','Co-opBank','coopbank'],'970449':['LPB','LPBank','lpb'],'970452':['KLB','KienlongBank','klb'],'422589':['CIMB','CIMB','cimb'],'970457':['WVN','Woori','wvn'],'970439':['PBVN','Public Bank','pbvn'],'970406':['VIKKI','Vikki',''],'970414':['MBV','MBV','']};
+const BANK_APPS=[['vcb','Vietcombank'],['bidv','BIDV SmartBanking'],['icb','VietinBank iPay'],['vba','Agribank'],['mb','MB Bank'],['tcb','Techcombank'],['acb','ACB One'],['vpb','VPBank NEO'],['tpb','TPBank'],['hdb','HDBank'],['vib-2','MyVIB'],['shb','SHB SAHA'],['ocb','OCB OMNI'],['scb','SCB'],['seab','SeAMobile'],['lpb','LPBank'],['eib','Eximbank'],['nab','Nam A Bank'],['abb','ABBank'],['cake','CAKE'],['timo','Timo'],['shbvn','Shinhan SOL'],['vietbank','Vietbank'],['klb','KienlongBank'],['bvb','BAOVIET Smart'],['ncb','NCB'],['pvcb','PVConnect'],['coopbank','Co-opBank'],['cimb','OCTO by CIMB'],['wvn','Woori WON']];
+let qrPending=null,qrStream=null,qrTimer=null,qrDetector=null;
+function parseTLV(s){const o={};let i=0;while(i+4<=s.length){const id=s.substr(i,2),len=parseInt(s.substr(i+2,2),10);if(isNaN(len))break;o[id]=s.substr(i+4,len);i+=4+len;}return o;}
+function parsePayQR(text){
+  const t=(text||'').trim();
+  if(/^000201/.test(t)){
+    const top=parseTLV(t);const res={raw:t,amount:parseInt(top['54']||'0',10)||0,name:top['59']||'',purpose:''};
+    if(top['62']){const a=parseTLV(top['62']);res.purpose=a['08']||'';}
+    const mk=top['38']||'';if(mk){const m=parseTLV(mk);if(m['00']==='A000000727'&&m['01']){const b=parseTLV(m['01']);res.bin=b['00'];res.acct=b['01'];}}
+    if(!res.bin){for(const k of Object.keys(top)){if(+k>=26&&+k<=51&&k!=='38'){const m=parseTLV(top[k]);res.merchantId=m['01']||m['02']||'';res.gateway=m['00']||'';break;}}}
+    const bk=res.bin&&VQ_BANKS[res.bin];if(bk){res.bankCode=bk[0];res.bankName=bk[1];res.appId=bk[2];}
+    return res;
+  }
+  return {raw:t,amount:0,name:'',purpose:'',unknown:true};
+}
+function loadJsQR(){
+  if(window.jsQR)return Promise.resolve();
+  const srcs=['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js','https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'];
+  return srcs.reduce((pr,src)=>pr.catch(()=>new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=src;sc.onload=()=>window.jsQR?ok():no();sc.onerror=no;document.head.appendChild(sc);})),Promise.reject());
+}
+async function getDetector(){
+  if(qrDetector)return qrDetector;
+  try{if('BarcodeDetector' in window){const f=await BarcodeDetector.getSupportedFormats();if(f.includes('qr_code')){const d=new BarcodeDetector({formats:['qr_code']});qrDetector=async src=>{const r=await d.detect(src);return r[0]?r[0].rawValue:null;};return qrDetector;}}}catch(e){}
+  await loadJsQR();
+  const cv=document.createElement('canvas'),ctx=cv.getContext('2d',{willReadFrequently:true});
+  qrDetector=async src=>{const w=src.videoWidth||src.naturalWidth||src.width,h=src.videoHeight||src.naturalHeight||src.height;if(!w||!h)return null;const sc=Math.min(1,1000/Math.max(w,h));cv.width=Math.round(w*sc);cv.height=Math.round(h*sc);ctx.drawImage(src,0,0,cv.width,cv.height);const im=ctx.getImageData(0,0,cv.width,cv.height);const r=jsQR(im.data,cv.width,cv.height,{inversionAttempts:'attemptBoth'});return r?r.data:null;};
+  return qrDetector;
+}
+async function openQrScan(){
+  const m=document.getElementById('qrModal'),msg=document.getElementById('qrMsg');m.classList.add('show');msg.textContent='Đang mở camera...';
+  let det;try{det=await getDetector();}catch(e){msg.textContent='Không tải được bộ đọc QR. Kiểm tra kết nối mạng rồi thử lại.';return;}
+  try{
+    qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+    const v=document.getElementById('qrVideo');v.srcObject=qrStream;await v.play();msg.textContent='Đưa mã QR vào giữa khung';
+    const tick=async()=>{if(!qrStream)return;try{const t=await det(v);if(t){onQrText(t);return;}}catch(e){}qrTimer=setTimeout(tick,250);};tick();
+  }catch(e){msg.textContent='Không mở được camera (hãy cho phép quyền camera). Bạn vẫn có thể chọn ảnh QR bên dưới.';}
+}
+function closeQrScan(){
+  clearTimeout(qrTimer);if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null;}
+  const v=document.getElementById('qrVideo');if(v)v.srcObject=null;
+  document.getElementById('qrModal').classList.remove('show');
+}
+async function qrFromFile(e){
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  const msg=document.getElementById('qrMsg');msg.textContent='Đang đọc ảnh...';
+  try{const det=await getDetector();const img=new Image();img.src=URL.createObjectURL(f);await img.decode();const t=await det(img);URL.revokeObjectURL(img.src);
+    if(t)onQrText(t);else msg.textContent='Không tìm thấy mã QR trong ảnh. Thử ảnh rõ hơn.';}
+  catch(err){msg.textContent='Không đọc được ảnh này.';}
+}
+function onQrText(text){
+  closeQrScan();
+  const q=parsePayQR(text);
+  showScreen('add');setType('chi');
+  if(q.amount)document.getElementById('amountInput').value=fmtShort(q.amount);
+  const who=q.name||(q.bankName?q.bankName+' '+(q.acct||''):'');
+  if(who)document.getElementById('personInput').value=who;
+  document.getElementById('noteInput').value=q.purpose||(who?'Thanh toán QR: '+who:'Thanh toán QR');
+  qrPending=q;renderQrPayBox();
+}
+function renderQrPayBox(){
+  const box=document.getElementById('qrPayBox');const q=qrPending;
+  if(!q){box.style.display='none';box.innerHTML='';return;}
+  let saved='';try{saved=localStorage.getItem('tc_bank_app')||'';}catch(e){}
+  const opts=BANK_APPS.map(a=>'<option value="'+a[0]+'"'+(a[0]===saved?' selected':'')+'>'+a[1]+'</option>').join('');
+  const row=(k,v)=>v?'<div class="qp-row"><span>'+k+'</span><b>'+v+'</b></div>':'';
+  box.innerHTML='<div style="font-weight:800;margin-bottom:6px;">'+(q.unknown?'Mã QR không phải VietQR':'Thông tin từ mã QR')+'</div>'+
+    row('Người nhận',q.name)+row('Ngân hàng',q.bankName||(q.bin?'BIN '+q.bin:''))+row('Số tài khoản',q.acct)+row('Mã điểm bán',q.merchantId)+row('Số tiền',q.amount?fmt(q.amount):'Chưa có — tự nhập')+row('Nội dung',q.purpose)+(q.unknown?row('Nội dung QR',q.raw.slice(0,80)):'')+
+    '<select id="qrBankApp" onchange="try{localStorage.setItem(\'tc_bank_app\',this.value)}catch(e){}"><option value="">-- Chọn app ngân hàng của bạn --</option>'+opts+'</select>'+
+    '<div class="qp-btns">'+(q.acct?'<button class="qp-sub" onclick="copyQrAcct()">Sao chép STK</button>':'')+'<button class="qp-main" onclick="qrSaveAndPay()">Lưu & mở app ngân hàng</button></div>'+
+    '<div class="loan-hint" style="margin:8px 0 0;">Chọn danh mục chi bên dưới rồi bấm nút. App sẽ ghi khoản chi và mở app ngân hàng. Nếu app ngân hàng chưa tự điền, hãy dùng chức năng quét QR trong app đó (hoặc dán STK đã sao chép).</div>';
+  box.style.display='block';
+}
+function copyQrAcct(){const q=qrPending;if(!q||!q.acct)return;(navigator.clipboard?navigator.clipboard.writeText(q.acct):Promise.reject()).then(()=>alert('Đã sao chép STK '+q.acct)).catch(()=>prompt('Sao chép số tài khoản:',q.acct));}
+function qrSaveAndPay(){
+  const q=qrPending;if(!q)return;
+  const app=(document.getElementById('qrBankApp')||{}).value||'';
+  const amount=parseInt(document.getElementById('amountInput').value.replace(/\D/g,''))||0;
+  const note=document.getElementById('noteInput').value;
+  const n=txs.length;saveTx();
+  if(txs.length<=n)return;
+  qrPending=null;renderQrPayBox();
+  if(!app){alert('Đã ghi khoản chi. Hãy mở app ngân hàng để thanh toán (lần sau chọn app ngân hàng để mở tự động).');return;}
+  let url='https://dl.vietqr.io/pay?app='+encodeURIComponent(app);
+  if(q.acct&&q.bankCode)url+='&ba='+encodeURIComponent(q.acct+'@'+q.bankCode.toLowerCase())+(amount?'&am='+amount:'')+(note?'&tn='+encodeURIComponent(note.slice(0,50)):'')+(q.name?'&bn='+encodeURIComponent(q.name):'');
+  window.location.href=url;
+}
+
 /* ---------- LỊCH NGÀY LÀM VIỆC VIỆT NAM ---------- */
 /* Tết Nguyên đán (mùng 1) và Giỗ Tổ (10/3 âm) theo dương lịch, tính theo lịch âm Việt Nam (GMT+7) */
 const VN_LUNAR={2024:['02-10','04-18'],2025:['01-29','04-07'],2026:['02-17','04-26'],2027:['02-06','04-16'],2028:['01-26','04-04'],2029:['02-13','04-23'],2030:['02-02','04-12'],2031:['01-23','04-01'],2032:['02-11','04-19'],2033:['01-31','04-09'],2034:['02-19','04-28'],2035:['02-08','04-17'],2036:['01-28','04-06'],2037:['02-15','04-24'],2038:['02-04','04-13'],2039:['01-24','04-03'],2040:['02-12','04-20'],2041:['02-01','04-10'],2042:['01-22','04-29'],2043:['02-10','04-19'],2044:['01-30','04-07'],2045:['02-17','04-26'],2046:['02-06','04-15'],2047:['01-26','04-04'],2048:['02-14','04-22'],2049:['02-02','04-11'],2050:['01-23','04-01']};
@@ -1653,14 +1770,15 @@ function loanDueUntil(l,until){
   else{for(let k=1;k<=sch.length&&sch[k-1].due<=until;k++){const v=Math.max(0,cumPrincipal(l,k)-Math.max(paid,cumPrincipal(l,k-1)));res.p+=v;add(sch[k-1].due,'p',v);}}
   return res;
 }
-function monthEndStr(){const d=new Date();return ymd(new Date(d.getFullYear(),d.getMonth()+1,0));}
-function loanMonthSummary(){
-  const end=monthEndStr(),ym=todayStr().slice(0,7);const out={p:0,i:0,paidP:0,paidI:0,rows:[],overdue:false};
+/* Kỳ tiếp theo của từng khoản vay: kỳ gốc/lãi chưa trả gần nhất (kèm các khoản quá hạn) */
+function loanNextSummary(){
+  const today=todayStr();const out={p:0,i:0,rows:[],overdue:false};
   loans.forEach(l=>{ensureLoanV2(l);
-    (l.history||[]).forEach(h=>{if((h.date||'').slice(0,7)===ym){out.paidP+=h.principal||0;out.paidI+=h.interest||0;}});
     if(l.status==='closed'||!l.termMonths)return;
-    const d=loanDueUntil(l,end);out.p+=d.p;out.i+=d.i;if(d.overdue)out.overdue=true;
-    Object.keys(d.items).forEach(dt=>out.rows.push({date:dt,name:l.name,p:d.items[dt].p,i:d.items[dt].i}));
+    const np=nextPrincipalDue(l),ni=nextInterestDue(l);
+    const nextD=[np&&np.amount>0?np.due:null,ni&&ni.due].filter(Boolean).sort()[0];if(!nextD)return;
+    const d=loanDueUntil(l,nextD>today?nextD:today);out.p+=d.p;out.i+=d.i;if(d.overdue)out.overdue=true;
+    Object.keys(d.items).forEach(dt=>out.rows.push({date:dt,name:l.name,type:l.type,p:d.items[dt].p,i:d.items[dt].i}));
   });
   out.rows.sort((a,b)=>a.date.localeCompare(b.date));return out;
 }
@@ -1768,13 +1886,13 @@ function renderLoans(){
   loans.forEach(ensureLoanV2);
   const active=loans.filter(l=>l.status!=='closed');
   document.getElementById('loanTotalLine').textContent=fmt(active.reduce((s,l)=>s+l.balance,0));
-  const ms=loanMonthSummary(),mLabel=todayStr().slice(5,7)+'/'+todayStr().slice(0,4),today=todayStr();
+  const ms=loanNextSummary(),today=todayStr();
   document.getElementById('loanMonthBox').innerHTML=loans.length?
-    '<div class="ls-grid"><div><span>Tổng gốc tháng này</span><b>'+fmt(ms.p)+'</b><small>đã trả '+fmtShort(ms.paidP)+'</small></div>'+
-    '<div><span>Tổng lãi tháng này</span><b>'+fmt(ms.i)+'</b><small>đã trả '+fmtShort(ms.paidI)+'</small></div></div>'+
-    '<div class="ls-total"><span>Còn phải trả tháng '+mLabel+'</span><b>'+fmt(ms.p+ms.i)+'</b></div>'+
-    (ms.rows.length?'<div class="ls-rows">'+ms.rows.map(r=>'<div class="ls-row'+(r.date<today?' od':'')+'"><span class="d">'+dmy(r.date).slice(0,5)+(r.date<today?' ⚠':'')+'</span><span class="n">'+r.name+'</span><span class="v">'+(r.p?'Gốc '+fmtShort(r.p):'')+(r.p&&r.i?' • ':'')+(r.i?'Lãi '+fmtShort(r.i):'')+'</span></div>').join('')+'</div>':'<div class="loan-hint" style="margin:8px 0 0;">Không còn khoản gốc, lãi nào đến hạn trong tháng này.</div>')+
-    '<div class="loan-hint" style="margin:8px 0 0;">Gồm các kỳ đến hạn đến hết '+dmy(monthEndStr())+(ms.overdue?' và các khoản quá hạn chưa trả (⚠)':'')+'. Lãi là số ước tính theo dư nợ hiện tại.</div>':'';
+    '<div class="ls-grid"><div><span>Tổng gốc kỳ tiếp theo</span><b>'+fmt(ms.p)+'</b></div>'+
+    '<div><span>Tổng lãi kỳ tiếp theo</span><b>'+fmt(ms.i)+'</b></div></div>'+
+    '<div class="ls-total"><span>Tổng gốc lãi phải trả kỳ tiếp theo</span><b>'+fmt(ms.p+ms.i)+'</b></div>'+
+    (ms.rows.length?'<div class="ls-rows">'+ms.rows.map(r=>'<div class="ls-row'+(r.date<today?' od':'')+'"><span class="d">'+dmy(r.date).slice(0,5)+(r.date<today?' ⚠':'')+'</span><span class="n">'+r.name+'</span><span class="v">'+(r.p?'Gốc '+fmtShort(r.p):'')+(r.p&&r.i?' • ':'')+(r.i?'Lãi '+fmtShort(r.i):'')+'</span></div>').join('')+'</div>':'<div class="loan-hint" style="margin:8px 0 0;">Không có khoản gốc, lãi nào sắp đến hạn.</div>')+
+    '<div class="loan-hint" style="margin:8px 0 0;">Mỗi khoản vay lấy kỳ trả gần nhất chưa thanh toán'+(ms.overdue?', kèm các khoản quá hạn (⚠)':'')+'. Lãi là số ước tính theo dư nợ hiện tại.</div>':'';
   const list=document.getElementById('loanList');
   if(!loans.length){list.innerHTML='<div class="empty">Chưa có khoản vay ngân hàng nào. Thêm khoản vay thấu chi hoặc vay tiêu dùng để theo dõi dư nợ và lịch trả nợ.</div>';return;}
   const firstDue=l=>{const a=nextPrincipalDue(l),b=nextInterestDue(l);return [a&&a.due,b&&b.due].filter(Boolean).sort()[0]||'9999';};
