@@ -2609,7 +2609,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='37';
+const APP_VERSION='38';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -2643,6 +2643,7 @@ document.getElementById('nav-home').innerHTML=icon('home','currentColor',30);
 document.getElementById('nav-accounts').innerHTML=icon('wallet','currentColor',30);
 document.getElementById('nav-report').innerHTML=icon('chart','currentColor',30);
 document.getElementById('nav-more').innerHTML=icon('gear','currentColor',30);
+[['nav-history','clock'],['nav-budget','chart'],['nav-recurring','repeat'],['nav-debts','handshake'],['nav-loans','bank'],['nav-family','house'],['nav-reward','paw']].forEach(([id,ic])=>{const e=document.getElementById(id);if(e)e.innerHTML=icon(ic,'currentColor',20);});
 document.getElementById('more-budget').innerHTML='<span>'+icon('chart','#c29a5c',20)+'</span><span>Ngân sách</span>';
 document.getElementById('more-recur').innerHTML='<span>'+icon('repeat','#c29a5c',20)+'</span><span>Thu chi định kỳ</span>';
 document.getElementById('more-acc').innerHTML='<span>'+icon('wallet','#c29a5c',20)+'</span><span>Quản lý ví tiền</span>';

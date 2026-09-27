@@ -712,3 +712,72 @@ html:not([data-theme]) .day-head{background:#0e0d0c;}
 .rl-head{position:relative;}
 
 .receipt-info{font-size:12px;color:var(--sub);margin:6px 4px 2px;}
+
+/* ================= GIAO DIỆN MÁY TÍNH (màn hình rộng) ================= */
+.desk-only{display:none!important;}
+@media (min-width:1000px){
+  :root{--side:248px;}
+  .desk-only{display:flex!important;}
+  html:not(.tt) .tt-only.desk-only{display:none!important;}
+  body{padding-left:var(--side);}
+  /* Thanh bên trái thay cho thanh dưới */
+  .tabbar{top:0!important;bottom:0!important;left:0!important;right:auto!important;width:var(--side);flex-direction:column!important;justify-content:flex-start!important;align-items:stretch!important;gap:2px;border-radius:0!important;border-top:none!important;border-right:1px solid rgba(194,154,92,.22)!important;box-shadow:none!important;padding:22px 14px!important;overflow-y:auto;transform:none!important;}
+  .tabbar::after{display:none;}
+  .side-brand{font-size:21px;font-weight:700;color:#e2c28b;padding:4px 12px 18px;letter-spacing:.2px;}
+  .side-sep{height:1px;background:rgba(194,154,92,.18);margin:10px 8px;flex:none;}
+  .tabbar .tab{flex:none!important;flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;gap:12px!important;min-height:0!important;padding:10px 12px!important;border-radius:12px!important;color:var(--sub);text-align:left;width:100%;}
+  .tabbar .tab .tab-icon{display:flex;}
+  .tabbar .tab .tab-icon svg{width:20px!important;height:20px!important;}
+  .tabbar .tab .tab-label{font-size:14.5px!important;font-weight:600;}
+  .tabbar .tab:hover{background:rgba(226,194,139,.08);color:var(--text);}
+  .tabbar .tab.active{background:rgba(226,194,139,.14);color:#e2c28b;}
+  .tabbar .tab-add{order:-1;margin-bottom:14px;background:linear-gradient(145deg,#d6b37a,#9c7640)!important;color:#1a1612!important;justify-content:center!important;padding:12px!important;}
+  .tabbar .tab-add .fab{width:auto!important;height:auto!important;margin:0!important;background:none!important;box-shadow:none!important;font-size:22px!important;color:#1a1612!important;}
+  .tabbar .tab-add .tab-label{color:#1a1612;}
+  .tabbar .tab-add:hover{filter:brightness(1.06);}
+  .side-brand{order:-2;}
+  /* Vùng nội dung */
+  .screen{max-width:1180px!important;padding:28px 40px 48px!important;}
+  .screen.active{min-height:100vh;}
+  #screen-add,#screen-history,#screen-more,#screen-cloud,#screen-budget,#screen-recurring,#screen-family,#screen-debts,#screen-loans{max-width:860px!important;}
+  .screen-title{font-size:24px;}
+  .mini-toast{bottom:28px!important;left:calc(50% + var(--side)/2)!important;}
+  /* Tổng quan */
+  .home-head{border-radius:20px;padding:26px 30px 52px;}
+  .hh-title{font-size:28px;}
+  .hero-pet{border-radius:20px!important;}
+  .balance-card{margin-left:24px!important;margin-right:24px!important;}
+  .home-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px;align-items:start;margin-top:6px;}
+  .home-col-b{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;padding-right:6px;scrollbar-width:thin;}
+  .home-col-b .rl-head{margin-top:0;}
+  .home-col-b .day-head{top:0;}
+  #quickAddWrap .qa-row{flex-wrap:wrap;}
+  /* Danh sách & thẻ: có hiệu ứng khi rê chuột */
+  .tx-item,.more-item,.wcard,.cat-btn,.cs-row,.cs-ghead,.nw-cell,.chip,.qa-chip{cursor:pointer;}
+  .tx-item:hover,.more-item:hover,.cs-row:hover{background:#2a2520;}
+  .cat-picker .cat-btn:hover,.cat-sheet .cat-btn:hover{background:rgba(226,194,139,.07);}
+  button:active,.tx-item:active,.more-item:active{transform:none!important;}
+  /* Ví tiền: lưới nhiều cột */
+  #accList{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+  #accList .wcard{margin:0;}
+  /* Cài đặt: 2 cột */
+  #screen-more .inner{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start;}
+  #screen-more .screen-title,#screen-more .mode-card{grid-column:1/-1;}
+  /* Thêm giao dịch */
+  .cat-picker .cat-grid{grid-template-columns:repeat(6,1fr);}
+  /* Màn chọn hạng mục thành hộp thoại giữa màn hình */
+  .cat-sheet{inset:auto!important;top:50%!important;left:calc(50% + var(--side)/2)!important;width:760px;max-width:calc(100vw - var(--side) - 40px);height:min(84vh,820px);border-radius:20px;border:1px solid rgba(194,154,92,.28);box-shadow:0 24px 60px rgba(0,0,0,.6);transform:translate(-50%,-46%) scale(.98)!important;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease!important;overflow:hidden;}
+  .cat-sheet.show{transform:translate(-50%,-50%)!important;opacity:1;pointer-events:auto;}
+  .cat-sheet.show{box-shadow:0 24px 60px rgba(0,0,0,.6),0 0 0 100vmax rgba(0,0,0,.55)!important;}
+  .cs-grid{grid-template-columns:repeat(6,1fr)!important;}
+  /* Hộp thoại */
+  #appModal{padding-left:calc(20px + var(--side));}
+  .edit-modal-card{max-width:440px;}
+  .cv-sheet{border-radius:20px;margin-bottom:40px;}
+  /* Báo cáo, lịch sử */
+  .hf-row{gap:10px;}
+  .back-btn{cursor:pointer;}
+}
+@media (min-width:1400px){
+  .screen{max-width:1280px!important;}
+}
