@@ -876,6 +876,42 @@ window.addEventListener('orientationchange',()=>{setTimeout(()=>{window.scrollTo
 document.addEventListener('focusout',e=>{if(e.target&&e.target.matches&&e.target.matches('input,select,textarea'))setTimeout(()=>{window.scrollTo(window.scrollX,window.scrollY);fixFixedBars();},120);});
 if(window.visualViewport){let vvT=0;window.visualViewport.addEventListener('resize',()=>{clearTimeout(vvT);vvT=setTimeout(fixFixedBars,150);});}
 try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('portrait').catch(()=>{});}catch(e){}
+/* iPhone không cho web khoá xoay: khi máy nằm ngang, xoay ngược nội dung 90° để app luôn đứng dọc */
+(function(){
+  const root=document.documentElement;
+  function wrap(){
+    if(document.getElementById('appScroll'))return document.getElementById('appScroll');
+    const w=document.createElement('div');w.id='appScroll';
+    const first=document.querySelector('.screen');if(!first)return null;
+    first.parentNode.insertBefore(w,first);
+    document.querySelectorAll('body>.screen').forEach(s=>w.appendChild(s));
+    return w;
+  }
+  function angle(){
+    if(screen.orientation&&typeof screen.orientation.angle==='number')return screen.orientation.angle;
+    if(typeof window.orientation==='number')return (window.orientation+360)%360;
+    return 0;
+  }
+  function apply(){
+    const W=window.innerWidth,H=window.innerHeight;
+    const touch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
+    const land=W>H&&touch&&Math.min(W,H)<=600;
+    if(!land){root.classList.remove('rot-lock','rot-cw','rot-ccw');return;}
+    wrap();
+    const a=angle();
+    /* a=90: máy xoay ngược chiều kim đồng hồ -> nội dung xoay -90°; a=270: ngược lại */
+    const ccw=a!==270;
+    root.style.setProperty('--pw',H+'px');root.style.setProperty('--ph',W+'px');
+    root.style.setProperty('--pw0',W+'px');root.style.setProperty('--ph0',H+'px');
+    root.classList.add('rot-lock');root.classList.toggle('rot-ccw',ccw);root.classList.toggle('rot-cw',!ccw);
+  }
+  const _st=window.scrollTo.bind(window);
+  window.scrollTo=function(){_st.apply(null,arguments);if(root.classList.contains('rot-lock')){const sc=document.getElementById('appScroll');if(sc){const a=arguments[0];if(a&&typeof a==='object')sc.scrollTo(a);else sc.scrollTo(arguments[0]||0,arguments[1]||0);}}};
+  window.addEventListener('resize',()=>setTimeout(apply,60));
+  window.addEventListener('orientationchange',()=>setTimeout(apply,250));
+  if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',()=>setTimeout(apply,60));
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+})();
 
 /* ---------- HOME / DASHBOARD ---------- */
 function renderHomePet(){
@@ -916,7 +952,7 @@ function renderHome(){
   const activeLoans=loans.filter(l=>l.status==='active');
   const loanMini=document.getElementById('loanMini');
   if(activeLoans.length){
-    loanMini.style.display='flex';
+    loanMini.style.display='none'; /* đã bỏ ô Dư nợ vay ở Tổng quan (xem trong Cài đặt → Vay ngân hàng) */
     document.getElementById('loanMiniAmt').textContent=fmtShort(activeLoans.reduce((s,l)=>s+l.balance,0))+' VND';
     {const ms=loanNextSummary();document.getElementById('loanMiniCount').textContent=activeLoans.length+' khoản'+((ms.p+ms.i)>0?' • kỳ tới '+fmtShort(ms.p+ms.i):'');}
   }else{loanMini.style.display='none';}
@@ -2515,7 +2551,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='32';
+const APP_VERSION='33';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

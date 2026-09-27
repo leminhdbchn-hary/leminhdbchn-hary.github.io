@@ -679,15 +679,13 @@ html:not(.tt) .balance-card.bal-with-char{margin-top:-30px;}
 
 /* ===== Thanh dưới cố định + chặn xoay ngang ===== */
 .tabbar{position:fixed!important;-webkit-transform:translateZ(0);transform:translateZ(0);will-change:transform;}
-.rotate-block{display:none;}
-@media (orientation:landscape) and (max-height:540px) and (pointer:coarse){
-  .rotate-block{display:flex;position:fixed;inset:0;z-index:5000;background:#0e0d0c;color:#e2c28b;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px;}
-  .rotate-block div{font-size:54px;animation:rotHint 1.6s ease-in-out infinite;}
-  .rotate-block b{font-size:18px;}
-  .rotate-block small{color:#bfb2a0;font-size:13.5px;}
-  body{overflow:hidden;}
-}
-@keyframes rotHint{0%,100%{transform:rotate(-90deg)}50%{transform:rotate(0)}}
+/* Khoá chiều dọc: khi điện thoại xoay ngang, app tự xoay ngược lại để vẫn hiển thị như chiều dọc */
+html.rot-lock,html.rot-lock body{width:100%;height:100%;overflow:hidden;}
+html.rot-lock body{position:fixed;top:0;left:0;width:var(--pw);height:var(--ph);transform-origin:0 0;padding-top:0;padding-bottom:0;}
+html.rot-lock.rot-ccw body{transform:translateY(var(--ph0)) rotate(-90deg);}
+html.rot-lock.rot-cw body{transform:translateX(var(--pw0)) rotate(90deg);}
+html.rot-lock #appScroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+html.rot-lock .screen.active{min-height:var(--ph);}
 /* ===== Giao dịch nhóm theo ngày ===== */
 .rl-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .rl-day{display:flex;align-items:center;gap:6px;}
