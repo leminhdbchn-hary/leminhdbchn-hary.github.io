@@ -794,3 +794,9 @@ html:not([data-theme]) .day-head{background:#0e0d0c;}
 .skin-opts{gap:8px;}
 .skin-opt{padding:10px 6px;gap:6px;font-size:13.5px;white-space:nowrap;}
 @media (min-width:1000px){#screen-more .skin-card{grid-column:1/-1;}}
+
+/* Vay nợ: tab Cho vay / Đi vay cá nhân */
+.debt-tabs{display:flex;gap:8px;margin:4px 0 12px;}
+.debt-tabs button{flex:1;padding:10px 6px;border-radius:12px;border:1px solid rgba(226,194,139,.22);background:var(--card);color:var(--sub);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.debt-tabs button.active{background:linear-gradient(145deg,#d6b37a,#9c7640);color:#1a1612;border-color:transparent;}
+.debt-in .debt-amt{color:var(--red);}

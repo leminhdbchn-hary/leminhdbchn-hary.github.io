@@ -15,8 +15,8 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=42">
-<script src="skin.js?v=42"></script>
+<link rel="stylesheet" href="app.css?v=43">
+<script src="skin.js?v=43"></script>
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');}catch(e){}</script>
 </head>
 <body>
@@ -74,7 +74,7 @@
     <div class="remind-card" id="remindCard" style="display:none"></div>
     <div id="quickAddWrap" style="display:none"><div class="section-title" style="margin-top:0;">Ghi nhanh</div><div class="qa-row" id="quickAdd"></div></div>
     <div class="rw-mini tt-only" onclick="showScreen('reward')"><span>✨ <b id="rwMiniPoints">0</b> linh lực</span><span class="rw-mini-sep">•</span><span>🐾 <b id="rwMiniStreak">0</b> ngày nuôi</span><span class="rw-mini-sep">•</span><span>📜 <b id="rwMiniQuest">0/3</b></span><span style="margin-left:auto;opacity:.6;">›</span></div>
-    <div class="rw-mini debt-mini" id="debtMini" onclick="showScreen('debts')" style="display:none;"><span>🤝 Đang cho vay: <b id="debtMiniAmt">0 VND</b></span><span class="rw-mini-sep">•</span><span id="debtMiniCount">0 người</span><span style="margin-left:auto;opacity:.6;">›</span></div>
+    <div class="rw-mini debt-mini" id="debtMini" onclick="openDebts('out')" style="display:none;"><span>🤝 Đang cho vay: <b id="debtMiniAmt">0 VND</b></span><span class="rw-mini-sep">•</span><span id="debtMiniCount">0 người</span><span style="margin-left:auto;opacity:.6;">›</span></div>
     <div class="rw-mini loan-mini" id="loanMini" onclick="showScreen('loans')" style="display:none;"><span>🏦 Dư nợ vay: <b id="loanMiniAmt">0 VND</b></span><span class="rw-mini-sep">•</span><span id="loanMiniCount">0 khoản</span><span style="margin-left:auto;opacity:.6;">›</span></div>
     <div class="home-grid"><div class="home-col-a">
     <div class="section-title" style="margin-top:0;" id="monthTitle">Tháng này</div>
@@ -306,21 +306,22 @@
 <div class="screen" id="screen-debts">
   <div class="inner">
   <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Theo dõi vay nợ</h2></div>
-  <div class="debt-summary"><span>Tổng đang cho vay</span><span id="debtTotalLine">0 VND</span></div>
+  <div class="debt-tabs"><button id="debtTabOut" class="active" onclick="setDebtDir('out')">Cho vay</button><button id="debtTabIn" onclick="setDebtDir('in')">Đi vay cá nhân</button></div>
+  <div class="debt-summary"><span id="debtTotalLbl">Tổng đang cho vay</span><span id="debtTotalLine">0 VND</span></div>
   <div id="debtList"></div>
   <div id="addDebtForm" class="add-acc-form" style="display:none;">
     <input id="debtPerson" type="text" placeholder="Tên người vay" title="Ví dụ: Chị Lan">
     <input id="debtAmount" type="tel" inputmode="numeric" placeholder="Số tiền cho vay (VND)">
-    <div style="padding:4px 2px 6px;font-size:12px;color:var(--sub);">Ngày cho vay</div>
+    <div id="debtDateLbl" style="padding:4px 2px 6px;font-size:12px;color:var(--sub);">Ngày cho vay</div>
     <input id="debtDate" type="date">
     <div style="padding:8px 2px 6px;font-size:12px;color:var(--sub);">Ngày hẹn trả</div>
     <input id="debtDueDate" type="date">
-    <div style="padding:8px 2px 6px;font-size:12px;color:var(--sub);">Xuất tiền từ ví (tuỳ chọn)</div>
+    <div id="debtWalletLbl" style="padding:8px 2px 6px;font-size:12px;color:var(--sub);">Xuất tiền từ ví (tuỳ chọn)</div>
     <select id="debtSourceWallet"><option value="">-- Không trừ ví nào --</option></select>
     <input id="debtNote" type="text" placeholder="Ghi chú (tuỳ chọn)">
-    <button class="save-btn" onclick="saveDebt()">Lưu khoản cho vay</button>
+    <button class="save-btn" id="debtSaveBtn" onclick="saveDebt()">Lưu khoản cho vay</button>
   </div>
-  <button class="save-btn ghost-btn" onclick="toggleDebtForm()">+ Thêm khoản cho vay</button>
+  <button class="save-btn ghost-btn" id="debtAddBtn" onclick="toggleDebtForm()">+ Thêm khoản cho vay</button>
   </div>
 </div>
 
@@ -457,7 +458,8 @@
   <div class="more-item" onclick="showScreen('recurring')" id="more-recur">Thu chi định kỳ</div>
   <div class="more-item" onclick="showScreen('accounts')" id="more-acc">Quản lý ví tiền</div>
   <div class="more-item" onclick="showScreen('family')" id="more-family">Tiền gia đình</div>
-  <div class="more-item" onclick="showScreen('debts')" id="more-debts">Theo dõi vay nợ</div>
+  <div class="more-item" onclick="openDebts('out')" id="more-debts">Theo dõi vay nợ</div>
+  <div class="more-item" onclick="openDebts('in')" id="more-borrow">Đi vay cá nhân</div>
   <div class="more-item" onclick="showScreen('loans')" id="more-loans">Vay ngân hàng</div>
   <div class="more-item" onclick="showScreen('history')" id="more-hist">Lịch sử giao dịch</div>
   <div class="more-item" onclick="openPinSettings()" id="more-lock">Mật khẩu vào app</div>
@@ -490,7 +492,7 @@
   <button class="tab desk-only" data-s="history" onclick="showScreen('history')"><span class="tab-icon" id="nav-history"></span><span class="tab-label">Lịch sử giao dịch</span></button>
   <button class="tab desk-only" data-s="budget" onclick="showScreen('budget')"><span class="tab-icon" id="nav-budget"></span><span class="tab-label">Ngân sách</span></button>
   <button class="tab desk-only" data-s="recurring" onclick="showScreen('recurring')"><span class="tab-icon" id="nav-recurring"></span><span class="tab-label">Thu chi định kỳ</span></button>
-  <button class="tab desk-only" data-s="debts" onclick="showScreen('debts')"><span class="tab-icon" id="nav-debts"></span><span class="tab-label">Theo dõi vay nợ</span></button>
+  <button class="tab desk-only" data-s="debts" onclick="openDebts('out')"><span class="tab-icon" id="nav-debts"></span><span class="tab-label">Theo dõi vay nợ</span></button>
   <button class="tab desk-only" data-s="loans" onclick="showScreen('loans')"><span class="tab-icon" id="nav-loans"></span><span class="tab-label">Vay ngân hàng</span></button>
   <button class="tab desk-only" data-s="family" onclick="showScreen('family')"><span class="tab-icon" id="nav-family"></span><span class="tab-label">Tiền gia đình</span></button>
   <button class="tab desk-only tt-only" data-s="reward" onclick="showScreen('reward')"><span class="tab-icon" id="nav-reward"></span><span class="tab-label">Nuôi Linh Thú</span></button>
@@ -498,7 +500,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=42"></script>
-<script src="app.js?v=42"></script>
+<script type="module" src="cloud.js?v=43"></script>
+<script src="app.js?v=43"></script>
 </body>
 </html>
