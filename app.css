@@ -781,3 +781,13 @@ html:not([data-theme]) .day-head{background:#0e0d0c;}
 @media (min-width:1400px){
   .screen{max-width:1280px!important;}
 }
+
+/* ===== Chọn giao diện màu ===== */
+.skin-card{background:var(--card);border:1px solid rgba(194,154,92,.3);border-radius:14px;padding:14px 15px;margin-bottom:14px;display:flex;flex-direction:column;gap:12px;}
+.skin-opts{display:flex;gap:10px;}
+.skin-opt{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;border:1.5px solid rgba(194,154,92,.25);background:none;color:var(--text);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.skin-opt.active{border-color:#e2c28b;background:rgba(226,194,139,.1);}
+.sw{width:22px;height:22px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 1px rgba(128,128,128,.35);}
+.sw-gold{background:linear-gradient(135deg,#d6b37a 0 50%,#1c1916 50% 100%);}
+.sw-sky{background:linear-gradient(135deg,#2ea6ef 0 50%,#ffffff 50% 100%);}
+@media (min-width:1000px){#screen-more .skin-card{grid-column:1/-1;}}

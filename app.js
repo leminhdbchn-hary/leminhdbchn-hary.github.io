@@ -260,7 +260,7 @@ function showScreen(name,isBack){
   if(name==='debts')renderDebts();
   if(name==='loans')renderLoans();
   if(name==='reward')renderReward();
-  if(name==='more'){updateLockMenu();renderModeSwitch();}
+  if(name==='more'){updateLockMenu();renderModeSwitch();renderSkinOpts();}
   if(name==='chars')renderChars();
   if(name==='cloud')renderCloudScreen();
 }
@@ -877,6 +877,8 @@ function renderModeSwitch(){
   const sw=document.getElementById('modeSwitch');if(sw){sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on?'true':'false');}
   const d=document.getElementById('modeDesc');if(d)d.textContent=on?'Đang bật · Linh thú, bộ sưu tập nhân vật và video đang hiện':'Đang tắt · Bật để nuôi linh thú, sưu tầm nhân vật và xem video';
 }
+function renderSkinOpts(){const cur=window.getSkin?getSkin():'gold';document.querySelectorAll('.skin-opt').forEach(b=>b.classList.toggle('active',b.dataset.skin===cur));}
+function chooseSkin(s){if(window.setSkin)setSkin(s);renderSkinOpts();showMiniToast(s==='sky'?'Đã đổi sang giao diện Xanh trắng':'Đã đổi sang giao diện Vàng đen');}
 function toggleTuTien(){
   const on=!isTuTien();
   try{localStorage.setItem('tc_mode',on?'tutien':'normal');}catch(e){}
@@ -2609,7 +2611,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='39';
+const APP_VERSION='40';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
