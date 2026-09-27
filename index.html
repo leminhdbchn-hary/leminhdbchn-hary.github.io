@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=29">
+<link rel="stylesheet" href="app.css?v=30">
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -166,9 +166,7 @@
 
   <div id="normalFields">
     <div class="field"><label>Ví tiền</label><select id="accSelect"></select></div>
-    <div class="section-title" style="margin-top:0;">Nhóm</div>
-    <div class="chip-row" id="groupChips"></div>
-    <div class="cat-grid" id="catGrid"></div>
+    <div class="cat-picker" id="catPicker"></div>
   </div>
 
   <div id="xferFields" style="display:none;">
@@ -396,6 +394,12 @@
 </div>
 
 <!-- HỘP THOẠI CHUNG -->
+<div id="catSheet" class="cat-sheet">
+  <div class="cs-head"><button class="back-btn" onclick="closeCatSheet()" aria-label="Quay lại">‹</button><h3 id="csTitle">Chọn hạng mục</h3><button class="cs-edit" id="csEditBtn" onclick="toggleFavEdit()" aria-label="Sửa mục hay dùng">✏️</button></div>
+  <div class="cs-tabs"><button id="csTab_chi" onclick="csSetType('chi')">Chi tiền</button><button id="csTab_thu" onclick="csSetType('thu')">Thu tiền</button><button id="csTab_vayno" onclick="csSetType('vayno')">Vay nợ</button></div>
+  <div class="cs-search" id="csSearchWrap"><input id="csQ" type="search" placeholder="🔍 Tìm kiếm theo tên hạng mục" oninput="renderCatSheet()" autocomplete="off"></div>
+  <div class="cs-body" id="csBody"></div>
+</div>
 <div id="appModal" onclick="if(event.target===this)closeAppModal()"><div class="edit-modal-card" id="appModalBody"></div></div>
 
 <!-- SỬA VÍ / TÀI KHOẢN -->
@@ -464,7 +468,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=29"></script>
-<script src="app.js?v=29"></script>
+<script type="module" src="cloud.js?v=30"></script>
+<script src="app.js?v=30"></script>
 </body>
 </html>

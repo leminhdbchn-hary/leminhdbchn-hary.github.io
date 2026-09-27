@@ -1,16 +1,69 @@
 /* ---------- DATA ---------- */
 const BANKS=[{code:'AGB',name:'Agribank',color:'#8b1e2f'},{code:'VCB',name:'Vietcombank',color:'#00733e'},{code:'BIDV',name:'BIDV',color:'#0a4f8c'},{code:'MB',name:'MB Bank (Quân đội)',color:'#c8102e'},{code:'CTG',name:'VietinBank',color:'#0033a0'},{code:'TCB',name:'Techcombank',color:'#e4032e'},{code:'ACB',name:'ACB',color:'#003da5'},{code:'SHB',name:'SHB',color:'#f7941d'},{code:'MSB',name:'MSB (Hàng Hải)',color:'#f36f21'},{code:'CB',name:'CB Bank (Xây dựng)',color:'#1b6fb5'},{code:'OJB',name:'Oceanbank',color:'#0a4f8c'},{code:'GPB',name:'GPBank',color:'#009944'},{code:'VPB',name:'VPBank',color:'#00a651'},{code:'STB',name:'Sacombank',color:'#0066b3'},{code:'SCB',name:'SCB (Sài Gòn)',color:'#004b93'},{code:'EIB',name:'Eximbank',color:'#f7941d'},{code:'HDB',name:'HDBank',color:'#e2231a'},{code:'PVC',name:'PVcomBank',color:'#004b93'},{code:'TPB',name:'TPBank',color:'#7b2d8e'},{code:'VIB',name:'VIB',color:'#1b75bc'},{code:'OCB',name:'OCB (Phương Đông)',color:'#00335c'},{code:'LPB',name:'LPBank',color:'#e2231a'},{code:'DAB',name:'DongABank',color:'#f7941d'},{code:'SEA',name:'SeABank',color:'#7b2d8e'},{code:'BAB',name:'Bac A Bank',color:'#009944'},{code:'ABB',name:'ABBANK',color:'#f9a51a'},{code:'BVB',name:'BaoVietBank',color:'#f4b400'},{code:'VAB',name:'VietABank',color:'#0a4f8c'},{code:'VBB',name:'VietBank',color:'#009944'},{code:'SGB',name:'Saigonbank',color:'#0066b3'},{code:'NAB',name:'Nam A Bank',color:'#f36f21'},{code:'NCB',name:'NCB',color:'#00a99d'},{code:'PGB',name:'PG Bank',color:'#f7941d'},{code:'CITI',name:'Citibank',color:'#003b70'},{code:'HSBC',name:'HSBC',color:'#db0011'},{code:'SHBVN',name:'Shinhan Bank',color:'#0033a0'}];
 const WTYPES=[{id:'cash',name:'Tiền mặt',color:'#22a765'},{id:'bank',name:'Ngân hàng',color:'#1487d8'},{id:'ewallet',name:'Ví điện tử',color:'#f7941d'},{id:'credit',name:'Thẻ tín dụng',color:'#e0483c'},{id:'saving',name:'Tiết kiệm',color:'#7b2d8e'}];
-const GROUPS={
+/* Hạng mục thu/chi – mỗi mục có biểu tượng riêng (emoji). icon:'e:<emoji>' được hàm icon() vẽ thành emoji */
+const CAT_TINTS=['rgba(20,135,216,.16)','rgba(224,160,0,.16)','rgba(224,72,60,.16)','rgba(34,167,101,.16)'];
+const CAT_DEF={
   chi:[
-    {name:'Ăn uống',icon:'anuong',accent:'#22a765',bg:'#dcefe4',items:['Ăn sáng','Ăn trưa','Ăn tối','Cà phê']},
-    {name:'Di chuyển',icon:'dichuyen',accent:'#c9860b',bg:'#fdf1cf',items:['Xăng xe','Taxi','Grab','Gửi xe']},
-    {name:'Gia đình',icon:'house',accent:'#1487d8',bg:'#dceeff',items:['Điện','Nước','Internet','Mua sắm','Y tế','Giáo dục']},
-    {name:'Cá nhân',icon:'user',accent:'#7b2d8e',bg:'#efe0f7',items:['Quần áo','Mỹ phẩm','Giải trí','Du lịch','Thể thao','Sức khỏe']},
-    {name:'Khác',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',items:['Khác']}
+    ['Ăn uống','🥗','#22a765',[['Ăn tiệm','🍽️'],['Cafe','☕'],['Ăn sáng','🍩'],['Ăn trưa','🍜'],['Ăn tối','🥩'],['Đi chợ/siêu thị','🛒']]],
+    ['Hiếu hỉ','🕯️','#b0578a',[['Cưới xin','💍'],['Biếu tặng','🎁'],['Ma chay','🪷'],['Thăm hỏi','🤒']]],
+    ['Đi lại','📍','#c9860b',[['Taxi/thuê xe','🚕'],['Xăng xe','⛽'],['Bảo hiểm xe','🛡️'],['Gửi xe','🅿️'],['Rửa xe','🚿'],['Sửa chữa, bảo dưỡng xe','🔧']]],
+    ['Dịch vụ sinh hoạt','🏠','#1487d8',[['Điện thoại di động','📱'],['Gas','🔥'],['Internet','📶'],['Nước','💧'],['Thuê người giúp việc','🧹'],['Truyền hình','📺'],['Điện','💡'],['Điện thoại cố định','☎️']]],
+    ['Nhà cửa','🏡','#0e6fb8',[['Mua sắm đồ đạc','🛋️'],['Sửa chữa nhà cửa','🔨'],['Thuê nhà','🔑']]],
+    ['Con cái','👶','#e0a000',[['Học phí','🎓'],['Sách vở','📚'],['Sữa','🍼'],['Tiền tiêu vặt','💵'],['Đồ chơi','🧸']]],
+    ['Hưởng thụ','🏖️','#7b2d8e',[['Du lịch','🗺️'],['Làm đẹp','💆'],['Mỹ phẩm','💄'],['Phim ảnh, ca nhạc','🎬'],['Vui chơi giải trí','🎵']]],
+    ['Ngân hàng','🏦','#0a4f8c',[['Phí chuyển khoản','💸'],['Thanh toán thẻ tín dụng','💳']]],
+    ['Phát triển bản thân','🌱','#22a765',[['Giao lưu, quan hệ','🤝'],['Học hành','✏️']]],
+    ['Sức khỏe','❤️','#e0483c',[['Khám chữa bệnh','🩺'],['Thuốc men','💊'],['Thể thao','⚽']]],
+    ['Trang phục','👔','#1b6fb5',[['Giày dép','👟'],['Phụ kiện khác','🕶️'],['Quần áo','👕']]],
+    ['Khác','📦','#7c8b98',[['Khác','📦']]]
   ],
-  thu:[{name:'Thu nhập',icon:'luong',accent:'#22a765',bg:'#dcefe4',items:['Lương','Thưởng','Lãi tiết kiệm','Được cho/tặng','Thu hồi nợ','Khác']}]
+  thu:[
+    ['Lương','💰','#22a765',[]],['Thưởng','🏅','#e0a000',[]],['Được cho/tặng','🤲','#b0578a',[]],
+    ['Lãi tiết kiệm','🐷','#e0483c',[]],['Tiền lãi','🪙','#1487d8',[]],['Thu hồi nợ','🔁','#0e6fb8',[]],['Khác','🌼','#7c8b98',[]]
+  ]
 };
+const ITEM_EMOJI={};
+const GROUPS={};
+Object.keys(CAT_DEF).forEach(type=>{
+  GROUPS[type]=CAT_DEF[type].map(([name,emo,accent,items],gi)=>{
+    const list=items.length?items:[[name,emo]];
+    list.forEach(([n,e])=>{ITEM_EMOJI[type+'|'+name+'|'+n]=e;if(!ITEM_EMOJI[n])ITEM_EMOJI[n]=e;});
+    return {name,emoji:emo,icon:'e:'+emo,accent,bg:CAT_TINTS[gi%4],items:list.map(x=>x[0]),single:!items.length};
+  });
+});
+function itemEmoji(type,group,item){return ITEM_EMOJI[type+'|'+group+'|'+item]||ITEM_EMOJI[item]||((GROUPS[type]||[]).find(g=>g.name===group)||{}).emoji||'📦';}
+function itemTint(type,group,item){const g=(GROUPS[type]||[]).find(x=>x.name===group);if(!g)return CAT_TINTS[0];const i=g.items.indexOf(item);return i<0?g.bg:CAT_TINTS[i%4];}
+/* Chuyển các giao dịch/ngân sách/định kỳ cũ (nhóm cũ: Di chuyển, Gia đình, Cá nhân, Thu nhập) sang hạng mục mới */
+const LEGACY_ITEM_MAP={chi:{'Cà phê':['Ăn uống','Cafe'],'Ăn sáng':['Ăn uống','Ăn sáng'],'Ăn trưa':['Ăn uống','Ăn trưa'],'Ăn tối':['Ăn uống','Ăn tối'],
+  'Xăng xe':['Đi lại','Xăng xe'],'Taxi':['Đi lại','Taxi/thuê xe'],'Grab':['Đi lại','Taxi/thuê xe'],'Gửi xe':['Đi lại','Gửi xe'],
+  'Điện':['Dịch vụ sinh hoạt','Điện'],'Nước':['Dịch vụ sinh hoạt','Nước'],'Internet':['Dịch vụ sinh hoạt','Internet'],
+  'Mua sắm':['Nhà cửa','Mua sắm đồ đạc'],'Y tế':['Sức khỏe','Khám chữa bệnh'],'Giáo dục':['Phát triển bản thân','Học hành'],
+  'Quần áo':['Trang phục','Quần áo'],'Mỹ phẩm':['Hưởng thụ','Mỹ phẩm'],'Giải trí':['Hưởng thụ','Vui chơi giải trí'],'Du lịch':['Hưởng thụ','Du lịch'],
+  'Thể thao':['Sức khỏe','Thể thao'],'Sức khỏe':['Sức khỏe','Khám chữa bệnh']}};
+const LEGACY_GROUP_MAP={'Di chuyển':'Đi lại','Gia đình':'Dịch vụ sinh hoạt','Cá nhân':'Hưởng thụ'};
+function legacyTarget(type,group,item){
+  if(type==='thu'&&group==='Thu nhập'){const g=GROUPS.thu.find(x=>x.name===item);return g?[g.name,g.name]:['Khác',item];}
+  const gs=GROUPS[type];if(!gs)return null;
+  if(gs.some(g=>g.name===group&&(g.items.includes(item)||item===group)))return null;
+  const m=(LEGACY_ITEM_MAP[type]||{})[item];return m||null;
+}
+function migrateCategories(){
+  let changed=false;
+  (txs||[]).forEach(t=>{
+    if(t.type!=='chi'&&t.type!=='thu')return;
+    const to=legacyTarget(t.type,t.group,t.item);
+    if(to){t.group=to[0];t.item=to[1];changed=true;}
+    const g=GROUPS[t.type].find(x=>x.name===t.group);
+    if(g&&g.items.includes(t.item)&&!String(t.icon||'').startsWith('e:')){t.icon='e:'+itemEmoji(t.type,t.group,t.item);t.accent=g.accent;t.bg=itemTint(t.type,t.group,t.item);changed=true;}
+  });
+  (recurring||[]).forEach(r=>{const to=legacyTarget(r.type,r.group,r.item);if(to){r.group=to[0];r.item=to[1];changed=true;}});
+  Object.keys(budgets||{}).forEach(k=>{
+    if(k.startsWith('item:')){const [g,it]=k.slice(5).split('|');const to=legacyTarget('chi',g,it);if(to){const nk='item:'+to[0]+'|'+to[1];if(!budgets[nk])budgets[nk]=budgets[k];delete budgets[k];changed=true;}}
+    else if(LEGACY_GROUP_MAP[k]){const nk=LEGACY_GROUP_MAP[k];budgets[nk]=(budgets[nk]||0)+(budgets[k]||0);delete budgets[k];changed=true;}
+  });
+  return changed;
+}
 const ICONS={
   handshake:'<path d="M11 17l2 2a1.4 1.4 0 002-2"/><path d="M14 14l2.5 2.5a1.4 1.4 0 002-2l-3.9-3.9a2.8 2.8 0 00-4 0l-.9.9a1.4 1.4 0 01-2-2l2.8-2.8a4 4 0 015.2-.4l.5.4"/><path d="M21 11l-2 1"/><path d="M3 11l5 5 1 1a1.4 1.4 0 002-2"/><path d="M3 5l3 3 3-2"/><path d="M21 5l-3 3"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/><circle cx="12" cy="16" r="1.3"/>',
@@ -36,7 +89,7 @@ const ICONS={
   piggy:'<path d="M4 12a7 7 0 0113-3l2-1v3l-2 1a7 7 0 01-1 3v2a1 1 0 01-1 1h-2v-2h-3v2H8a1 1 0 01-1-1v-2a7 7 0 01-3-3z"/><circle cx="15" cy="10" r="0.6"/>',
   trophy:'<path d="M7 4h10v3a5 5 0 01-10 0V4z"/><path d="M7 5H4a3 3 0 003 3"/><path d="M17 5h3a3 3 0 01-3 3"/><path d="M10 14h4v3h-4z"/><path d="M8 20h8"/><path d="M12 17v3"/>'
 };
-function icon(name,color,size){return '<svg viewBox="0 0 24 24" width="'+(size||20)+'" height="'+(size||20)+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||ICONS.khac)+'</svg>';}
+function icon(name,color,size){if(String(name).startsWith('e:'))return '<span class="emo-ic" style="font-size:'+Math.round((size||20)*1.05)+'px">'+name.slice(2)+'</span>';return '<svg viewBox="0 0 24 24" width="'+(size||20)+'" height="'+(size||20)+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||ICONS.khac)+'</svg>';}
 function fmt(n){return Number(n||0).toLocaleString('vi-VN')+' VND';}
 function fmtBig(n){return Number(n||0).toLocaleString('vi-VN')+'<sup class="cur">VND</sup>';}
 let hideBal=false;try{hideBal=localStorage.getItem('tc_hide_bal')==='1';}catch(e){}
@@ -67,6 +120,7 @@ try{txs=JSON.parse(localStorage.getItem('tc_txs')||'[]');}catch(e){txs=[];}
 try{wallets=JSON.parse(localStorage.getItem('tc_wallets')||'[]');}catch(e){wallets=[];}
 try{budgets=JSON.parse(localStorage.getItem('tc_budgets')||'{}');}catch(e){budgets={};}
 try{recurring=JSON.parse(localStorage.getItem('tc_recurring')||'[]');}catch(e){recurring=[];}
+try{if(migrateCategories()){localStorage.setItem('tc_txs',JSON.stringify(txs));localStorage.setItem('tc_budgets',JSON.stringify(budgets));localStorage.setItem('tc_recurring',JSON.stringify(recurring));}}catch(e){}
 let debts=[];
 try{debts=JSON.parse(localStorage.getItem('tc_debts')||'[]');}catch(e){debts=[];}
 let loans=[];
@@ -122,6 +176,7 @@ function applyCloudPayload(data){
   if(Array.isArray(data.customBanks)){customBanks=data.customBanks;saveCustomBanks();customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});}
   rewardProfile=data.rewardProfile||{total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};
   rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
+  try{migrateCategories();}catch(e){}
 }
 
 let currentType='chi', selectedGroup=null, selectedItem=null, receiptData=null, editingTxId=null;
@@ -331,7 +386,7 @@ function daysUntil(dateStr){
 function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000);}
 function calcInterest(balance,ratePct,days,dayBasis){return Math.round(balance*(ratePct||0)/100*days/(dayBasis||365));}
 function mkSavTx(type,amount,note,walletId,date){
-  return {id:Date.now()+Math.random(),type,amount,group:'Thu nhập',item:'Lãi tiết kiệm',icon:'luong',accent:'#22a765',bg:'#dcefe4',walletId,note,date,time:nowTime()};
+  return {id:Date.now()+Math.random(),type,amount,group:'Lãi tiết kiệm',item:'Lãi tiết kiệm',icon:'e:🐷',accent:'#e0483c',bg:CAT_TINTS[3],walletId,note,date,time:nowTime()};
 }
 function deleteAccount(id){wallets=wallets.filter(w=>w.id!==id);saveAll();renderAccounts();}
 let editingWalletId=null;
@@ -473,19 +528,110 @@ function setType(t){
   if(normal){renderGroupChips();renderItemGrid();}
   if(t==='family')renderFamFields();
 }
-function renderGroupChips(){
-  const groups=GROUPS[currentType];if(!groups)return;
-  if(!selectedGroup)selectedGroup=groups[0].name;
-  document.getElementById('groupChips').innerHTML=groups.map(g=>'<div class="chip'+(g.name===selectedGroup?' active':'')+'" onclick="pickGroup(\''+g.name.replace(/'/g,"")+'\')">'+icon(g.icon,g.name===selectedGroup?'#fff':g.accent,16)+g.name+'</div>').join('');
+/* Chọn hạng mục: "Hay dùng" + màn "Tất cả" (giống sổ thu chi phổ biến) */
+let catFavOpen=true,catFavEdit=false,csType='chi';
+try{catFavOpen=localStorage.getItem('tc_fav_open')!=='0';}catch(e){}
+const FAV_DEFAULT={chi:['Ăn uống|Ăn tiệm','Ăn uống|Ăn uống','Ăn uống|Cafe','Đi lại|Taxi/thuê xe','Hiếu hỉ|Cưới xin','Đi lại|Xăng xe','Đi lại|Bảo hiểm xe'],
+  thu:['Lương|Lương','Thưởng|Thưởng','Được cho/tặng|Được cho/tặng','Tiền lãi|Tiền lãi','Lãi tiết kiệm|Lãi tiết kiệm','Khác|Khác']};
+function catValid(type,g,it){const G=(GROUPS[type]||[]).find(x=>x.name===g);return !!G&&(G.items.includes(it)||it===g);}
+function getCustomFav(type){try{const a=JSON.parse(localStorage.getItem('tc_fav_'+type)||'null');return Array.isArray(a)?a:null;}catch(e){return null;}}
+function getFavs(type){
+  const c=getCustomFav(type);
+  if(c)return c.filter(k=>{const [g,it]=k.split('|');return catValid(type,g,it);});
+  const cnt={};(txs||[]).forEach(t=>{if(t.type===type&&catValid(type,t.group,t.item)){const k=t.group+'|'+t.item;cnt[k]=(cnt[k]||0)+1;}});
+  const used=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]);
+  const out=[];used.concat(FAV_DEFAULT[type]||[]).forEach(k=>{if(out.length<7&&!out.includes(k))out.push(k);});
+  return out;
 }
-function pickGroup(name){selectedGroup=name;selectedItem=null;renderGroupChips();renderItemGrid();}
-function renderItemGrid(){
-  if(!GROUPS[currentType])return;
-  const g=GROUPS[currentType].find(x=>x.name===selectedGroup)||GROUPS[currentType][0];
-  document.getElementById('catGrid').innerHTML=g.items.map(it=>'<div class="cat-btn'+(selectedItem===it?' selected':'')+'" onclick="pickItem(\''+it.replace(/'/g,"")+'\')"><span class="cat-emoji" style="background:'+g.bg+'">'+icon(g.icon,g.accent,18)+'</span>'+it+'</div>').join('');
+function catTile(type,g,it,size){const G=GROUPS[type].find(x=>x.name===g)||{};const isG=it===g&&!G.single;
+  return '<span class="cat-emoji" style="background:'+(isG?G.bg:itemTint(type,g,it))+'"><span class="emo-ic" style="font-size:'+(size||22)+'px">'+(isG?G.emoji:itemEmoji(type,g,it))+'</span></span>';}
+function esc1(x){return String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function renderCatPicker(){
+  const box=document.getElementById('catPicker');if(!box||!GROUPS[currentType])return;
+  const sel=selectedItem?catTile(currentType,selectedGroup,selectedItem,22):'<span class="cp-plus">+</span>';
+  const selName=selectedItem?'<span class="cp-sel-name"><b>'+selectedItem+'</b>'+(selectedItem!==selectedGroup?'<small>'+selectedGroup+'</small>':'')+'</span>':'<span class="cp-sel-name cp-ph">Chọn hạng mục</span>';
+  const favs=getFavs(currentType);
+  let h='<div class="cp-sel" onclick="openCatSheet()">'+sel+selName+'<span class="cp-all">Tất cả ›</span></div>';
+  h+='<div class="cp-fav-head" onclick="toggleFavOpen()"><span>Hay dùng</span><span class="cp-arrow'+(catFavOpen?' open':'')+'">⌃</span></div>';
+  if(catFavOpen){
+    h+='<div class="cat-grid cp-grid">'+favs.map(k=>{const [g,it]=k.split('|');
+      return '<div class="cat-btn'+(selectedGroup===g&&selectedItem===it?' selected':'')+'" onclick="pickCat(\''+esc1(g)+'\',\''+esc1(it)+'\')">'+catTile(currentType,g,it)+'<span class="cat-lbl">'+it+'</span></div>';}).join('')+
+      '<div class="cat-btn cp-editbtn" onclick="openCatSheet(true)"><span class="cat-emoji"><span class="emo-ic" style="font-size:20px">✏️</span></span><span class="cat-lbl">Sửa</span></div></div>';
+  }
+  box.innerHTML=h;
 }
-function pickItem(it){selectedItem=it;renderItemGrid();}
+function renderGroupChips(){renderCatPicker();}
+function renderItemGrid(){renderCatPicker();}
+function toggleFavOpen(){catFavOpen=!catFavOpen;try{localStorage.setItem('tc_fav_open',catFavOpen?'1':'0');}catch(e){}renderCatPicker();}
+function pickCat(g,it){selectedGroup=g;selectedItem=it;renderCatPicker();}
+function pickGroup(name){selectedGroup=name;selectedItem=null;renderCatPicker();}
+function pickItem(it){selectedItem=it;renderCatPicker();}
 
+function openCatSheet(edit){
+  csType=(currentType==='thu')?'thu':'chi';catFavEdit=!!edit;
+  const q=document.getElementById('csQ');if(q)q.value='';
+  document.getElementById('catSheet').classList.add('show');renderCatSheet();
+  document.getElementById('csBody').scrollTop=0;
+}
+function closeCatSheet(){document.getElementById('catSheet').classList.remove('show');catFavEdit=false;renderCatPicker();}
+function csSetType(t){
+  csType=t;
+  if(t==='chi'||t==='thu'){if(currentType!==t){setType(t);}}
+  renderCatSheet();document.getElementById('csBody').scrollTop=0;
+}
+function toggleFavEdit(){
+  if(csType==='vayno')return;
+  if(!catFavEdit&&!getCustomFav(csType)){try{localStorage.setItem('tc_fav_'+csType,JSON.stringify(getFavs(csType)));}catch(e){}}
+  catFavEdit=!catFavEdit;renderCatSheet();
+}
+function toggleFav(g,it){
+  const k=g+'|'+it;let a=getCustomFav(csType)||getFavs(csType).slice();
+  if(a.includes(k))a=a.filter(x=>x!==k);else{if(a.length>=11){showMiniToast('Tối đa 11 mục hay dùng');return;}a.push(k);}
+  try{localStorage.setItem('tc_fav_'+csType,JSON.stringify(a));}catch(e){}
+  renderCatSheet();
+}
+function resetFavs(){try{localStorage.removeItem('tc_fav_'+csType);}catch(e){}catFavEdit=false;renderCatSheet();showMiniToast('Đã đặt lại mục hay dùng theo tần suất');}
+function csPick(g,it){
+  if(catFavEdit){toggleFav(g,it);return;}
+  if(currentType!==csType)setType(csType);
+  selectedGroup=g;selectedItem=it;closeCatSheet();
+}
+function csVayNo(k){
+  closeCatSheet();
+  if(k==='chovay'){showScreen('debts');setTimeout(()=>{try{toggleDebtForm();}catch(e){}},50);}
+  else if(k==='thuno'){showScreen('debts');}
+  else if(k==='divay'){showScreen('loans');setTimeout(()=>{try{toggleLoanForm(true);}catch(e){}},50);}
+  else showScreen('loans');
+}
+function renderCatSheet(){
+  ['chi','thu','vayno'].forEach(t=>{const b=document.getElementById('csTab_'+t);if(b)b.classList.toggle('active',t===csType);});
+  document.getElementById('csTitle').textContent=catFavEdit?'Sửa mục hay dùng':'Chọn hạng mục';
+  const eb=document.getElementById('csEditBtn');eb.style.visibility=csType==='vayno'?'hidden':'visible';eb.textContent=catFavEdit?'Xong':'✏️';eb.classList.toggle('done',catFavEdit);
+  document.getElementById('csSearchWrap').style.display=csType==='vayno'?'none':'block';
+  const body=document.getElementById('csBody');
+  if(csType==='vayno'){
+    const rows=[['chovay','💵','Cho vay','Ghi khoản bạn cho người khác vay'],['divay','👛','Đi vay','Thêm khoản vay ngân hàng/tổ chức'],['thuno','📥','Thu nợ','Thu hồi khoản đã cho vay'],['trano','💰','Trả nợ','Trả gốc/lãi khoản vay']];
+    body.innerHTML='<div class="cs-rows">'+rows.map(r=>'<div class="cs-row" onclick="csVayNo(\''+r[0]+'\')"><span class="cat-emoji" style="background:'+CAT_TINTS[rows.indexOf(r)%4]+'"><span class="emo-ic" style="font-size:22px">'+r[1]+'</span></span><span class="cs-row-t"><b>'+r[2]+'</b><small>'+r[3]+'</small></span><span class="cs-chev">›</span></div>').join('')+'</div>'+
+      '<div class="cs-note">Mượn/cho mượn với người thân: dùng tab "Gia đình" khi thêm giao dịch.</div>';
+    return;
+  }
+  const q=stripVN((document.getElementById('csQ').value||'').trim());
+  const favs=catFavEdit?(getCustomFav(csType)||getFavs(csType)):[];
+  const star=(g,it)=>catFavEdit?'<span class="cs-star'+(favs.includes(g+'|'+it)?' on':'')+'">'+(favs.includes(g+'|'+it)?'★':'☆')+'</span>':'';
+  const isSel=(g,it)=>!catFavEdit&&currentType===csType&&selectedGroup===g&&selectedItem===it;
+  let h=catFavEdit?'<div class="cs-note top">Bấm vào hạng mục để thêm/bỏ khỏi "Hay dùng" (tối đa 11). <a onclick="resetFavs()">Đặt lại tự động</a></div>':'';
+  let any=false;
+  GROUPS[csType].forEach(G=>{
+    const gm=!q||stripVN(G.name).includes(q);
+    const items=G.single?[]:G.items.filter(it=>gm||stripVN(it).includes(q));
+    if(!gm&&!items.length)return;any=true;
+    h+='<div class="cs-group"><div class="cs-ghead'+(isSel(G.name,G.name)?' selected':'')+'" onclick="csPick(\''+esc1(G.name)+'\',\''+esc1(G.name)+'\')"><span class="cat-emoji" style="background:'+G.bg+'"><span class="emo-ic" style="font-size:24px">'+G.emoji+'</span></span><span class="cs-gname">'+G.name+'</span>'+star(G.name,G.name)+'</div>';
+    if(items.length)h+='<div class="cat-grid cs-grid">'+items.map(it=>'<div class="cat-btn'+(isSel(G.name,it)?' selected':'')+'" onclick="csPick(\''+esc1(G.name)+'\',\''+esc1(it)+'\')">'+star(G.name,it)+catTile(csType,G.name,it)+'<span class="cat-lbl">'+it+'</span></div>').join('')+'</div>';
+    h+='</div>';
+  });
+  if(!any)h+='<div class="empty">Không tìm thấy hạng mục phù hợp.</div>';
+  body.innerHTML=h;
+}
 function onReceiptChange(e){
   const f=e.target.files[0];if(!f)return;
   const reader=new FileReader();
@@ -531,7 +677,7 @@ function saveTx(){
         const g=GROUPS[currentType].find(x=>x.name===selectedGroup);
         const walletId=document.getElementById('accSelect').value;
         const person=document.getElementById('personInput').value;
-        Object.assign(old,{type:currentType,amount,group:g.name,item:selectedItem,icon:g.icon,accent:g.accent,bg:g.bg,walletId:walletId||null,person,note,receipt:receiptData,date,time});
+        Object.assign(old,{type:currentType,amount,group:g.name,item:selectedItem,icon:'e:'+(selectedItem===g.name&&!g.single?g.emoji:itemEmoji(currentType,g.name,selectedItem)),accent:g.accent,bg:selectedItem===g.name?g.bg:itemTint(currentType,g.name,selectedItem),walletId:walletId||null,person,note,receipt:receiptData,date,time});
         delete old.fromName;delete old.toName;delete old.dir;delete old.repay;delete old.dueDate;delete old.settled;
         if(currentType!=='chi'&&old.reward_status==='REWARDED'){revokeTxLinhLuc(old,true);delete old.reward_status;delete old.rewarded_at;}
         if(walletId){const w=wallets.find(x=>String(x.id)===String(walletId));if(w)w.balance+=(currentType==='thu'?amount:-amount);}
@@ -575,7 +721,7 @@ function saveTx(){
   const g=GROUPS[currentType].find(x=>x.name===selectedGroup);
   const walletId=document.getElementById('accSelect').value;
   const person=document.getElementById('personInput').value;
-  const tx={id:Date.now(),type:currentType,amount,group:g.name,item:selectedItem,icon:g.icon,accent:g.accent,bg:g.bg,walletId:walletId||null,person,note,receipt:receiptData,date,time};
+  const tx={id:Date.now(),type:currentType,amount,group:g.name,item:selectedItem,icon:'e:'+(selectedItem===g.name&&!g.single?g.emoji:itemEmoji(currentType,g.name,selectedItem)),accent:g.accent,bg:selectedItem===g.name?g.bg:itemTint(currentType,g.name,selectedItem),walletId:walletId||null,person,note,receipt:receiptData,date,time};
   txs.unshift(tx);
   if(walletId){const w=wallets.find(x=>String(x.id)===String(walletId));if(w)w.balance+=(currentType==='thu'?amount:-amount);}
   awardBaseLinhThach(tx);
@@ -728,7 +874,7 @@ function renderHome(){
   }).join('');
 
   const byGroup={};
-  monthTx.filter(t=>t.type==='chi').forEach(t=>{byGroup[t.group]=byGroup[t.group]||{sum:0,icon:t.icon,accent:t.accent,bg:t.bg};byGroup[t.group].sum+=t.amount;});
+  monthTx.filter(t=>t.type==='chi').forEach(t=>{if(!byGroup[t.group]){const G=GROUPS.chi.find(x=>x.name===t.group);byGroup[t.group]=G?{sum:0,icon:G.icon,accent:G.accent,bg:G.bg}:{sum:0,icon:t.icon,accent:t.accent,bg:t.bg};}byGroup[t.group].sum+=t.amount;});
   const rows=Object.entries(byGroup).sort((a,b)=>b[1].sum-a[1].sum).slice(0,4);
   document.getElementById('topSpendList').innerHTML=rows.length?rows.map(([name,d])=>'<div class="tx-item"><div class="tx-icon" style="background:'+d.bg+'">'+icon(d.icon,d.accent,19)+'</div><div class="tx-info"><div class="cat">'+name+'</div></div><div class="tx-amt out">'+fmt(d.sum)+'</div></div>').join(''):'<div class="empty">Chưa có chi tiêu tháng này.</div>';
 
@@ -816,7 +962,7 @@ function renderReportCharts(inRange,thu,chi){
 }
 function repRenderGroup(inRange,type,elId,emptyMsg){
   const byCat={};
-  inRange.filter(t=>t.type===type).forEach(t=>{const k=t.group||'Khác';byCat[k]=byCat[k]||{sum:0,icon:t.icon||'khac',accent:t.accent||'#7c8b98',items:{}};byCat[k].sum+=t.amount;const it=t.item||k;byCat[k].items[it]=(byCat[k].items[it]||0)+t.amount;});
+  inRange.filter(t=>t.type===type).forEach(t=>{const k=t.group||'Khác';if(!byCat[k]){const G=(GROUPS[type]||[]).find(x=>x.name===k);byCat[k]=G?{sum:0,icon:G.icon,accent:G.accent,items:{}}:{sum:0,icon:t.icon||'khac',accent:t.accent||'#7c8b98',items:{}};}byCat[k].sum+=t.amount;const it=t.item||k;byCat[k].items[it]=(byCat[k].items[it]||0)+t.amount;});
   const rows=Object.entries(byCat).sort((a,b)=>b[1].sum-a[1].sum);
   const list=document.getElementById(elId);
   if(!rows.length){list.innerHTML='<div class="empty">'+emptyMsg+'</div>';return;}
@@ -892,7 +1038,7 @@ function checkDueRecurring(){
   if(confirm('Có '+due.length+' khoản định kỳ đến hạn: '+names+'.\nThêm vào sổ thu chi ngay?')){
     due.forEach(r=>{
       const g=GROUPS[r.type].find(x=>x.name===r.group)||GROUPS[r.type][0];
-      txs.unshift({id:Date.now()+Math.random(),type:r.type,amount:r.amount,group:r.group,item:r.item,icon:g.icon,accent:g.accent,bg:g.bg,walletId:r.walletId||null,note:'Tự động: '+r.name,date:todayStr(),time:nowTime(),recurringId:r.id});
+      txs.unshift({id:Date.now()+Math.random(),type:r.type,amount:r.amount,group:r.group,item:r.item,icon:'e:'+itemEmoji(r.type,r.group,r.item),accent:g.accent,bg:itemTint(r.type,r.group,r.item),walletId:r.walletId||null,note:'Tự động: '+r.name,date:todayStr(),time:nowTime(),recurringId:r.id});
       if(r.walletId){const w=wallets.find(x=>String(x.id)===String(r.walletId));if(w)w.balance+=(r.type==='thu'?r.amount:-r.amount);}
       r.lastLoggedYm=curYm;
     });
@@ -971,7 +1117,7 @@ function markDebtPaid(id){
   const w=wallets.find(x=>String(x.id)===String(walletId));if(!w)return;
   w.balance+=d.amount;
   const txId=Date.now()+Math.random();
-  txs.unshift({id:txId,type:'thu',group:'Thu nhập',item:'Thu hồi nợ',icon:'luong',accent:'#22a765',bg:'#dcefe4',walletId,person:d.person,note:'Thu hồi nợ: '+d.person,date:todayStr(),time:nowTime(),debtId:d.id});
+  txs.unshift({id:txId,type:'thu',group:'Thu hồi nợ',item:'Thu hồi nợ',icon:'e:🔁',accent:'#0e6fb8',bg:CAT_TINTS[1],walletId,person:d.person,note:'Thu hồi nợ: '+d.person,date:todayStr(),time:nowTime(),debtId:d.id});
   d.status='paid';d.paidDate=todayStr();d.paidWalletId=walletId;d.inTxId=txId;
   saveAll();renderDebts();renderHome();
 }
@@ -1186,7 +1332,7 @@ function saveLoan(){
   if(disburseWalletId){
     const w=wallets.find(x=>String(x.id)===String(disburseWalletId));
     if(w){w.balance+=principal;const txId=Date.now()+Math.random();
-      txs.unshift({id:txId,type:'thu',amount:principal,group:'Thu nhập',item:'Giải ngân khoản vay',icon:'luong',accent:'#22a765',bg:'#dcefe4',walletId:disburseWalletId,note:'Giải ngân: '+name,date:startDate,time:nowTime(),loanId:loan.id});
+      txs.unshift({id:txId,type:'thu',amount:principal,group:'Khác',item:'Giải ngân khoản vay',icon:'luong',accent:'#22a765',bg:'#dcefe4',walletId:disburseWalletId,note:'Giải ngân: '+name,date:startDate,time:nowTime(),loanId:loan.id});
       loan.disburseTxId=txId;}
   }
   loans.push(loan);saveAll();toggleLoanForm(false);renderLoans();renderHome();
@@ -1590,7 +1736,7 @@ const QUEST_POOL=[
   {id:'thu1',t:'Ghi 1 khoản thu',r:1,check:()=>txs.some(t=>t.type==='thu'&&t.date===todayStr())},
   {id:'visit',t:'Ghé thăm linh thú',r:1,check:()=>rewardProfile.visit_date===todayStr()},
   {id:'nofun',t:'Không chi Giải trí hôm nay',r:2,night:1,check:()=>!txs.some(t=>t.type==='chi'&&t.date===todayStr()&&t.item==='Giải trí')},
-  {id:'nocafe',t:'Không chi Cà phê hôm nay',r:2,night:1,check:()=>!txs.some(t=>t.type==='chi'&&t.date===todayStr()&&t.item==='Cà phê')},
+  {id:'nocafe',t:'Không chi Cà phê hôm nay',r:2,night:1,check:()=>!txs.some(t=>t.type==='chi'&&t.date===todayStr()&&(t.item==='Cà phê'||t.item==='Cafe'))},
   {id:'underavg',t:'Chi hôm nay thấp hơn trung bình ngày trong tháng',r:3,night:1,check:()=>{const td=todayStr(),ymv=td.slice(0,7);const m=txs.filter(t=>t.type==='chi'&&t.date.slice(0,7)===ymv&&t.date<td);const days=new Date(td).getDate()-1;if(!days||!m.length)return false;const avg=m.reduce((a,t)=>a+t.amount,0)/days;return txs.filter(t=>t.type==='chi'&&t.date===td).reduce((a,t)=>a+t.amount,0)<avg;}}
 ];
 function todaysQuests(){
@@ -1879,6 +2025,7 @@ function onImportFile(e){
       if(Array.isArray(data.customBanks)){customBanks=data.customBanks;saveCustomBanks();customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});}
       rewardProfile=data.rewardProfile||{total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};
       rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
+      try{migrateCategories();}catch(e){}
       saveAll();renderHome();alert('Đã khôi phục dữ liệu thành công.');
     }catch(err){alert('File không hợp lệ hoặc bị lỗi.');}
   };
@@ -2159,7 +2306,7 @@ function renderQuickAdd(){
   const wrap=document.getElementById('quickAddWrap');if(!wrap)return;
   const from=addDays(todayStr(),-90),map={};
   txs.forEach(t=>{if(t.type!=='chi'||!t.item||!t.group||(t.date||'')<from||t.loanId||t.debtId)return;const k=t.group+'|'+t.item;
-    if(!map[k])map[k]={group:t.group,item:t.item,icon:t.icon,accent:t.accent,count:0,amount:t.amount,walletId:t.walletId,date:t.date};
+    if(!map[k])map[k]={group:t.group,item:t.item,icon:t.icon,accent:t.accent,bg:t.bg,count:0,amount:t.amount,walletId:t.walletId,date:t.date};
     const m=map[k];m.count++;if((t.date||'')>=m.date){m.date=t.date;m.amount=t.amount;m.walletId=t.walletId;}});
   qaList=Object.values(map).sort((a,b)=>b.count-a.count||b.date.localeCompare(a.date)).slice(0,6);
   if(!qaList.length){wrap.style.display='none';return;}
@@ -2172,7 +2319,7 @@ function quickAdd(i){
   const amount=parseInt(String(v).replace(/\D/g,''))||0;if(amount<=0){alert('Số tiền không hợp lệ');return;}
   const g=GROUPS.chi.find(x=>x.name===q.group)||GROUPS.chi[GROUPS.chi.length-1];
   const sp=getSpendableWallets();let w=sp.find(x=>String(x.id)===String(q.walletId))||sp[0]||null;
-  const tx={id:Date.now(),type:'chi',amount,group:g.name,item:q.item,icon:g.icon,accent:g.accent,bg:g.bg,walletId:w?w.id:null,person:'',note:'',receipt:null,date:todayStr(),time:nowTime()};
+  const tx={id:Date.now(),type:'chi',amount,group:g.name,item:q.item,icon:q.icon||g.icon,accent:g.accent,bg:q.bg||g.bg,walletId:w?w.id:null,person:'',note:'',receipt:null,date:todayStr(),time:nowTime()};
   txs.unshift(tx);if(w)w.balance-=amount;
   awardBaseLinhThach(tx);saveAll();renderHome();
   showMiniToast('✅ Đã ghi '+q.item+' '+fmtShort(amount)+(w?' • '+w.name:''));
@@ -2304,7 +2451,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='29';
+const APP_VERSION='30';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

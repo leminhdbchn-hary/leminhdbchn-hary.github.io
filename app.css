@@ -608,3 +608,54 @@ button,input,select,textarea{font-family:inherit;}
 .nd-row>span{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .nd-row>span.neg{color:var(--red);}
 .nd-l small{white-space:normal;}
+
+/* ===== Chọn hạng mục (Hay dùng + Tất cả) ===== */
+.emo-ic{line-height:1;display:inline-flex;align-items:center;justify-content:center;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;}
+.cat-picker{background:var(--card);border-radius:16px;margin-bottom:14px;overflow:hidden;}
+.cp-sel{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;}
+.cp-sel .cat-emoji{margin:0;width:42px;height:42px;flex-shrink:0;}
+.cp-plus{width:42px;height:42px;border-radius:12px;border:1.5px dashed rgba(226,194,139,.45);display:flex;align-items:center;justify-content:center;font-size:26px;color:#e2c28b;flex-shrink:0;}
+.cp-sel-name{flex:1;min-width:0;display:flex;flex-direction:column;font-size:15.5px;color:var(--text);}
+.cp-sel-name small{font-size:12px;color:var(--sub);margin-top:2px;}
+.cp-sel-name.cp-ph{color:var(--sub);}
+.cp-all{color:#e2c28b;font-weight:600;font-size:14px;white-space:nowrap;}
+.cp-fav-head{display:flex;align-items:center;gap:8px;padding:12px 14px 6px;color:var(--sub);font-size:14px;cursor:pointer;}
+.cp-arrow{display:inline-block;transform:rotate(180deg);transition:transform .2s ease;font-size:15px;}
+.cp-arrow.open{transform:none;}
+.cp-grid{padding:4px 8px 10px;gap:4px 6px;margin-bottom:0;}
+.cat-picker .cat-btn,.cat-sheet .cat-btn{background:transparent;padding:6px 2px;border-radius:12px;position:relative;}
+.cat-picker .cat-btn.selected,.cat-sheet .cat-btn.selected{border-color:#e2c28b;background:rgba(226,194,139,.08);}
+.cat-picker .cat-emoji,.cat-sheet .cat-emoji{width:46px;height:46px;border-radius:13px;}
+.cat-lbl{display:block;font-size:12.5px;line-height:1.25;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
+.cp-editbtn .cat-emoji{background:rgba(226,194,139,.1);}
+.cp-editbtn .cat-lbl{color:#e2c28b;font-weight:600;}
+.cat-sheet{position:fixed;inset:0;z-index:900;background:var(--bg);display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s ease;padding-top:env(safe-area-inset-top,0px);}
+.cat-sheet.show{transform:none;}
+.cs-head{display:flex;align-items:center;gap:10px;padding:12px 14px 6px;}
+.cs-head h3{flex:1;margin:0;text-align:center;font-size:18px;color:var(--text);}
+.cs-edit{background:none;border:none;font-size:20px;min-width:44px;height:40px;color:#e2c28b;font-family:inherit;}
+.cs-edit.done{font-size:15px;font-weight:700;background:linear-gradient(145deg,#d6b37a,#9c7640);color:#1a1612;border-radius:10px;padding:0 12px;}
+.cs-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.08);}
+.cs-tabs button{flex:1;background:none;border:none;border-bottom:2.5px solid transparent;padding:12px 0 10px;font-size:15px;font-weight:600;color:var(--sub);font-family:inherit;}
+.cs-tabs button.active{color:#e2c28b;border-bottom-color:#e2c28b;}
+.cs-search{padding:10px 14px;}
+.cs-search input{width:100%;box-sizing:border-box;border:1px solid rgba(226,194,139,.25);border-radius:12px;padding:11px 14px;background:var(--card);color:var(--text);font-family:inherit;font-size:15px;}
+.cs-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(30px + env(safe-area-inset-bottom,0px));}
+.cs-group{background:var(--card);margin:0 0 10px;padding:6px 8px 8px;}
+.cs-ghead{display:flex;align-items:center;gap:12px;padding:8px 6px;border-radius:12px;border:2px solid transparent;cursor:pointer;position:relative;}
+.cs-ghead.selected{border-color:#e2c28b;}
+.cs-ghead .cat-emoji{margin:0;}
+.cs-gname{flex:1;font-size:16.5px;font-weight:700;color:#e2c28b;}
+.cs-grid{gap:4px 6px;margin:4px 0 0;}
+.cs-star{position:absolute;top:2px;right:6px;font-size:16px;color:var(--sub);}
+.cs-ghead .cs-star{position:static;font-size:20px;}
+.cs-star.on{color:#f5c542;}
+.cs-rows{display:flex;flex-direction:column;gap:8px;padding:10px 0;}
+.cs-row{display:flex;align-items:center;gap:12px;background:var(--card);padding:10px 16px;cursor:pointer;}
+.cs-row .cat-emoji{margin:0;}
+.cs-row-t{flex:1;display:flex;flex-direction:column;font-size:15.5px;color:var(--text);}
+.cs-row-t small{font-size:12px;color:var(--sub);margin-top:2px;}
+.cs-chev{color:var(--sub);font-size:22px;}
+.cs-note{font-size:12.5px;color:var(--sub);padding:6px 16px 10px;line-height:1.45;}
+.cs-note a{color:#e2c28b;text-decoration:underline;cursor:pointer;}
+.tx-icon .emo-ic,.qa-chip .emo-ic{font-size:20px!important;}
