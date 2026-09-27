@@ -15,8 +15,8 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=44">
-<script src="skin.js?v=44"></script>
+<link rel="stylesheet" href="app.css?v=45">
+<script src="skin.js?v=45"></script>
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');}catch(e){}</script>
 </head>
 <body>
@@ -305,8 +305,7 @@
 
 <div class="screen" id="screen-debts">
   <div class="inner">
-  <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Theo dõi vay nợ</h2></div>
-  <div class="debt-tabs"><button id="debtTabOut" class="active" onclick="setDebtDir('out')">Cho vay</button><button id="debtTabIn" onclick="setDebtDir('in')">Đi vay cá nhân</button></div>
+  <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title" id="debtTitle">Cho vay</h2></div>
   <div class="debt-summary"><span id="debtTotalLbl">Tổng đang cho vay</span><span id="debtTotalLine">0 VND</span></div>
   <div id="debtList"></div>
   <div id="addDebtForm" class="add-acc-form" style="display:none;">
@@ -458,8 +457,8 @@
   <div class="more-item" onclick="showScreen('recurring')" id="more-recur">Thu chi định kỳ</div>
   <div class="more-item" onclick="showScreen('accounts')" id="more-acc">Quản lý ví tiền</div>
   <div class="more-item" onclick="showScreen('family')" id="more-family">Tiền gia đình</div>
-  <div class="more-item" onclick="openDebts('out')" id="more-debts">Theo dõi vay nợ</div>
-  <div class="more-item" onclick="openDebts('in')" id="more-borrow">Đi vay cá nhân</div>
+  <div class="more-item" onclick="openDebts('out')" id="more-debts">Cho vay</div>
+  <div class="more-item" onclick="openDebts('in')" id="more-borrow">Vay nợ khác</div>
   <div class="more-item" onclick="showScreen('loans')" id="more-loans">Vay ngân hàng</div>
   <div class="more-item" onclick="showScreen('history')" id="more-hist">Lịch sử giao dịch</div>
   <div class="more-item" onclick="openPinSettings()" id="more-lock">Mật khẩu vào app</div>
@@ -492,7 +491,8 @@
   <button class="tab desk-only" data-s="history" onclick="showScreen('history')"><span class="tab-icon" id="nav-history"></span><span class="tab-label">Lịch sử giao dịch</span></button>
   <button class="tab desk-only" data-s="budget" onclick="showScreen('budget')"><span class="tab-icon" id="nav-budget"></span><span class="tab-label">Ngân sách</span></button>
   <button class="tab desk-only" data-s="recurring" onclick="showScreen('recurring')"><span class="tab-icon" id="nav-recurring"></span><span class="tab-label">Thu chi định kỳ</span></button>
-  <button class="tab desk-only" data-s="debts" onclick="openDebts('out')"><span class="tab-icon" id="nav-debts"></span><span class="tab-label">Theo dõi vay nợ</span></button>
+  <button class="tab desk-only" data-s="debts" data-dd="out" onclick="openDebts('out')"><span class="tab-icon" id="nav-debts"></span><span class="tab-label">Cho vay</span></button>
+  <button class="tab desk-only" data-s="debts" data-dd="in" onclick="openDebts('in')"><span class="tab-icon" id="nav-borrow"></span><span class="tab-label">Vay nợ khác</span></button>
   <button class="tab desk-only" data-s="loans" onclick="showScreen('loans')"><span class="tab-icon" id="nav-loans"></span><span class="tab-label">Vay ngân hàng</span></button>
   <button class="tab desk-only" data-s="family" onclick="showScreen('family')"><span class="tab-icon" id="nav-family"></span><span class="tab-label">Tiền gia đình</span></button>
   <button class="tab desk-only tt-only" data-s="reward" onclick="showScreen('reward')"><span class="tab-icon" id="nav-reward"></span><span class="tab-label">Nuôi Linh Thú</span></button>
@@ -500,7 +500,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=44"></script>
-<script src="app.js?v=44"></script>
+<script type="module" src="cloud.js?v=45"></script>
+<script src="app.js?v=45"></script>
 </body>
 </html>
