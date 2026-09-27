@@ -75,7 +75,7 @@
           var k=kindOf(p),nv=v.replace(COLOR_RE,function(c){return mapColor(c,k,p);});
           if(nv!==v)decl+=p+':'+nv+(r.style.getPropertyPriority(p)?' !important':'')+';';
         }
-        if(decl)css+=splitSel(r.selectorText).map(prefix).join(',')+'{'+decl+'}\n';
+        if(decl&&!/\.sw\b|\.sw-/.test(r.selectorText))css+=splitSel(r.selectorText).map(prefix).join(',')+'{'+decl+'}\n';
       }else if(r.type===4&&r.cssRules){ /* @media */
         var inner=convertRules(r.cssRules);if(inner)css+='@media '+r.conditionText+'{'+inner+'}\n';
       }else if(r.type===12&&r.cssRules){ /* @supports */

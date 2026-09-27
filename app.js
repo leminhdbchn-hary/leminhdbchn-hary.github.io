@@ -276,10 +276,10 @@ function selectWType(id){
   selectedWType=id;renderWTypeGrid(id);
   const bs=document.getElementById('bankSelect'),nm=document.getElementById('accNameInput');
   if(id==='bank'){bs.style.display='block';nm.style.display='none';}
-  else{bs.style.display='none';nm.style.display='block';nm.placeholder=WTYPES.find(w=>w.id===id).name+' (đặt tên, VD: Ví Momo)';}
+  else{bs.style.display='none';nm.style.display='block';nm.placeholder='Tên '+WTYPES.find(w=>w.id===id).name.toLowerCase();nm.title='Ví dụ: Ví Momo';}
   const sf=document.getElementById('savingFields');
   if(id==='saving'){
-    sf.style.display='block';nm.placeholder='Tên sổ tiết kiệm (VD: Sổ TK Vietcombank)';
+    sf.style.display='block';nm.placeholder='Tên sổ tiết kiệm';nm.title='Ví dụ: Sổ TK Vietcombank';
     document.getElementById('savDate').value=todayStr();
     populateSavBankSelect();renderSavSourceWalletSelect();
   }
@@ -299,7 +299,7 @@ function addCustomBank(name){
 document.addEventListener('change',e=>{
   const el=e.target;if(!el||el.tagName!=='SELECT'||el.value!=='__newbank')return;
   e.stopImmediatePropagation();
-  const idx=addCustomBank(prompt('Tên ngân hàng muốn thêm (VD: Cake, Timo, Kienlongbank...)')||'');
+  const idx=addCustomBank(prompt('Tên ngân hàng muốn thêm')||'');
   ['bankSelect','savBank','loanBank'].forEach(id=>{const s=document.getElementById(id);if(!s)return;const v=s.value;
     if(id==='bankSelect')populateBankSelect();else if(id==='savBank')populateSavBankSelect();else if(typeof populateLoanBankSelect==='function')populateLoanBankSelect();
     if(s!==el&&v!=='__newbank')s.value=v;});
@@ -1186,7 +1186,7 @@ function saveRecurring(){
 function deleteRecurring(id){recurring=recurring.filter(r=>r.id!==id);saveAll();renderRecurring();}
 function renderRecurring(){
   const list=document.getElementById('recurList');
-  if(!recurring.length){list.innerHTML='<div class="empty">Chưa có khoản định kỳ nào. VD: Lương ngày 25, Tiền nhà ngày 5...</div>';return;}
+  if(!recurring.length){list.innerHTML='<div class="empty">Chưa có khoản định kỳ nào.</div>';return;}
   list.innerHTML=recurring.map(r=>'<div class="acc-item"><div class="acc-icon" style="background:'+(r.type==='thu'?'#dcefe4':'#fbdfe0')+';color:'+(r.type==='thu'?'var(--green)':'var(--red)')+'">'+icon('repeat',r.type==='thu'?'var(--green)':'var(--red)',18)+'</div><div><div class="acc-name">'+r.name+'</div><div class="acc-sub">Ngày '+r.day+' hàng tháng • '+r.item+'</div></div><div class="acc-bal">'+fmt(r.amount)+'</div><button onclick="deleteRecurring('+r.id+')" style="background:none;border:none;color:var(--sub);font-size:15px;">✕</button></div>').join('');
 }
 function checkDueRecurring(){
@@ -2611,7 +2611,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='40';
+const APP_VERSION='41';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -2690,7 +2690,7 @@ function renderFamFields(){
   document.getElementById('famPeople').innerHTML=ppl.map(p=>'<div class="chip'+(p===famPerson?' active':'')+'" onclick="famPerson=\''+p.replace(/'/g,'')+'\';renderFamFields()">'+p+'</div>').join('')+'<div class="chip" onclick="addFamPerson()">+ Người khác</div>';
 }
 function setFamDir(d){famDir=d;renderFamFields();}
-function addFamPerson(){const n=(prompt('Tên người (VD: Anh trai, Chị gái...)')||'').trim();if(n){famPerson=n;renderFamFields();}}
+function addFamPerson(){const n=(prompt('Tên người')||'').trim();if(n){famPerson=n;renderFamFields();}}
 function onFamRepay(){document.getElementById('famDueWrap').style.display=document.getElementById('famRepay').checked?'block':'none';}
 function readFamForm(){
   const walletId=document.getElementById('famWallet').value;
