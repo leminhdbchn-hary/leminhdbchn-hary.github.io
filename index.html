@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=36">
+<link rel="stylesheet" href="app.css?v=37">
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');}catch(e){}</script>
 </head>
 <body>
@@ -204,6 +204,7 @@
     <label>Đính kèm ảnh hoá đơn (tuỳ chọn)</label>
     <input id="receiptInput" type="file" accept="image/*" onchange="onReceiptChange(event)">
     <img id="receiptPreview" class="file-thumb" style="display:none;">
+    <div id="receiptInfo" class="receipt-info"></div>
   </div>
   <button class="save-btn" id="saveTxBtn" onclick="saveTx()">Lưu lại</button>
   <button class="save-btn ghost-btn" id="cancelEditBtn" style="display:none;" onclick="cancelEditTx()">Huỷ chỉnh sửa</button>
@@ -475,7 +476,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=36"></script>
-<script src="app.js?v=36"></script>
+<script type="module" src="cloud.js?v=37"></script>
+<script src="app.js?v=37"></script>
 </body>
 </html>

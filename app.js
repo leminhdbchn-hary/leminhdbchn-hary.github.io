@@ -177,6 +177,7 @@ function applyCloudPayload(data){
   rewardProfile=data.rewardProfile||{total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};
   rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
   try{migrateCategories();}catch(e){}
+  setTimeout(()=>{try{shrinkOldReceipts();}catch(e){}},3000);
 }
 
 let currentType='chi', selectedGroup=null, selectedItem=null, receiptData=null, editingTxId=null;
@@ -213,6 +214,7 @@ function openEditTx(id){
     if(t.walletId)document.getElementById('accSelect').value=t.walletId;
     document.getElementById('personInput').value=t.person||'';
     const rp=document.getElementById('receiptPreview'), ri=document.getElementById('receiptInput');
+    {const ri=document.getElementById('receiptInfo');if(ri)ri.textContent=t.receipt?'Ảnh đang lưu: '+fmtKB(dataUrlBytes(t.receipt)):'';}
     if(t.receipt){receiptData=t.receipt;rp.src=t.receipt;rp.style.display='block';}
     else{receiptData=null;rp.style.display='none';if(ri)ri.value='';}
   }
@@ -633,15 +635,63 @@ function renderCatSheet(){
   if(!any)h+='<div class="empty">Không tìm thấy hạng mục phù hợp.</div>';
   body.innerHTML=h;
 }
-function onReceiptChange(e){
-  const f=e.target.files[0];if(!f)return;
-  const reader=new FileReader();
-  reader.onload=()=>{receiptData=reader.result;const img=document.getElementById('receiptPreview');img.src=receiptData;img.style.display='block';};
-  reader.readAsDataURL(f);
+/* ---------- NÉN ẢNH HOÁ ĐƠN: thu nhỏ còn ~100 KB (JPEG, cạnh dài tối đa 1280px) ---------- */
+const IMG_MAX_SIDE=1280,IMG_TARGET=110*1024;
+function dataUrlBytes(u){const i=String(u||'').indexOf(',');return i<0?0:Math.floor((u.length-i-1)*3/4);}
+function fmtKB(b){return b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';}
+function loadImg(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('img'));im.src=src;});}
+async function compressImage(src){
+  const im=await loadImg(src);
+  let w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;if(!w||!h)throw new Error('size');
+  let side=Math.min(IMG_MAX_SIDE,Math.max(w,h)),best=null;
+  for(let round=0;round<6;round++){
+    const k=side/Math.max(w,h),cw=Math.max(1,Math.round(w*k)),ch=Math.max(1,Math.round(h*k));
+    const c=document.createElement('canvas');c.width=cw;c.height=ch;
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,cw,ch);g.drawImage(im,0,0,cw,ch);
+    for(const q of [0.72,0.6,0.5,0.42]){
+      const out=c.toDataURL('image/jpeg',q);
+      if(!best||dataUrlBytes(out)<dataUrlBytes(best))best=out;
+      if(dataUrlBytes(out)<=IMG_TARGET)return out;
+    }
+    side=Math.round(side*0.8);if(side<480)break;
+  }
+  return best;
 }
+function fileToDataUrl(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});}
+let receiptBusy=false;
+async function onReceiptChange(e){
+  const f=e.target.files[0];if(!f)return;
+  const img=document.getElementById('receiptPreview'),info=document.getElementById('receiptInfo');
+  receiptBusy=true;if(info)info.textContent='⏳ Đang nén ảnh...';
+  let url=null,orig=f.size||0;
+  try{url=URL.createObjectURL(f);receiptData=await compressImage(url);}
+  catch(err){
+    try{const raw=await fileToDataUrl(f);receiptData=await compressImage(raw);}
+    catch(e2){receiptData=null;receiptBusy=false;if(info)info.textContent='';img.style.display='none';e.target.value='';alert('Không đọc được ảnh này. Hãy thử chụp lại hoặc chọn ảnh khác (định dạng JPG/PNG).');return;}
+  }finally{if(url)try{URL.revokeObjectURL(url);}catch(_){}}
+  receiptBusy=false;
+  img.src=receiptData;img.style.display='block';
+  if(info)info.textContent='✓ Đã nén ảnh: '+fmtKB(orig)+' → '+fmtKB(dataUrlBytes(receiptData));
+}
+/* Nén lại các ảnh hoá đơn cũ đang lưu dạng ảnh gốc (chạy ngầm, 1 lần) */
+let shrinkRunning=false;
+async function shrinkOldReceipts(){
+  if(shrinkRunning)return;shrinkRunning=true;let changed=0;
+  try{
+    for(const t of txs){
+      if(t.receipt&&typeof t.receipt==='string'&&t.receipt.startsWith('data:image')&&dataUrlBytes(t.receipt)>IMG_TARGET*1.6){
+        try{const out=await compressImage(t.receipt);if(out&&dataUrlBytes(out)<dataUrlBytes(t.receipt)){t.receipt=out;changed++;}}catch(e){}
+        await new Promise(r=>setTimeout(r,30));
+      }
+    }
+    if(changed){saveAll();showMiniToast('🗜️ Đã nén '+changed+' ảnh hoá đơn cũ để tiết kiệm bộ nhớ');}
+  }finally{shrinkRunning=false;}
+}
+setTimeout(()=>{try{shrinkOldReceipts();}catch(e){}},4000);
 
 /* ---------- SAVE TX ---------- */
 function saveTx(){
+  if(receiptBusy){showMiniToast('⏳ Đang nén ảnh, đợi 1 giây rồi bấm Lưu lại nhé');return;}
   const amount=parseInt(document.getElementById('amountInput').value.replace(/\D/g,''))||0;
   if(amount<=0){alert('Vui lòng nhập số tiền');return;}
   const date=document.getElementById('dateInput').value||todayStr();
@@ -688,7 +738,7 @@ function saveTx(){
       document.getElementById('amountInput').value='';document.getElementById('noteInput').value='';document.getElementById('personInput').value='';
       receiptData=null;
       const ri0=document.getElementById('receiptInput'),rp0=document.getElementById('receiptPreview');
-      if(ri0)ri0.value='';if(rp0)rp0.style.display='none';
+      if(ri0)ri0.value='';if(rp0)rp0.style.display='none';{const ri=document.getElementById('receiptInfo');if(ri)ri.textContent='';}
       selectedItem=null;
       showScreen('history');
     }
@@ -728,7 +778,7 @@ function saveTx(){
   awardBaseLinhThach(tx);
   saveAll();budgetWarn(tx);
   document.getElementById('amountInput').value='';document.getElementById('noteInput').value='';document.getElementById('personInput').value='';
-  receiptData=null;document.getElementById('receiptInput').value='';document.getElementById('receiptPreview').style.display='none';
+  receiptData=null;document.getElementById('receiptInput').value='';document.getElementById('receiptPreview').style.display='none';{const ri=document.getElementById('receiptInfo');if(ri)ri.textContent='';}
   selectedItem=null;
   showScreen('home');
 }
@@ -2559,7 +2609,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='36';
+const APP_VERSION='37';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
