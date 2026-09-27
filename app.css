@@ -703,3 +703,10 @@ html:not([data-theme]) .day-head{background:#0e0d0c;}
 .tabbar{left:0!important;right:0!important;bottom:0!important;max-width:none!important;margin:0!important;border-radius:22px 22px 0 0!important;border:none!important;border-top:1px solid rgba(194,154,92,.28)!important;background:#1c1916!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 -6px 20px rgba(0,0,0,.45)!important;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))!important;}
 .tabbar::after{content:'';position:absolute;left:0;right:0;top:100%;height:120px;background:#1c1916;}
 .screen{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px));}
+
+.rl-tabs{display:flex;gap:8px;margin:-2px 0 6px;}
+.rl-tabs button,.rl-tabs .rl-daybtn{flex:1;padding:9px 6px;border-radius:12px;border:1px solid rgba(226,194,139,.22);background:var(--card);color:var(--sub);font-family:inherit;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rl-tabs button.active,.rl-tabs .rl-daybtn.active{background:linear-gradient(145deg,#d6b37a,#9c7640);color:#1a1612;border-color:transparent;}
+.rl-daybtn{position:relative;text-align:center;cursor:pointer;display:block;}
+.rl-daybtn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none;font-size:16px;}
+.rl-head{position:relative;}

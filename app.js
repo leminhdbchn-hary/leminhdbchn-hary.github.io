@@ -854,15 +854,23 @@ function txByDayHTML(list,limit){
     return '<div class="day-group"><div class="day-head"><span class="dh-date">'+dayLabel(d)+'</span><span class="dh-sum">'+(thu?'<i class="pos">+'+fmtShort(thu)+'</i>':'')+(chi?'<i class="neg">−'+fmtShort(chi)+'</i>':'')+'</span></div>'+byDay[d].map(txItemHTML).join('')+'</div>';
   }).join('');
 }
-let homeDay='',homeTxLimit=40,homeTxObs=null;
-function setHomeDay(v){homeDay=v||'';homeTxLimit=40;const i=document.getElementById('homeDay');if(i&&i.value!==homeDay)i.value=homeDay;renderHomeTxList();}
+let homeDay='',homeRange='week',homeTxLimit=40,homeTxObs=null;
+function setHomeRange(r){homeRange=r;homeDay='';homeTxLimit=40;const i=document.getElementById('homeDay');if(i)i.value='';renderHomeTxList();}
+function setHomeDay(v){homeDay=v||'';homeTxLimit=40;const i=document.getElementById('homeDay');if(i&&i.value!==homeDay)i.value=homeDay;if(!homeDay&&homeRange==='day')homeRange='week';renderHomeTxList();}
+function pickHomeDay(){const i=document.getElementById('homeDay');if(!i)return;if(!i.value)i.value=todayStr();try{if(i.showPicker){i.showPicker();return;}}catch(e){}i.focus();i.click();}
 function renderHomeTxList(){
   const el=document.getElementById('recentList');if(!el)return;
-  const cb=document.getElementById('homeDayClear');if(cb)cb.style.display=homeDay?'inline-block':'none';
-  const list=homeDay?txs.filter(t=>t.date===homeDay):txs;
-  if(!list.length){el.innerHTML='<div class="empty">'+(homeDay?'Không có giao dịch nào trong ngày '+homeDay.split('-').reverse().join('/')+'.':'Chưa có giao dịch nào. Bấm nút + để thêm.')+'</div>';return;}
-  const more=list.length-homeTxLimit;
-  el.innerHTML=txByDayHTML(list,homeTxLimit)+(more>0?'<button class="load-more" id="homeMore" onclick="homeTxLimit+=60;renderHomeTxList()">Xem thêm ('+more+' giao dịch cũ hơn)</button>':'');
+  const mode=homeDay?'day':homeRange;
+  [['rlWeek','week'],['rlAll','all'],['rlDay','day']].forEach(([id,m])=>{const b=document.getElementById(id);if(b)b.classList.toggle('active',m===mode);});
+  const dBtn=document.getElementById('rlDayTxt');if(dBtn)dBtn.textContent=homeDay?'📅 '+homeDay.split('-').reverse().join('/'):'📅 Chọn ngày';
+  const from=addDays(todayStr(),-6);
+  const list=mode==='day'?txs.filter(t=>t.date===homeDay):mode==='week'?txs.filter(t=>(t.date||'')>=from):txs;
+  let foot='';
+  if(mode!=='all'){const n=txs.length-list.length;if(n>0)foot='<button class="load-more" onclick="setHomeRange(\'all\')">Xem tất cả giao dịch ('+txs.length+')</button>';}
+  if(!list.length){el.innerHTML='<div class="empty">'+(mode==='day'?'Không có giao dịch nào trong ngày '+homeDay.split('-').reverse().join('/')+'.':mode==='week'?'Không có giao dịch nào trong 7 ngày qua.':'Chưa có giao dịch nào. Bấm nút + để thêm.')+'</div>'+foot;return;}
+  const lim=mode==='all'?homeTxLimit:0;
+  const more=lim?list.length-lim:0;
+  el.innerHTML=txByDayHTML(list,lim)+(more>0?'<button class="load-more" id="homeMore" onclick="homeTxLimit+=60;renderHomeTxList()">Xem thêm ('+more+' giao dịch cũ hơn)</button>':'')+foot;
   if(homeTxObs){homeTxObs.disconnect();homeTxObs=null;}
   const btn=document.getElementById('homeMore');
   if(btn&&'IntersectionObserver' in window){homeTxObs=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){homeTxObs.disconnect();homeTxObs=null;homeTxLimit+=60;renderHomeTxList();}},{rootMargin:'300px'});homeTxObs.observe(btn);}
@@ -2551,7 +2559,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='35';
+const APP_VERSION='36';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

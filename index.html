@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=35">
+<link rel="stylesheet" href="app.css?v=36">
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');}catch(e){}</script>
 </head>
 <body>
@@ -87,7 +87,8 @@
     <div id="topSpendList"></div>
     <div class="section-title">Insight</div>
     <div id="insightList"></div>
-    <div class="section-title rl-head"><span>Giao dịch</span><span class="rl-day"><input type="date" id="homeDay" onchange="setHomeDay(this.value)" aria-label="Xem theo ngày"><button id="homeDayClear" onclick="setHomeDay('')" style="display:none">Tất cả</button></span></div>
+    <div class="section-title rl-head"><span>Giao dịch</span></div>
+    <div class="rl-tabs"><button id="rlWeek" class="active" onclick="setHomeRange('week')">7 ngày qua</button><button id="rlAll" onclick="setHomeRange('all')">Tất cả</button><label id="rlDay" class="rl-daybtn"><span id="rlDayTxt">📅 Chọn ngày</span><input type="date" id="homeDay" onchange="setHomeDay(this.value)" aria-label="Xem giao dịch theo ngày"></label></div>
     <div id="recentList"></div>
   </div>
 </div>
@@ -474,7 +475,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=35"></script>
-<script src="app.js?v=35"></script>
+<script type="module" src="cloud.js?v=36"></script>
+<script src="app.js?v=36"></script>
 </body>
 </html>
