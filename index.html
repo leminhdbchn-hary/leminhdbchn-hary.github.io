@@ -15,9 +15,9 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=45">
-<script src="skin.js?v=45"></script>
-<script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');}catch(e){}</script>
+<link rel="stylesheet" href="app.css?v=46">
+<script src="skin.js?v=46"></script>
+<script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');if(localStorage.getItem('tc_ls_partial')==='1')document.documentElement.classList.add('idb-wait');}catch(e){}</script>
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
@@ -166,9 +166,23 @@
     <button id="tabXfer" class="xfer" onclick="setType('transfer')">Chuyển ví</button>
     <button id="tabFam" class="fam" onclick="setType('family')">Gia đình</button>
   </div>
+  <div class="qe-bar" id="qeBar">
+    <span class="qe-ic">⚡</span>
+    <input id="qeInput" type="text" placeholder="Nhập nhanh: nội dung + số tiền" autocomplete="off" autocapitalize="off" enterkeyhint="done" title="Ví dụ: cafe 35k · xăng 80k hôm qua · lương 15tr">
+    <button type="button" class="qe-mic" id="qeMic" onclick="qeVoice()" aria-label="Nói để nhập">🎤</button>
+  </div>
+  <div class="qe-hint" id="qeHint"></div>
   <div class="amount-card">
     <div class="label">Số tiền</div>
     <input id="amountInput" autocomplete="off" type="tel" inputmode="numeric" placeholder="0" value="">
+    <div class="fx-row" id="fxRow">
+      <select id="fxCur" onchange="fxChange()" aria-label="Loại tiền"></select>
+      <span class="fx-wrap" id="fxWrap" style="display:none">
+        <input id="fxAmt" type="text" inputmode="decimal" placeholder="Số ngoại tệ" oninput="fxCalc()" aria-label="Số tiền ngoại tệ">
+        <span class="fx-x">×</span>
+        <input id="fxRate" type="text" inputmode="decimal" placeholder="Tỷ giá" oninput="fxCalc()" aria-label="Tỷ giá (VND)">
+      </span>
+    </div>
   </div>
 
   <div id="normalFields">
@@ -209,6 +223,7 @@
     <input id="receiptInput" type="file" accept="image/*" onchange="onReceiptChange(event)">
     <img id="receiptPreview" class="file-thumb" style="display:none;">
     <div id="receiptInfo" class="receipt-info"></div>
+    <button type="button" class="ocr-btn" id="ocrBtn" style="display:none" onclick="ocrReceipt()">🔍 Đọc số tiền trên hoá đơn</button>
   </div>
   <button class="save-btn" id="saveTxBtn" onclick="saveTx()">Lưu lại</button>
   <button class="save-btn ghost-btn" id="cancelEditBtn" style="display:none;" onclick="cancelEditTx()">Huỷ chỉnh sửa</button>
@@ -257,6 +272,7 @@
   <div id="repCatList"></div>
   <div class="section-title" style="padding:0;margin-top:22px;">Thu theo nhóm</div>
   <div id="repThuList"></div>
+  <div id="repExtras"></div>
   </div>
 </div>
 
@@ -454,6 +470,9 @@
   <div class="more-item tt-only" onclick="showScreen('reward')" id="more-reward">Nuôi Linh Thú 🐾</div>
   <div class="more-item tt-only" onclick="showScreen('chars')" id="more-chars">Bộ sưu tập nhân vật</div>
   <div class="more-item" onclick="showScreen('budget')" id="more-budget">Ngân sách</div>
+  <div class="more-item" onclick="showScreen('goals')" id="more-goals">Mục tiêu tiết kiệm</div>
+  <div class="more-item" onclick="openSplitBill()" id="more-split">Chia tiền nhóm</div>
+  <div class="more-item" onclick="showScreen('cats')" id="more-cats">Quản lý hạng mục</div>
   <div class="more-item" onclick="showScreen('recurring')" id="more-recur">Thu chi định kỳ</div>
   <div class="more-item" onclick="showScreen('accounts')" id="more-acc">Quản lý ví tiền</div>
   <div class="more-item" onclick="showScreen('family')" id="more-family">Tiền gia đình</div>
@@ -462,6 +481,7 @@
   <div class="more-item" onclick="showScreen('loans')" id="more-loans">Vay ngân hàng</div>
   <div class="more-item" onclick="showScreen('history')" id="more-hist">Lịch sử giao dịch</div>
   <div class="more-item" onclick="openPinSettings()" id="more-lock">Mật khẩu vào app</div>
+  <div class="more-item" onclick="openBackups()" id="more-autobk">Bản sao lưu tự động</div>
   <div class="more-item" onclick="exportCSV()" id="more-exportcsv">Xuất dữ liệu (CSV / Excel)</div>
   <div class="more-item" onclick="exportJSON()" id="more-exportjson">Sao lưu dữ liệu (JSON)</div>
   <div class="more-item" onclick="triggerImport()" id="more-import">Khôi phục dữ liệu (JSON)</div>
@@ -469,6 +489,25 @@
   <div class="more-item" onclick="showScreen('cloud')" id="more-cloud">☁️ Đồng bộ nhiều thiết bị (Cloud)</div>
   <div class="more-item" onclick="checkUpdate(true)" id="more-update">Cập nhật app</div>
   <div class="more-item" onclick="clearAll()" id="more-trash" style="color:var(--red);">Xoá toàn bộ dữ liệu</div>
+  </div>
+</div>
+
+<!-- MỤC TIÊU TIẾT KIỆM -->
+<div class="screen" id="screen-goals">
+  <div class="inner">
+  <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Mục tiêu tiết kiệm</h2></div>
+  <div id="goalList"></div>
+  <button class="save-btn ghost-btn" onclick="openGoalEdit()">+ Thêm mục tiêu</button>
+  </div>
+</div>
+
+<!-- QUẢN LÝ HẠNG MỤC -->
+<div class="screen" id="screen-cats">
+  <div class="inner">
+  <div class="scr-head"><button class="back-btn" onclick="goBack()" aria-label="Quay lại">‹</button><h2 class="screen-title">Quản lý hạng mục</h2></div>
+  <div class="debt-tabs"><button id="catMgrChi" class="active" onclick="setCatMgrType('chi')">Chi tiền</button><button id="catMgrThu" onclick="setCatMgrType('thu')">Thu tiền</button></div>
+  <div id="catMgrList"></div>
+  <button class="save-btn ghost-btn" onclick="openCatGroupAdd()">+ Thêm nhóm mới</button>
   </div>
 </div>
 
@@ -493,6 +532,7 @@
   <button class="tab desk-only" data-s="recurring" onclick="showScreen('recurring')"><span class="tab-icon" id="nav-recurring"></span><span class="tab-label">Thu chi định kỳ</span></button>
   <button class="tab desk-only" data-s="debts" data-dd="out" onclick="openDebts('out')"><span class="tab-icon" id="nav-debts"></span><span class="tab-label">Cho vay</span></button>
   <button class="tab desk-only" data-s="debts" data-dd="in" onclick="openDebts('in')"><span class="tab-icon" id="nav-borrow"></span><span class="tab-label">Vay nợ khác</span></button>
+  <button class="tab desk-only" data-s="goals" onclick="showScreen('goals')"><span class="tab-icon" id="nav-goals"></span><span class="tab-label">Mục tiêu tiết kiệm</span></button>
   <button class="tab desk-only" data-s="loans" onclick="showScreen('loans')"><span class="tab-icon" id="nav-loans"></span><span class="tab-label">Vay ngân hàng</span></button>
   <button class="tab desk-only" data-s="family" onclick="showScreen('family')"><span class="tab-icon" id="nav-family"></span><span class="tab-label">Tiền gia đình</span></button>
   <button class="tab desk-only tt-only" data-s="reward" onclick="showScreen('reward')"><span class="tab-icon" id="nav-reward"></span><span class="tab-label">Nuôi Linh Thú</span></button>
@@ -500,7 +540,9 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=45"></script>
-<script src="app.js?v=45"></script>
+<script type="module" src="cloud.js?v=46"></script>
+<script src="store.js?v=46"></script>
+<script src="app.js?v=46"></script>
+<script src="features.js?v=46"></script>
 </body>
 </html>

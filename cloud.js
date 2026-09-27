@@ -25,6 +25,7 @@ const db = getFirestore(app);
 
 const CHUNK = 300000;      // ký tự / chunk (tối đa ~900KB kể cả chữ có dấu)
 const MAX_SIZE = 9000000;  // giới hạn 1 lần ghi của Firestore ~10MB
+const ZIP_FROM = 1000000;  // dữ liệu lớn hơn ~1 triệu ký tự → nén gzip trước khi gửi (dung lượng giảm ~5–10 lần)
 
 let currentUser = null;
 let pushTimer = null;
@@ -94,14 +95,17 @@ async function pushState(payload, opts) {
       const err = new Error('CLOUD_CONFLICT'); err.meta = m; throw err;
     }
   }
-  const json = JSON.stringify(payload);
+  let json = JSON.stringify(payload), z = 0;
+  if (json.length > ZIP_FROM && window.StcZip && window.StcZip.supported) {
+    try { json = await window.StcZip.gzipB64(json); z = 1; } catch (e) { z = 0; json = JSON.stringify(payload); }
+  }
   if (json.length > MAX_SIZE) throw new Error('CLOUD_TOO_BIG');
   const n = Math.max(1, Math.ceil(json.length / CHUNK));
   const rev = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
   const b = writeBatch(db);
   for (let i = 0; i < n; i++) b.set(chunkRef(uid, i), { d: json.slice(i * CHUNK, (i + 1) * CHUNK), r: rev });
   // set() không merge → xoá sạch các trường của định dạng cũ (nếu có)
-  b.set(metaRef(uid), { v: 2, n, rev, at: Date.now(), dev: devName(), size: json.length, who: currentUser.email || '' });
+  b.set(metaRef(uid), { v: z ? 3 : 2, z, n, rev, at: Date.now(), dev: devName(), size: json.length, who: currentUser.email || '' });
   await b.commit();
   ls.set(revKey(), rev);
   ls.set('tc_cloud_dirty', null);
@@ -122,7 +126,12 @@ async function pullState() {
     }
     const parts = await Promise.all(Array.from({ length: m.n }, (_, i) => getDoc(chunkRef(uid, i))));
     if (parts.every(p => p.exists() && p.data().r === m.rev)) {
-      const data = JSON.parse(parts.map(p => p.data().d).join(''));
+      let raw = parts.map(p => p.data().d).join('');
+      if (m.z) {
+        if (!window.StcZip || !window.StcZip.supported) throw new Error('CLOUD_NEED_UPDATE');
+        raw = await window.StcZip.gunzipB64(raw);
+      }
+      const data = JSON.parse(raw);
       return Object.assign(data, { updatedAtClient: m.at, dev: m.dev, __rev: m.rev });
     }
     await new Promise(r => setTimeout(r, 800)); // máy khác đang ghi dở → thử lại

@@ -25,13 +25,34 @@ const CAT_DEF={
 };
 const ITEM_EMOJI={};
 const GROUPS={};
-Object.keys(CAT_DEF).forEach(type=>{
-  GROUPS[type]=CAT_DEF[type].map(([name,emo,accent,items],gi)=>{
-    const list=items.length?items:[[name,emo]];
-    list.forEach(([n,e])=>{ITEM_EMOJI[type+'|'+name+'|'+n]=e;if(!ITEM_EMOJI[n])ITEM_EMOJI[n]=e;});
-    return {name,emoji:emo,icon:'e:'+emo,accent,bg:CAT_TINTS[gi%4],items:list.map(x=>x[0]),single:!items.length};
+/* Hạng mục tự tạo của người dùng (đồng bộ Cloud):
+   customCats[type] = {groups:[{name,emoji,items:[[tên,emoji],...]}], add:{'Tên nhóm':[[tên,emoji],...]}, hidden:['Nhóm|Mục',...]} */
+let customCats={};
+try{customCats=JSON.parse(localStorage.getItem('tc_custom_cats')||'{}')||{};}catch(e){customCats={};}
+const CUSTOM_ACCENTS=['#22a765','#1487d8','#c9860b','#b0578a','#7b2d8e','#e0483c','#0e6fb8','#e0a000'];
+function ccOf(type){const c=(customCats&&customCats[type])||{};return {groups:Array.isArray(c.groups)?c.groups:[],add:(c.add&&typeof c.add==='object')?c.add:{},hidden:Array.isArray(c.hidden)?c.hidden:[]};}
+function rebuildGroups(){
+  Object.keys(ITEM_EMOJI).forEach(k=>delete ITEM_EMOJI[k]);
+  Object.keys(CAT_DEF).forEach(type=>{
+    const cc=ccOf(type);
+    const defs=CAT_DEF[type].map(d=>[d[0],d[1],d[2],d[3].slice()]);
+    const custom=cc.groups.filter(g=>g&&g.name&&!defs.some(d=>d[0]===g.name)).map((g,i)=>[g.name,g.emoji||'📁',CUSTOM_ACCENTS[i%CUSTOM_ACCENTS.length],(g.items||[]).filter(x=>x&&x[0]).map(x=>[x[0],x[1]||g.emoji||'📁']),true]);
+    /* nhóm "Khác" luôn nằm cuối */
+    const kIdx=defs.findIndex(d=>d[0]==='Khác');const khac=kIdx>=0?defs.splice(kIdx,1):[];
+    const all=defs.concat(custom,khac);
+    all.forEach(d=>{const extra=cc.add[d[0]];if(Array.isArray(extra)&&type==='chi')extra.forEach(x=>{if(x&&x[0]&&!d[3].some(y=>y[0]===x[0]))d[3].push([x[0],x[1]||'📌']);});});
+    GROUPS[type]=all.map(([name,emo,accent,items,isCustom],gi)=>{
+      const single=type==='thu'||!items.length;
+      const list=single?[[name,emo]]:items;
+      list.forEach(([n,e])=>{ITEM_EMOJI[type+'|'+name+'|'+n]=e;if(!ITEM_EMOJI[n])ITEM_EMOJI[n]=e;});
+      return {name,emoji:emo,icon:'e:'+emo,accent,bg:CAT_TINTS[gi%4],items:list.map(x=>x[0]),single,custom:!!isCustom};
+    });
   });
-});
+}
+rebuildGroups();
+/* Mục bị ẩn: vẫn giữ trong dữ liệu (giao dịch cũ không lỗi), chỉ không hiện khi chọn hạng mục */
+function catHidden(type,group,item){const h=ccOf(type).hidden;return h.includes(group+'|'+item)||h.includes(group+'|*');}
+function visibleItems(type,G){return G.items.filter(it=>!catHidden(type,G.name,it));}
 function itemEmoji(type,group,item){return ITEM_EMOJI[type+'|'+group+'|'+item]||ITEM_EMOJI[item]||((GROUPS[type]||[]).find(g=>g.name===group)||{}).emoji||'📦';}
 function itemTint(type,group,item){const g=(GROUPS[type]||[]).find(x=>x.name===group);if(!g)return CAT_TINTS[0];const i=g.items.indexOf(item);return i<0?g.bg:CAT_TINTS[i%4];}
 /* Chuyển các giao dịch/ngân sách/định kỳ cũ (nhóm cũ: Di chuyển, Gia đình, Cá nhân, Thu nhập) sang hạng mục mới */
@@ -126,6 +147,9 @@ let debts=[];
 try{debts=JSON.parse(localStorage.getItem('tc_debts')||'[]');}catch(e){debts=[];}
 let loans=[];
 try{loans=JSON.parse(localStorage.getItem('tc_loans')||'[]');}catch(e){loans=[];}
+/* Mục tiêu tiết kiệm */
+let goals=[];
+try{goals=JSON.parse(localStorage.getItem('tc_goals')||'[]');}catch(e){goals=[];}
 /* Ví "Tiết kiệm" bị khoá khỏi các thao tác chi tiêu/chuyển tiền thủ công.
    Toàn bộ tiền vào/ra sổ tiết kiệm chỉ được xử lý qua màn hình Ví tiền
    (gửi mới, đáo hạn, tất toán...) để tránh làm sai lệch lãi suất/kỳ hạn. */
@@ -156,20 +180,51 @@ try{rewardProfile=JSON.parse(localStorage.getItem('tc_reward_profile')||'null')|
 try{rewardHistory=JSON.parse(localStorage.getItem('tc_reward_history')||'[]');}catch(e){rewardHistory=[];}
 try{userAchievements=JSON.parse(localStorage.getItem('tc_user_achievements')||'[]');}catch(e){userAchievements=[];}
 
+/* Lưu dữ liệu: localStorage (mở app nhanh) + IndexedDB (dung lượng lớn, bản chính khi localStorage đầy) */
+const LS_KEYS=[['tc_txs',()=>txs],['tc_wallets',()=>wallets],['tc_budgets',()=>budgets],['tc_recurring',()=>recurring],['tc_debts',()=>debts],['tc_loans',()=>loans],
+  ['tc_reward_profile',()=>rewardProfile],['tc_reward_history',()=>rewardHistory],['tc_user_achievements',()=>userAchievements],['tc_custom_cats',()=>customCats],['tc_goals',()=>goals]];
+let storeReady=false,storePending=false,storeTimer=null,lsPartial=false;
+try{lsPartial=localStorage.getItem('tc_ls_partial')==='1';}catch(e){}
 function saveAll(){
-  try{localStorage.setItem('tc_txs',JSON.stringify(txs));}catch(e){}
-  try{localStorage.setItem('tc_wallets',JSON.stringify(wallets));}catch(e){}
-  try{localStorage.setItem('tc_budgets',JSON.stringify(budgets));}catch(e){}
-  try{localStorage.setItem('tc_recurring',JSON.stringify(recurring));}catch(e){}
-  try{localStorage.setItem('tc_debts',JSON.stringify(debts));}catch(e){}
-  try{localStorage.setItem('tc_loans',JSON.stringify(loans));}catch(e){}
-  try{localStorage.setItem('tc_reward_profile',JSON.stringify(rewardProfile));}catch(e){}
-  try{localStorage.setItem('tc_reward_history',JSON.stringify(rewardHistory));}catch(e){}
-  try{localStorage.setItem('tc_user_achievements',JSON.stringify(userAchievements));}catch(e){}
+  let lsOk=true;
+  LS_KEYS.forEach(([k,get])=>{try{localStorage.setItem(k,JSON.stringify(get()));}catch(e){lsOk=false;}});
+  if(lsOk){if(lsPartial){lsPartial=false;try{localStorage.removeItem('tc_ls_partial');}catch(e){}}}
+  else{
+    /* localStorage đầy: bỏ bản cũ ở localStorage, IndexedDB giữ bản chính */
+    lsPartial=true;
+    ['tc_txs','tc_reward_history'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+    try{localStorage.setItem('tc_ls_partial','1');}catch(e){}
+  }
+  storeQueue(lsPartial);
   try{if(window.Cloud)window.Cloud.queuePush(buildCloudPayload);}catch(e){}
 }
+function storeQueue(now){
+  if(!window.StcStore||!StcStore.available)return;
+  if(!storeReady){storePending=true;return;}
+  clearTimeout(storeTimer);
+  if(now)storeFlush();else storeTimer=setTimeout(storeFlush,400);
+}
+function storeFlush(){
+  clearTimeout(storeTimer);storeTimer=null;
+  if(!storeReady||!window.StcStore)return Promise.resolve();
+  return StcStore.set('state',{rev:Date.now(),data:buildCloudPayload()}).catch(e=>console.warn('IDB save',e));
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&storeTimer)storeFlush();});
+window.addEventListener('pagehide',()=>{if(storeTimer)storeFlush();});
+/* Khởi động: nếu localStorage không đủ dữ liệu → lấy bản chính từ IndexedDB */
+async function storeInit(){
+  let st=null;
+  if(window.StcStore&&StcStore.available){try{st=await StcStore.get('state');}catch(e){console.warn('IDB load',e);}}
+  if(lsPartial&&st&&st.data&&Array.isArray(st.data.txs)){
+    applyCloudPayload(st.data);
+    try{renderHome();const s=currentScreen();if(s&&s!=='home')showScreen(s);}catch(e){}
+  }
+  document.documentElement.classList.remove('idb-wait');
+  storeReady=!!(window.StcStore&&StcStore.available);
+  if(storeReady){storePending=false;storeFlush().then(()=>{try{autoBackupCheck();}catch(e){}});}
+}
 function buildCloudPayload(){
-  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements};
+  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals};
 }
 function applyCloudPayload(data){
   txs=data.txs||[];wallets=data.wallets||[];budgets=data.budgets||{};recurring=data.recurring||[];
@@ -177,6 +232,9 @@ function applyCloudPayload(data){
   if(Array.isArray(data.customBanks)){customBanks=data.customBanks;saveCustomBanks();customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});}
   rewardProfile=data.rewardProfile||{total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};
   rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
+  /* bản từ máy chưa cập nhật có thể thiếu 2 mục này → giữ nguyên dữ liệu đang có */
+  if(data.customCats&&typeof data.customCats==='object'){customCats=data.customCats;rebuildGroups();}
+  if(Array.isArray(data.goals))goals=data.goals;
   try{migrateCategories();}catch(e){}
   setTimeout(()=>{try{shrinkOldReceipts();}catch(e){}},3000);
 }
@@ -219,6 +277,7 @@ function openEditTx(id){
     if(t.receipt){receiptData=t.receipt;rp.src=t.receipt;rp.style.display='block';}
     else{receiptData=null;rp.style.display='none';if(ri)ri.value='';}
   }
+  if(window.editTxExtras){try{editTxExtras(t);}catch(e){console.error(e);}}
   document.getElementById('addScreenTitle').textContent='Sửa giao dịch';
   document.getElementById('saveTxBtn').textContent='Cập nhật giao dịch';
   document.getElementById('cancelEditBtn').style.display='block';
@@ -264,6 +323,7 @@ function showScreen(name,isBack){
   if(name==='more'){updateLockMenu();renderModeSwitch();renderSkinOpts();}
   if(name==='chars')renderChars();
   if(name==='cloud')renderCloudScreen();
+  if(window.screenHooks&&screenHooks[name]){try{screenHooks[name]();}catch(e){console.error(e);}}
 }
 
 /* ---------- WALLETS ---------- */
@@ -532,13 +592,14 @@ function setType(t){
   document.getElementById('receiptField').style.display=normal?'block':'none';
   if(normal){renderGroupChips();renderItemGrid();}
   if(t==='family')renderFamFields();
+  if(window.onTypeExtras){try{onTypeExtras(t);}catch(e){console.error(e);}}
 }
 /* Chọn hạng mục: "Hay dùng" + màn "Tất cả" (giống sổ thu chi phổ biến) */
 let catFavOpen=true,catFavEdit=false,csType='chi';
 try{catFavOpen=localStorage.getItem('tc_fav_open')!=='0';}catch(e){}
 const FAV_DEFAULT={chi:['Ăn uống|Ăn tiệm','Ăn uống|Ăn uống','Ăn uống|Cafe','Đi lại|Taxi/thuê xe','Hiếu hỉ|Cưới xin','Đi lại|Xăng xe','Đi lại|Bảo hiểm xe'],
   thu:['Lương|Lương','Thưởng|Thưởng','Được cho/tặng|Được cho/tặng','Tiền lãi|Tiền lãi','Lãi tiết kiệm|Lãi tiết kiệm','Khác|Khác']};
-function catValid(type,g,it){const G=(GROUPS[type]||[]).find(x=>x.name===g);return !!G&&(G.items.includes(it)||it===g);}
+function catValid(type,g,it){const G=(GROUPS[type]||[]).find(x=>x.name===g);return !!G&&(G.items.includes(it)||it===g)&&!catHidden(type,g,it);}
 function getCustomFav(type){try{const a=JSON.parse(localStorage.getItem('tc_fav_'+type)||'null');return Array.isArray(a)?a:null;}catch(e){return null;}}
 function getFavs(type){
   const c=getCustomFav(type);
@@ -630,7 +691,8 @@ function renderCatSheet(){
   let any=false;
   GROUPS[csType].forEach(G=>{
     const gm=!q||stripVN(G.name).includes(q);
-    const items=G.single?[]:G.items.filter(it=>gm||stripVN(it).includes(q));
+    const items=G.single?[]:visibleItems(csType,G).filter(it=>gm||stripVN(it).includes(q));
+    if(catHidden(csType,G.name,G.single?G.name:'*'))return;
     if(!gm&&!items.length)return;any=true;
     h+='<div class="cs-group"><div class="cs-ghead'+(isSel(G.name,G.name)?' selected':'')+'" onclick="csPick(\''+esc1(G.name)+'\',\''+esc1(G.name)+'\')"><span class="cat-emoji" style="background:'+G.bg+'"><span class="emo-ic" style="font-size:24px">'+G.emoji+'</span></span><span class="cs-gname">'+G.name+'</span>'+star(G.name,G.name)+'</div>';
     if(items.length)h+='<div class="cat-grid cs-grid">'+items.map(it=>'<div class="cat-btn'+(isSel(G.name,it)?' selected':'')+'" onclick="csPick(\''+esc1(G.name)+'\',\''+esc1(it)+'\')">'+star(G.name,it)+catTile(csType,G.name,it)+'<span class="cat-lbl">'+it+'</span></div>').join('')+'</div>';
@@ -676,6 +738,7 @@ async function onReceiptChange(e){
   receiptBusy=false;
   img.src=receiptData;img.style.display='block';
   if(info)info.textContent='✓ Đã nén ảnh: '+fmtKB(orig)+' → '+fmtKB(dataUrlBytes(receiptData));
+  if(window.afterReceipt){try{afterReceipt();}catch(e){console.error(e);}}
 }
 /* Nén lại các ảnh hoá đơn cũ đang lưu dạng ảnh gốc (chạy ngầm, 1 lần) */
 let shrinkRunning=false;
@@ -734,6 +797,7 @@ function saveTx(){
         const person=document.getElementById('personInput').value;
         Object.assign(old,{type:currentType,amount,group:g.name,item:selectedItem,icon:'e:'+(selectedItem===g.name&&!g.single?g.emoji:itemEmoji(currentType,g.name,selectedItem)),accent:g.accent,bg:selectedItem===g.name?g.bg:itemTint(currentType,g.name,selectedItem),walletId:walletId||null,person,note,receipt:receiptData,date,time});
         delete old.fromName;delete old.toName;delete old.dir;delete old.repay;delete old.dueDate;delete old.settled;
+        if(window.txExtras){try{txExtras(old);}catch(e){console.error(e);}}
         if(currentType!=='chi'&&old.reward_status==='REWARDED'){revokeTxLinhLuc(old,true);delete old.reward_status;delete old.rewarded_at;}
         if(walletId){const w=wallets.find(x=>String(x.id)===String(walletId));if(w)w.balance+=(currentType==='thu'?amount:-amount);}
       }
@@ -777,6 +841,7 @@ function saveTx(){
   const walletId=document.getElementById('accSelect').value;
   const person=document.getElementById('personInput').value;
   const tx={id:Date.now(),type:currentType,amount,group:g.name,item:selectedItem,icon:'e:'+(selectedItem===g.name&&!g.single?g.emoji:itemEmoji(currentType,g.name,selectedItem)),accent:g.accent,bg:selectedItem===g.name?g.bg:itemTint(currentType,g.name,selectedItem),walletId:walletId||null,person,note,receipt:receiptData,date,time};
+  if(window.txExtras){try{txExtras(tx);}catch(e){console.error(e);}}
   txs.unshift(tx);
   if(walletId){const w=wallets.find(x=>String(x.id)===String(walletId));if(w)w.balance+=(currentType==='thu'?amount:-amount);}
   awardBaseLinhThach(tx);
@@ -823,7 +888,7 @@ function deleteTx(id){
   const t=txs.find(x=>x.id===id);if(t){reverseTxBalance(t);revokeTxLinhLuc(t,false);}
   txs=txs.filter(x=>x.id!==id);saveAll();renderHistory();renderHome();
 }
-function clearAll(){if(confirm('Xoá toàn bộ dữ liệu (giao dịch, ví, ngân sách, định kỳ, vay nợ, vay ngân hàng, linh lực tu luyện)?')){txs=[];wallets=[];budgets={};recurring=[];debts=[];loans=[];rewardProfile={total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};rewardHistory=[];userAchievements=[];saveAll();renderHome();}}
+function clearAll(){if(confirm('Xoá toàn bộ dữ liệu (giao dịch, ví, ngân sách, định kỳ, vay nợ, vay ngân hàng, linh lực tu luyện)?')){txs=[];wallets=[];budgets={};recurring=[];debts=[];loans=[];rewardProfile={total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};rewardHistory=[];userAchievements=[];goals=[];customCats={};rebuildGroups();saveAll();renderHome();}}
 
 function txItemHTML(t){
   if(t.type==='family'){
@@ -835,7 +900,7 @@ function txItemHTML(t){
     return '<div class="tx-item"><div class="tx-icon" style="background:#dceeff">'+icon('transfer','#1487d8',19)+'</div><div class="tx-info"><div class="cat">Chuyển: '+t.fromName+' → '+t.toName+'</div><div class="note">'+(t.note||t.date)+'</div></div><div class="tx-amt xfer">'+fmt(t.amount)+'</div><button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();if(confirm(\'Xoá giao dịch này?\'))deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
   }
   const sign=t.type==='chi'?'-':'+';const cls=t.type==='chi'?'out':'in';
-  return '<div class="tx-item" onclick="if(!event.target.closest(\'button\'))openEditTx('+t.id+')" style="cursor:pointer"><div class="tx-icon" style="background:'+(t.bg||'#e7f2fa')+'">'+icon(t.icon||'khac',t.accent||'#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+t.item+'</div><div class="note">'+(t.note||t.person||t.date)+'</div></div><div class="tx-amt '+cls+'">'+sign+fmt(t.amount)+'</div>'+rewardBtnHTML(t)+'<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();if(confirm(\'Xoá giao dịch này?\'))deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
+  return '<div class="tx-item" onclick="if(!event.target.closest(\'button\'))openEditTx('+t.id+')" style="cursor:pointer"><div class="tx-icon" style="background:'+(t.bg||'#e7f2fa')+'">'+icon(t.icon||'khac',t.accent||'#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+t.item+'</div><div class="note">'+(t.note||t.person||t.date)+(t.fx&&t.fx.cur?' · '+t.fx.amt+' '+t.fx.cur:'')+'</div></div><div class="tx-amt '+cls+'">'+sign+fmt(t.amount)+'</div>'+rewardBtnHTML(t)+'<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();if(confirm(\'Xoá giao dịch này?\'))deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
 }
 function rewardBtnHTML(t){
   if(!isTuTien())return '';
@@ -1045,6 +1110,7 @@ function renderHome(){
   document.getElementById('insightList').innerHTML=computeInsights(monthTx,thu,chi,byGroup,now).map(i=>'<div class="insight-card"><span class="ic">'+i.emoji+'</span><span>'+i.text+'</span></div>').join('') || '<div class="empty">Chưa đủ dữ liệu để đưa ra nhận định.</div>';
 
   renderHomeTxList();
+  if(window.homeExtras){try{homeExtras();}catch(e){console.error(e);}}
 }
 
 function computeInsights(monthTx,thu,chi,byGroup,now){
@@ -1073,6 +1139,7 @@ function computeInsights(monthTx,thu,chi,byGroup,now){
     const projRemain=thu-projected;
     out.push({emoji:'🔮',text:'Nếu duy trì tốc độ chi hiện tại, cuối tháng bạn dự kiến còn khoảng <b>'+fmt(projRemain)+'</b>.'});
   }
+  if(window.extraInsights){try{extraInsights(out,now);}catch(e){console.error(e);}}
   return out;
 }
 
@@ -1100,6 +1167,7 @@ function renderReport(){
   renderReportCharts(inRange,thu,chi);
   repRenderGroup(inRange,'chi','repCatList','Không có chi tiêu trong kỳ này.');
   repRenderGroup(inRange,'thu','repThuList','Không có khoản thu trong kỳ này.');
+  if(window.reportExtras){try{reportExtras(inRange,start,end);}catch(e){console.error(e);}}
 }
 function sumRange(a,b,type){return txs.filter(t=>t.type===type&&(()=>{const d=new Date(t.date+'T00:00:00');return d>=a&&d<=b;})()).reduce((x,t)=>x+t.amount,0);}
 function renderReportCharts(inRange,thu,chi){
@@ -1160,7 +1228,7 @@ function itemBudgetHtml(g,monthChi){
   const open=openItemBud[g.name];
   let h='<button class="ib-toggle" onclick="openItemBud[\''+g.name+'\']=!openItemBud[\''+g.name+'\'];renderBudget()">'+(open?'▾':'▸')+' Ngân sách theo từng mục'+(set?' ('+set+')':'')+'</button>';
   if(!open)return h;
-  return h+'<div class="ib-list">'+g.items.map(it=>{
+  return h+'<div class="ib-list">'+g.items.filter(it=>!catHidden('chi',g.name,it)||budgets[itemKey(g.name,it)]>0).map(it=>{
     const b=budgets[itemKey(g.name,it)]||0,sp=monthChi.filter(t=>t.group===g.name&&t.item===it).reduce((s,t)=>s+t.amount,0);
     const pct=b>0?Math.round(sp/b*100):0,c=pct>=90?'var(--red)':pct>=70?'var(--yellow)':'var(--green)';
     return '<div class="ib-row"><div class="ib-top"><span>'+it+'</span><span>'+fmtShort(sp)+(b?' / '+fmtShort(b)+' <b style="color:'+c+'">'+pct+'%</b>':'')+'</span></div>'+
@@ -1173,7 +1241,7 @@ function setBudget(group,val){const n=parseInt(String(val).replace(/\D/g,''))||0
 /* ---------- RECURRING ---------- */
 let recType='chi';
 function setRecType(t){recType=t;document.getElementById('recTabChi').classList.toggle('active',t==='chi');document.getElementById('recTabThu').classList.toggle('active',t==='thu');populateRecGroup();}
-function populateRecGroup(){document.getElementById('recGroup').innerHTML=GROUPS[recType].flatMap(g=>g.items.map(it=>'<option value="'+g.name+'|||'+it+'">'+g.name+' • '+it+'</option>')).join('');}
+function populateRecGroup(){document.getElementById('recGroup').innerHTML=GROUPS[recType].flatMap(g=>visibleItems(recType,g).map(it=>'<option value="'+g.name+'|||'+it+'">'+g.name+' • '+it+'</option>')).join('');}
 function toggleRecurForm(){const f=document.getElementById('addRecurForm');f.style.display=f.style.display==='none'?'block':'none';if(f.style.display==='block'){setRecType('chi');populateRecGroup();renderWalletSelects();}}
 function saveRecurring(){
   const name=document.getElementById('recName').value.trim();
@@ -2217,6 +2285,8 @@ function onImportFile(e){
       if(Array.isArray(data.customBanks)){customBanks=data.customBanks;saveCustomBanks();customBanks.forEach(b=>{if(!BANKS.some(x=>x.code===b.code))BANKS.push(b);});}
       rewardProfile=data.rewardProfile||{total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};
       rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
+      customCats=(data.customCats&&typeof data.customCats==='object')?data.customCats:{};rebuildGroups();
+      goals=Array.isArray(data.goals)?data.goals:[];
       try{migrateCategories();}catch(e){}
       saveAll();renderHome();alert('Đã khôi phục dữ liệu thành công.');
     }catch(err){alert('File không hợp lệ hoặc bị lỗi.');}
@@ -2237,6 +2307,7 @@ function cloudErrMsg(e){
   if(c==='auth/user-disabled')return'Tài khoản này đã bị khoá.';
   if(c==='auth/network-request-failed'||c==='unavailable')return'Không có mạng hoặc không kết nối được cloud.';
   if(c==='permission-denied')return'Cloud từ chối truy cập, hãy đăng nhập lại.';
+  if(e&&e.message==='CLOUD_NEED_UPDATE')return'Dữ liệu trên cloud đã được nén, trình duyệt này quá cũ để đọc. Hãy cập nhật iOS/trình duyệt rồi thử lại.';
   if(e&&e.message==='CLOUD_TOO_BIG')return'Dữ liệu quá lớn (nhiều ảnh hoá đơn) để sao lưu cloud. Hãy xoá bớt ảnh hoá đơn cũ.';
   if(e&&e.message==='CLOUD_INCONSISTENT')return'Dữ liệu trên cloud đang được máy khác cập nhật, hãy thử lại sau vài giây.';
   return'Có lỗi xảy ra: '+(e&&e.message?e.message:'không rõ')+(c?' ('+c+')':'');
@@ -2644,7 +2715,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='45';
+const APP_VERSION='46';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -2696,13 +2767,18 @@ document.getElementById('more-chars').innerHTML='<span>'+icon('trophy','#c29a5c'
 document.getElementById('more-trash').innerHTML='<span>'+icon('trash','var(--red)',20)+'</span><span>Xoá toàn bộ dữ liệu</span>';
 document.querySelectorAll('.more-item').forEach(el=>el.style.gap='12px');
 renderHome();
-checkDueRecurring();
-checkMonthlyBudgetBonus();
-checkMaturedSavings();
-checkMonthlyInterestAccrual();
-checkNoTermAccrual();
-repairLoanTxAmounts();
-checkLoanPaymentsDue();
+function bootChecks(){
+  checkDueRecurring();
+  checkMonthlyBudgetBonus();
+  checkMaturedSavings();
+  checkMonthlyInterestAccrual();
+  checkNoTermAccrual();
+  repairLoanTxAmounts();
+  checkLoanPaymentsDue();
+}
+/* localStorage thiếu dữ liệu (đã đầy) → chờ tải bản chính từ IndexedDB rồi mới kiểm tra định kỳ/đáo hạn */
+if(lsPartial){storeInit().then(bootChecks);}
+else{bootChecks();storeInit();}
 
 /* Chặn phóng to bằng 2 ngón (iOS Safari bỏ qua user-scalable=no) */
 (function(){
