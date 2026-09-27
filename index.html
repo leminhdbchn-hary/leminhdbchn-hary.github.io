@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=31">
+<link rel="stylesheet" href="app.css?v=32">
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');}catch(e){}</script>
 </head>
 <body>
@@ -87,7 +87,7 @@
     <div id="topSpendList"></div>
     <div class="section-title">Insight</div>
     <div id="insightList"></div>
-    <div class="section-title">Giao dịch gần đây</div>
+    <div class="section-title rl-head"><span>Giao dịch</span><span class="rl-day"><input type="date" id="homeDay" onchange="setHomeDay(this.value)" aria-label="Xem theo ngày"><button id="homeDayClear" onclick="setHomeDay('')" style="display:none">Tất cả</button></span></div>
     <div id="recentList"></div>
   </div>
 </div>
@@ -466,6 +466,7 @@
   </div>
 </div>
 
+<div class="rotate-block"><div>📱</div><b>Vui lòng xoay dọc điện thoại</b><small>Sổ Thu Chi chỉ dùng ở chiều dọc</small></div>
 <div class="tabbar">
   <button class="tab active" data-s="home" onclick="showScreen('home')"><span class="tab-icon" id="nav-home"></span><span class="tab-label">Tổng quan</span></button>
   <button class="tab" data-s="accounts" onclick="showScreen('accounts')"><span class="tab-icon" id="nav-accounts"></span><span class="tab-label">Ví tiền</span></button>
@@ -474,7 +475,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=31"></script>
-<script src="app.js?v=31"></script>
+<script type="module" src="cloud.js?v=32"></script>
+<script src="app.js?v=32"></script>
 </body>
 </html>

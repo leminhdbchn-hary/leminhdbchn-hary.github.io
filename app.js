@@ -812,7 +812,7 @@ function renderHistory(keepFilters){
   const sumChi=res.filter(t=>t.type==='chi').reduce((s,t)=>s+(t.amount||0),0),sumThu=res.filter(t=>t.type==='thu').reduce((s,t)=>s+(t.amount||0),0);
   const sumEl=document.getElementById('historySum');
   if(sumEl)sumEl.innerHTML=txs.length?'<span>'+res.length+' giao dịch</span><span class="hs-thu">Thu '+fmtShort(sumThu)+'</span><span class="hs-chi">Chi '+fmtShort(sumChi)+'</span>'+(filtered?'<button onclick="clearHistF()">Xoá lọc</button>':''):'';
-  list.innerHTML=res.length?res.map(txItemHTML).join(''):'<div class="empty">'+(txs.length?'Không tìm thấy giao dịch phù hợp.':'Chưa có giao dịch nào.')+'</div>';
+  list.innerHTML=res.length?txByDayHTML(res):'<div class="empty">'+(txs.length?'Không tìm thấy giao dịch phù hợp.':'Chưa có giao dịch nào.')+'</div>';
 }
 function clearHistF(){histF.q='';histF.type='';histF.group='';histF.month='';const i=document.getElementById('hfQ');if(i)i.value='';document.getElementById('hfType').value='';renderHistory();}
 
@@ -835,6 +835,48 @@ function toggleTuTien(){
   try{renderHome();}catch(e){}
   showMiniToast(on?'🐾 Đã bật chế độ Tu tiên':'Đã chuyển về chế độ bình thường');
 }
+/* ---------- DANH SÁCH GIAO DỊCH NHÓM THEO NGÀY ---------- */
+function sortTxDesc(list){return list.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.time||'').localeCompare(a.time||'')||((+b.id||0)-(+a.id||0)));}
+function dayLabel(d){
+  if(!d)return 'Không rõ ngày';
+  const t=todayStr(),y=addDays(t,-1);const dt=new Date(d+'T00:00:00');
+  const wd=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][dt.getDay()];
+  const dmyS=d.split('-').reverse().join('/');
+  return (d===t?'Hôm nay':d===y?'Hôm qua':wd)+' · '+dmyS;
+}
+function txByDayHTML(list,limit){
+  const sorted=sortTxDesc(list);const shown=limit?sorted.slice(0,limit):sorted;
+  const days=[];const byDay={};
+  shown.forEach(t=>{const d=t.date||'';if(!byDay[d]){byDay[d]=[];days.push(d);}byDay[d].push(t);});
+  return days.map(d=>{
+    const all=sorted.filter(t=>(t.date||'')===d);
+    const thu=all.filter(t=>t.type==='thu').reduce((s,t)=>s+(t.amount||0),0),chi=all.filter(t=>t.type==='chi').reduce((s,t)=>s+(t.amount||0),0);
+    return '<div class="day-group"><div class="day-head"><span class="dh-date">'+dayLabel(d)+'</span><span class="dh-sum">'+(thu?'<i class="pos">+'+fmtShort(thu)+'</i>':'')+(chi?'<i class="neg">−'+fmtShort(chi)+'</i>':'')+'</span></div>'+byDay[d].map(txItemHTML).join('')+'</div>';
+  }).join('');
+}
+let homeDay='',homeTxLimit=40,homeTxObs=null;
+function setHomeDay(v){homeDay=v||'';homeTxLimit=40;const i=document.getElementById('homeDay');if(i&&i.value!==homeDay)i.value=homeDay;renderHomeTxList();}
+function renderHomeTxList(){
+  const el=document.getElementById('recentList');if(!el)return;
+  const cb=document.getElementById('homeDayClear');if(cb)cb.style.display=homeDay?'inline-block':'none';
+  const list=homeDay?txs.filter(t=>t.date===homeDay):txs;
+  if(!list.length){el.innerHTML='<div class="empty">'+(homeDay?'Không có giao dịch nào trong ngày '+homeDay.split('-').reverse().join('/')+'.':'Chưa có giao dịch nào. Bấm nút + để thêm.')+'</div>';return;}
+  const more=list.length-homeTxLimit;
+  el.innerHTML=txByDayHTML(list,homeTxLimit)+(more>0?'<button class="load-more" id="homeMore" onclick="homeTxLimit+=60;renderHomeTxList()">Xem thêm ('+more+' giao dịch cũ hơn)</button>':'');
+  if(homeTxObs){homeTxObs.disconnect();homeTxObs=null;}
+  const btn=document.getElementById('homeMore');
+  if(btn&&'IntersectionObserver' in window){homeTxObs=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){homeTxObs.disconnect();homeTxObs=null;homeTxLimit+=60;renderHomeTxList();}},{rootMargin:'300px'});homeTxObs.observe(btn);}
+}
+
+/* ---------- Giữ thanh công cụ dưới đúng vị trí (lỗi iPhone khi cuộn/xoay/đóng bàn phím) ---------- */
+function fixFixedBars(){
+  requestAnimationFrame(()=>{const tb=document.querySelector('.tabbar');if(!tb)return;tb.style.display='none';void tb.offsetHeight;tb.style.display='';});
+}
+window.addEventListener('orientationchange',()=>{setTimeout(()=>{window.scrollTo(window.scrollX,window.scrollY);fixFixedBars();},350);});
+document.addEventListener('focusout',e=>{if(e.target&&e.target.matches&&e.target.matches('input,select,textarea'))setTimeout(()=>{window.scrollTo(window.scrollX,window.scrollY);fixFixedBars();},120);});
+if(window.visualViewport){let vvT=0;window.visualViewport.addEventListener('resize',()=>{clearTimeout(vvT);vvT=setTimeout(fixFixedBars,150);});}
+try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('portrait').catch(()=>{});}catch(e){}
+
 /* ---------- HOME / DASHBOARD ---------- */
 function renderHomePet(){
   if(!isTuTien()){const hs=document.getElementById('homeHeadSub');if(hs){const d=new Date();hs.textContent=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();}return;}
@@ -902,8 +944,7 @@ function renderHome(){
 
   document.getElementById('insightList').innerHTML=computeInsights(monthTx,thu,chi,byGroup,now).map(i=>'<div class="insight-card"><span class="ic">'+i.emoji+'</span><span>'+i.text+'</span></div>').join('') || '<div class="empty">Chưa đủ dữ liệu để đưa ra nhận định.</div>';
 
-  const recent=txs.slice(0,6);
-  document.getElementById('recentList').innerHTML=recent.length?recent.map(txItemHTML).join(''):'<div class="empty">Chưa có giao dịch nào. Bấm nút + để thêm.</div>';
+  renderHomeTxList();
 }
 
 function computeInsights(monthTx,thu,chi,byGroup,now){
@@ -2474,7 +2515,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='31';
+const APP_VERSION='32';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
