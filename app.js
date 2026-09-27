@@ -472,7 +472,7 @@ function renderNetWorth(elId){
   const v=x=>hideBal?'******':fmtShort(x);
   el.innerHTML='<div class="nw-cell" onclick="openNwDetail(\'ready\')"><span>Tiền sẵn dùng</span><b>'+v(n.ready)+'</b><small>không gồm tiết kiệm</small></div>'+
     '<div class="nw-cell" onclick="openNwDetail(\'saving\')"><span>Tiết kiệm</span><b>'+v(n.saving)+'</b><small>sổ tiết kiệm</small></div>'+
-    '<div class="nw-cell" onclick="showScreen(\'loans\')"><span>Đang nợ</span><b class="neg">'+v(n.owe)+'</b><small>vay, mượn, thẻ âm</small></div>'+
+    '<div class="nw-cell" onclick="closeAppModal();showScreen(\'loans\')"><span>Đang nợ</span><b class="neg">'+v(n.owe)+'</b><small>vay, mượn, thẻ âm</small></div>'+
     '<div class="nw-cell" onclick="openNetWorthInfo()"><span>Tài sản ròng</span><b class="'+(n.net>=0?'pos':'neg')+'">'+v(n.net)+'</b><small>bấm xem chi tiết</small></div>';
 }
 function openNetWorthInfo(){
@@ -939,7 +939,7 @@ function renderHome(){
   renderQuests();
   checkBackupReminder();
   try{renderInstallTip();renderReminders();renderQuickAdd();applyCompanion();}catch(e){console.error(e);}
-  document.getElementById('homeBalance').innerHTML=balHtml(walletTotal())+eyeBtn();renderNetWorth('homeNet');
+  document.getElementById('homeBalance').innerHTML=balHtml(walletTotal())+eyeBtn();
   document.getElementById('rwMiniPoints').textContent=rewardProfile.total_points||0;
   document.getElementById('rwMiniStreak').textContent=rewardProfile.current_streak||0;
   const pendingDebts=debts.filter(d=>d.status==='pending');
@@ -2551,7 +2551,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='33';
+const APP_VERSION='35';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -2741,6 +2741,13 @@ function confirmPayoutWallet(){
 }
 
 /* Chi tiết Tiền sẵn dùng / Tiết kiệm */
+function openAssetDetail(){
+  document.getElementById('appModalBody').innerHTML='<h3>Chi tiết tài sản</h3><div class="nw-row nw-in" id="assetNet"></div>'+
+    '<div class="loan-hint" style="margin-bottom:12px;">Bấm vào từng ô để xem chi tiết.</div>'+
+    '<div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal();showScreen(\'accounts\')">Quản lý ví</button><button class="edit-modal-save" onclick="closeAppModal()">Đóng</button></div>';
+  renderNetWorth('assetNet');
+  document.getElementById('appModal').classList.add('show');
+}
 function openNwDetail(kind){
   const sav=kind==='saving';
   const list=wallets.filter(w=>sav?w.type==='saving':w.type!=='saving').slice().sort((a,b)=>(b.balance||0)-(a.balance||0));

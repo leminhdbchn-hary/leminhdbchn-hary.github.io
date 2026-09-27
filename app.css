@@ -699,3 +699,7 @@ html:not([data-theme]) .day-head{background:#0e0d0c;}
 .dh-sum i{font-style:normal;}
 .dh-sum .pos{color:var(--green);}.dh-sum .neg{color:var(--red);}
 .load-more{display:block;width:100%;margin:6px 0 12px;padding:12px;border:1px dashed rgba(226,194,139,.35);border-radius:12px;background:none;color:#e2c28b;font-family:inherit;font-size:13.5px;font-weight:600;}
+/* ===== Thanh dưới dính sát đáy màn hình, không còn nội dung nào lộ ra bên dưới ===== */
+.tabbar{left:0!important;right:0!important;bottom:0!important;max-width:none!important;margin:0!important;border-radius:22px 22px 0 0!important;border:none!important;border-top:1px solid rgba(194,154,92,.28)!important;background:#1c1916!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:0 -6px 20px rgba(0,0,0,.45)!important;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))!important;}
+.tabbar::after{content:'';position:absolute;left:0;right:0;top:100%;height:120px;background:#1c1916;}
+.screen{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px));}

@@ -15,7 +15,7 @@
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=33">
+<link rel="stylesheet" href="app.css?v=35">
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');}catch(e){}</script>
 </head>
 <body>
@@ -64,10 +64,10 @@
   <div class="balance-card bal-with-char">
     <div class="bal-txt"><div class="label">Tổng số dư</div>
     <div class="amount" id="homeBalance">0</div>
-    <div class="bal-links"><button onclick="showScreen('history')"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Lịch sử giao dịch</button><span class="bl-sep"></span><button onclick="showScreen('accounts')"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Ví tiền</button></div></div>
+    <div class="bal-links"><button onclick="showScreen('history')"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Lịch sử giao dịch</button><span class="bl-sep"></span><button onclick="openAssetDetail()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M2 20h20"/></svg>Chi tiết tài sản</button></div></div>
     <video class="bal-char tt-only" id="balChar" onclick="showScreen('chars')" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
   </div>
-  <div class="inner"><div class="nw-row" id="homeNet"></div>
+  <div class="inner">
     <div class="backup-warn" id="backupWarn" style="display:none"><span id="backupWarnTxt">💾 Đã lâu chưa sao lưu dữ liệu</span><button onclick="event.stopPropagation();exportJSON()">Sao lưu</button><button class="bw-x" onclick="event.stopPropagation();snoozeBackup()">✕</button></div>
     <div class="install-tip" id="installTip" style="display:none"><span>📲 Hãy <b>Thêm vào Màn hình chính</b> (nút Chia sẻ của Safari) và mở app từ icon — nếu không, iPhone có thể tự xoá dữ liệu sau vài ngày không dùng.</span><button onclick="snoozeInstallTip()">✕</button></div>
     <div class="remind-card" id="remindCard" style="display:none"></div>
@@ -474,7 +474,7 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=33"></script>
-<script src="app.js?v=33"></script>
+<script type="module" src="cloud.js?v=35"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>
