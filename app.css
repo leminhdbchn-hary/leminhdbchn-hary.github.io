@@ -790,4 +790,7 @@ html:not([data-theme]) .day-head{background:#0e0d0c;}
 .sw{width:22px;height:22px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 1px rgba(128,128,128,.35);}
 .sw-gold{background:linear-gradient(135deg,#d6b37a 0 50%,#1c1916 50% 100%);}
 .sw-sky{background:linear-gradient(135deg,#2ea6ef 0 50%,#ffffff 50% 100%);}
+.sw-red{background:linear-gradient(135deg,#e2142d 0 50%,#ffffff 50% 100%);}
+.skin-opts{gap:8px;}
+.skin-opt{padding:10px 6px;gap:6px;font-size:13.5px;white-space:nowrap;}
 @media (min-width:1000px){#screen-more .skin-card{grid-column:1/-1;}}
