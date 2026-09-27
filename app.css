@@ -800,3 +800,17 @@ html:not([data-theme]) .day-head{background:#0e0d0c;}
 .debt-tabs button{flex:1;padding:10px 6px;border-radius:12px;border:1px solid rgba(226,194,139,.22);background:var(--card);color:var(--sub);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
 .debt-tabs button.active{background:linear-gradient(145deg,#d6b37a,#9c7640);color:#1a1612;border-color:transparent;}
 .debt-in .debt-amt{color:var(--red);}
+
+/* ===== Thanh dưới trên điện thoại: gọn, cân đối, sát đáy hơn ===== */
+@media (max-width:999.98px){
+  .tabbar{align-items:center!important;padding:5px 6px max(4px,calc(env(safe-area-inset-bottom,0px) - 14px))!important;border-radius:20px 20px 0 0!important;}
+  .tabbar .tab{min-height:50px;padding:4px 0;gap:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .tabbar .tab .tab-icon{display:flex;align-items:center;justify-content:center;height:24px;}
+  .tabbar .tab .tab-icon svg{width:23px;height:23px;}
+  .tabbar .tab .tab-label{font-size:11.5px;line-height:1.2;font-weight:600;text-align:center;}
+  .tabbar .tab-add{justify-content:center;}
+  .tabbar .tab .fab{width:54px;height:54px;font-size:34px;margin-top:-26px;}
+  .screen{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px));}
+}
+/* Đầu trang Tổng quan: bo tròn mềm mại */
+.home-head{border-radius:26px!important;margin-top:4px;box-shadow:0 10px 28px rgba(0,0,0,.28);}
