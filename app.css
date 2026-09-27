@@ -659,3 +659,19 @@ button,input,select,textarea{font-family:inherit;}
 .cs-note{font-size:12.5px;color:var(--sub);padding:6px 16px 10px;line-height:1.45;}
 .cs-note a{color:#e2c28b;text-decoration:underline;cursor:pointer;}
 .tx-icon .emo-ic,.qa-chip .emo-ic{font-size:20px!important;}
+
+/* ===== Chế độ bình thường / Tu tiên ===== */
+html:not(.tt) .tt-only{display:none!important;}
+html.tt .normal-only{display:none!important;}
+.home-head{padding:calc(18px + env(safe-area-inset-top,0px)) 20px 44px;background:linear-gradient(145deg,#2a241d,#0e0d0c);border-radius:0 0 24px 24px;}
+.hh-title{font-size:24px;font-weight:700;color:#e2c28b;letter-spacing:.2px;}
+.hh-sub{font-size:13.5px;color:#bfb2a0;margin-top:4px;}
+html:not(.tt) .balance-card.bal-with-char{margin-top:-30px;}
+.lock-logo{object-fit:cover;border-radius:26px;}
+.mode-card{display:flex;align-items:center;gap:12px;background:linear-gradient(145deg,#2b2621,#1a1714);border:1px solid rgba(194,154,92,.3);border-radius:14px;padding:14px 15px;margin-bottom:14px;cursor:pointer;}
+.mode-txt{flex:1;display:flex;flex-direction:column;gap:3px;font-size:15px;color:var(--text);}
+.mode-txt small{font-size:12.5px;color:var(--sub);font-weight:400;line-height:1.4;}
+.switch{flex-shrink:0;width:50px;height:30px;border-radius:15px;background:rgba(255,255,255,.14);position:relative;transition:background .2s ease;}
+.switch span{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .2s ease;}
+.switch.on{background:linear-gradient(145deg,#d6b37a,#9c7640);}
+.switch.on span{transform:translateX(20px);}

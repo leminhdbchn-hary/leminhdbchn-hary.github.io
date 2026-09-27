@@ -238,6 +238,7 @@ function goBack(){
   showScreen(prev||(cur==='add'?'home':'more'),true);
 }
 function showScreen(name,isBack){
+  if((name==='reward'||name==='chars')&&!isTuTien()){name='home';}
   const cur=currentScreen();
   if(!isBack&&cur!==name){if(TAB_SCREENS.includes(name))navStack=[];else{navStack.push(cur);if(navStack.length>20)navStack.shift();}}
   window.scrollTo(0,0);
@@ -257,7 +258,7 @@ function showScreen(name,isBack){
   if(name==='debts')renderDebts();
   if(name==='loans')renderLoans();
   if(name==='reward')renderReward();
-  if(name==='more')updateLockMenu();
+  if(name==='more'){updateLockMenu();renderModeSwitch();}
   if(name==='chars')renderChars();
   if(name==='cloud')renderCloudScreen();
 }
@@ -783,6 +784,7 @@ function txItemHTML(t){
   return '<div class="tx-item" onclick="if(!event.target.closest(\'button\'))openEditTx('+t.id+')" style="cursor:pointer"><div class="tx-icon" style="background:'+(t.bg||'#e7f2fa')+'">'+icon(t.icon||'khac',t.accent||'#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+t.item+'</div><div class="note">'+(t.note||t.person||t.date)+'</div></div><div class="tx-amt '+cls+'">'+sign+fmt(t.amount)+'</div>'+rewardBtnHTML(t)+'<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();if(confirm(\'Xoá giao dịch này?\'))deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
 }
 function rewardBtnHTML(t){
+  if(!isTuTien())return '';
   if(t.type!=='chi')return '';
   if(t.reward_status==='REWARDED')return '<button class="rw-badge rw-done" title="Đã x2: '+t.reward_points+' linh lực" onclick="event.stopPropagation()">✓</button>';
   return '<button class="rw-badge rw-pending" title="Đánh dấu chi tiêu hợp lý (x2 linh lực)" onclick="awardSavingReward('+t.id+')">✨</button>';
@@ -814,8 +816,28 @@ function renderHistory(keepFilters){
 }
 function clearHistF(){histF.q='';histF.type='';histF.group='';histF.month='';const i=document.getElementById('hfQ');if(i)i.value='';document.getElementById('hfType').value='';renderHistory();}
 
+
+/* ---------- CHẾ ĐỘ: Bình thường (mặc định) / Tu tiên (linh thú, nhân vật, video) ---------- */
+function isTuTien(){try{return localStorage.getItem('tc_mode')==='tutien';}catch(e){return false;}}
+function stopTuTienMedia(){
+  ['homePetVid','petVid','balChar'].forEach(id=>{const v=document.getElementById(id);if(!v)return;try{v.pause();v.removeAttribute('src');v.removeAttribute('poster');delete v.dataset.st;v.load();}catch(e){}});
+}
+function renderModeSwitch(){
+  const on=isTuTien();document.documentElement.classList.toggle('tt',on);
+  const sw=document.getElementById('modeSwitch');if(sw){sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on?'true':'false');}
+  const d=document.getElementById('modeDesc');if(d)d.textContent=on?'Đang bật · Linh thú, bộ sưu tập nhân vật và video đang hiện':'Đang tắt · Bật để nuôi linh thú, sưu tầm nhân vật và xem video';
+}
+function toggleTuTien(){
+  const on=!isTuTien();
+  try{localStorage.setItem('tc_mode',on?'tutien':'normal');}catch(e){}
+  if(!on)stopTuTienMedia();
+  renderModeSwitch();
+  try{renderHome();}catch(e){}
+  showMiniToast(on?'🐾 Đã bật chế độ Tu tiên':'Đã chuyển về chế độ bình thường');
+}
 /* ---------- HOME / DASHBOARD ---------- */
 function renderHomePet(){
+  if(!isTuTien()){const hs=document.getElementById('homeHeadSub');if(hs){const d=new Date();hs.textContent=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()]+', '+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();}return;}
   const st=petStageIndex(),S=PET_STAGES[st],N=PET_STAGES[st+1],p=rewardProfile.total_points||0;
   document.getElementById('homePetName').textContent=rewardProfile.pet_name||'Linh Thú';
   document.getElementById('homePetLv').textContent=st+1;
@@ -1569,7 +1591,7 @@ function awardBaseLinhThach(t){
   });
   if(document.getElementById('screen-home').classList.contains('active'))renderHome();
   if(document.getElementById('screen-reward').classList.contains('active'))renderReward();
-  if(unlocked)setTimeout(()=>showMilestoneModal(unlocked),350);
+  if(unlocked&&isTuTien())setTimeout(()=>showMilestoneModal(unlocked),350);
 }
 function awardSavingReward(txId){
   const t=txs.find(x=>x.id===txId);
@@ -1674,7 +1696,7 @@ function renderPet(){
   if(petPreviewSt!==null)document.getElementById('petStageName').innerHTML+=' · <u onclick="event.stopPropagation();petPreviewSt=null;renderReward()">về hiện tại</u>';
   document.getElementById('petTalk').textContent=S.desc;
 }
-function petPlayVideo(){['petVid','homePetVid'].forEach(id=>{const v=document.getElementById(id);if(v&&v.style.display!=='none'&&v.paused){const pl=v.play();if(pl&&pl.catch)pl.catch(()=>{});}});}
+function petPlayVideo(){if(!isTuTien())return;['petVid','homePetVid'].forEach(id=>{const v=document.getElementById(id);if(v&&v.style.display!=='none'&&v.paused){const pl=v.play();if(pl&&pl.catch)pl.catch(()=>{});}});}
 document.addEventListener('touchstart',petPlayVideo,{passive:true});document.addEventListener('click',petPlayVideo);
 function petTap(){
   petPlayVideo();
@@ -2336,6 +2358,7 @@ const CHAR_SLOTS=6;
 function charOwned(c){return (rewardProfile.total_points||0)>=(c.need||0);}
 function companionId(){let id='';try{id=localStorage.getItem('tc_companion')||'';}catch(e){}const c=CHARACTERS.find(x=>x.id===id);return c&&charOwned(c)?c.id:CHARACTERS[0].id;}
 function applyCompanion(){
+  if(!isTuTien())return;
   const v=document.getElementById('balChar');if(!v)return;const c=CHARACTERS.find(x=>x.id===companionId());if(!c)return;
   if(v.getAttribute('src')!==c.video){v.setAttribute('poster',c.poster);v.setAttribute('src',c.video);v.load();v.play&&v.play().catch(()=>{});}
 }
@@ -2386,7 +2409,7 @@ function pinBuildPad(){
 }
 function pinShow(mode,keepUser){
   pinMode=mode;pinBuf='';pinFirst='';if(!keepUser&&mode!=='setUser')pendingUser='';
-  const T={unlock:['Nhập mật khẩu','Linh thú đang canh giữ sổ thu chi của bạn'],set:['Đặt mật khẩu mới','Nhập '+PIN_LEN+' số bạn dễ nhớ'],verifyOff:['Nhập mật khẩu hiện tại','Để tắt mật khẩu'],verifyChange:['Nhập mật khẩu hiện tại','Để đổi mật khẩu'],verifyChangeUser:['Nhập mật khẩu hiện tại','Để đổi tên đăng nhập'],setUser:['Đặt tên đăng nhập','Phải nhập đúng tên này (và mật khẩu) mới mở được app']}[mode];
+  const T={unlock:['Nhập mật khẩu',isTuTien()?'Linh thú đang canh giữ sổ thu chi của bạn':'Nhập mật khẩu để mở sổ thu chi'],set:['Đặt mật khẩu mới','Nhập '+PIN_LEN+' số bạn dễ nhớ'],verifyOff:['Nhập mật khẩu hiện tại','Để tắt mật khẩu'],verifyChange:['Nhập mật khẩu hiện tại','Để đổi mật khẩu'],verifyChangeUser:['Nhập mật khẩu hiện tại','Để đổi tên đăng nhập'],setUser:['Đặt tên đăng nhập','Phải nhập đúng tên này (và mật khẩu) mới mở được app']}[mode];
   if(mode==='unlock'&&userIsSet()){T[0]='Đăng nhập';T[1]='Nhập tên đăng nhập và mật khẩu';}
   const uIn=document.getElementById('lockUser'),showU=mode==='setUser'||(mode==='unlock'&&userIsSet());
   uIn.style.display=showU?'':'none';uIn.value='';
@@ -2451,7 +2474,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='30';
+const APP_VERSION='31';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
