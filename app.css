@@ -917,3 +917,19 @@ html.idb-wait body::after{content:'Đang tải dữ liệu…';position:fixed;in
 /* Số tiền trong danh sách giao dịch: to hơn bản gốc một chút nhưng vừa mắt, đồng nhất với các số khác */
 .tx-item>.tx-amt,.tx-amt{font-size:15.5px;font-weight:700;}
 html.skin-sky .tx-amt.fam,html.skin-red .tx-amt.fam{color:#c2508f!important;}
+
+/* ===== v50: Chữ và số cùng cỡ trên màn Tổng quan (điện thoại + máy tính) =====
+   Mỗi cặp nhãn–số lấy trung bình cộng 2 cỡ cũ; phân biệt bằng độ đậm và màu. */
+/* Chi tiêu lớn nhất + danh sách giao dịch: tên 14.5 & số 15.5 → 15 */
+.tx-info .cat{font-size:15px;font-weight:600;line-height:1.35;}
+.tx-item>.tx-amt,.tx-amt{font-size:15px;font-weight:700;line-height:1.35;}
+/* Ô Thu / Chi / Còn lại: nhãn 11.5 & số 14 → 12.75 */
+#screen-home .month-box .l,#screen-home .month-box .v{font-size:12.75px;}
+#screen-home .month-box .v{margin-top:4px;}
+/* Ghi nhanh: tên 12.5 & số tiền 11 → 11.75 */
+#screen-home .qa-chip,#screen-home .qa-chip small{font-size:11.75px;}
+/* Sắp đến hạn: "Tổng phải trả" 12.5 & số 13.5 → 13; "Cả 7 ngày" 12.5 & số 14.5 → 13.5 */
+#screen-home .rc-sum,#screen-home .rc-sum b{font-size:13px;}
+#screen-home .rc-week>div:first-child,#screen-home .rc-week b{font-size:13.5px;}
+/* Tiêu đề ngày: ngày 13.5 & tổng 12.5 → 13 */
+#screen-home .dh-date,#screen-home .dh-sum{font-size:13px;}
