@@ -553,6 +553,37 @@ window.screenHooks={
 })();
 
 /* =====================================================================
+   v53: Sắp xếp các mục trong Cài đặt (kéo thả / ▲▼), lưu trên máy
+   ===================================================================== */
+const MORE_ORDER_DEFAULT=['more-acc','more-budget','more-recur','more-hist','more-cats','more-goals','more-loans','more-debts','more-borrow','more-family','more-split','grp-backup','more-lock','grp-skin','grp-fs','more-mode','more-reward','more-chars','more-update'];
+const MORE_NAMES={'more-acc':'Quản lý ví tiền','more-budget':'Ngân sách','more-recur':'Thu chi định kỳ','more-hist':'Lịch sử giao dịch','more-cats':'Quản lý hạng mục','more-goals':'Mục tiêu tiết kiệm','more-loans':'Vay ngân hàng','more-debts':'Cho vay','more-borrow':'Vay nợ khác','more-family':'Tiền gia đình','more-split':'Chia tiền nhóm','grp-backup':'Sao lưu và đồng bộ','more-lock':'Tên đăng nhập & mật khẩu','grp-skin':'Giao diện màu','grp-fs':'Cỡ chữ & số','more-mode':'Chế độ Tu tiên','more-reward':'Nuôi Linh Thú','more-chars':'Bộ sưu tập nhân vật','more-update':'Cập nhật app'};
+function moreInner(){return document.querySelector('#screen-more .inner');}
+function moreMovables(){const inner=moreInner();return inner?[...inner.children].filter(e=>e.id&&MORE_NAMES[e.id]):[];}
+function getMoreOrder(){let o=null;try{o=JSON.parse(localStorage.getItem('tc_more_order')||'null');}catch(e){}
+  if(!Array.isArray(o))o=MORE_ORDER_DEFAULT.slice();
+  o=o.filter(id=>MORE_NAMES[id]);MORE_ORDER_DEFAULT.forEach(id=>{if(!o.includes(id))o.push(id);});return o;}
+function applyMoreOrder(){const inner=moreInner();if(!inner)return;const anchor=document.getElementById('more-trash');const map={};moreMovables().forEach(e=>map[e.id]=e);
+  getMoreOrder().forEach(id=>{if(map[id])inner.insertBefore(map[id],anchor);});}
+function saveMoreOrder(o){try{localStorage.setItem('tc_more_order',JSON.stringify(o));}catch(e){}applyMoreOrder();}
+function renderMoreSort(){const box=document.getElementById('moreSortList');if(!box)return;const o=getMoreOrder();
+  box.innerHTML=o.map((id,i)=>'<div class="ms-row'+(/more-reward|more-chars/.test(id)?' tt-only':'')+'" data-id="'+id+'"><span class="ms-grip" aria-label="Kéo để di chuyển">≡</span><span class="ms-name">'+MORE_NAMES[id]+'</span>'+
+    '<button class="ms-btn" '+(i===0?'disabled':'')+' onclick="moveMoreItem(\''+id+'\',-1)" aria-label="Lên">▲</button><button class="ms-btn" '+(i===o.length-1?'disabled':'')+' onclick="moveMoreItem(\''+id+'\',1)" aria-label="Xuống">▼</button></div>').join('');
+  box.querySelectorAll('.ms-grip').forEach(g=>g.addEventListener('pointerdown',moreDragStart));}
+function moveMoreItem(id,d){const o=getMoreOrder();const i=o.indexOf(id),j=i+d;if(i<0||j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];saveMoreOrder(o);renderMoreSort();}
+function resetMoreOrder(){try{localStorage.removeItem('tc_more_order');}catch(e){}applyMoreOrder();renderMoreSort();showMiniToast('Đã đưa về thứ tự gợi ý');}
+function toggleMoreSort(){const inner=moreInner();const on=!inner.classList.contains('sorting');inner.classList.toggle('sorting',on);
+  document.getElementById('moreSort').style.display=on?'block':'none';document.getElementById('moreSortBtn').textContent=on?'✓ Xong':'⇅ Sắp xếp';
+  if(on)renderMoreSort();else applyMoreOrder();}
+function moreDragStart(ev){const row=ev.target.closest('.ms-row');if(!row)return;ev.preventDefault();const box=row.parentNode;row.classList.add('dragging');
+  const move=e=>{const y=e.clientY;const rows=[...box.querySelectorAll('.ms-row')].filter(r=>r!==row&&r.offsetParent!==null);
+    let before=null;for(const r of rows){const b=r.getBoundingClientRect();if(y<b.top+b.height/2){before=r;break;}}
+    if(before)box.insertBefore(row,before);else box.appendChild(row);};
+  const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);row.classList.remove('dragging');
+    saveMoreOrder([...box.querySelectorAll('.ms-row')].map(r=>r.dataset.id));renderMoreSort();};
+  window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);}
+try{applyMoreOrder();}catch(e){}
+
+/* =====================================================================
    Kiểm thử tự động (gọi từ tests/run.js)
    ===================================================================== */
 window.__extraTests=async function(){
