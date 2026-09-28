@@ -61,6 +61,18 @@ async function addTx(p, type, amount, group, item, walletId) {
   await p.evaluate(() => { showScreen('add'); setType('transfer'); document.getElementById('amountInput').value = '200000'; document.getElementById('xferFrom').value = '2'; document.getElementById('xferTo').value = '1'; saveTx(); });
   ok(await bal(p, 1) === 1200000 && await bal(p, 2) === 5100000, 'chuyển ví', [await bal(p, 1), await bal(p, 2)]);
 
+  /* 2b. Tiền gia đình: thêm & sửa */
+  await p.evaluate(() => { showScreen('add'); setType('family'); setFamDir('in'); document.getElementById('amountInput').value = '500000'; document.getElementById('famWallet').value = '1'; saveTx(); });
+  ok(await bal(p, 1) === 1700000, 'gia đình: nhận tiền cộng ví', await bal(p, 1));
+  const famId = await p.evaluate(() => txs.find(t => t.type === 'family').id);
+  ok(await p.evaluate(id => { showScreen('family'); return !!document.querySelector('#screen-family [onclick*="openEditTx(' + id + ')"][aria-label="Sửa"]'); }, famId), 'gia đình: có nút sửa');
+  await p.evaluate(id => { openEditTx(id); document.getElementById('amountInput').value = '300000'; saveTx(); }, famId);
+  ok(await bal(p, 1) === 1500000 && await p.evaluate(id => txs.find(t => t.id === id).amount, famId) === 300000, 'gia đình: sửa số tiền', await bal(p, 1));
+  await p.evaluate(id => { openEditTx(id); setFamDir('out'); saveTx(); }, famId);
+  ok(await bal(p, 1) === 900000, 'gia đình: đổi nhận → đưa', await bal(p, 1));
+  await p.evaluate(id => deleteTx(id), famId);
+  ok(await bal(p, 1) === 1200000, 'gia đình: xoá hoàn ví', await bal(p, 1));
+
   /* 3. Cho vay & Vay nợ khác */
   await p.evaluate(() => { openDebts('out'); toggleDebtForm(); document.getElementById('debtPerson').value = 'Lan'; document.getElementById('debtAmount').value = '100000'; document.getElementById('debtSourceWallet').value = '1'; saveDebt(); });
   ok(await bal(p, 1) === 1100000, 'cho vay trừ ví', await bal(p, 1));
