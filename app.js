@@ -947,7 +947,10 @@ function renderModeSwitch(){
   const sw=document.getElementById('modeSwitch');if(sw){sw.classList.toggle('on',on);sw.setAttribute('aria-checked',on?'true':'false');}
   const d=document.getElementById('modeDesc');if(d)d.textContent=on?'Đang bật · Linh thú, bộ sưu tập nhân vật và video đang hiện':'Đang tắt · Bật để nuôi linh thú, sưu tầm nhân vật và xem video';
 }
-function renderSkinOpts(){const cur=window.getSkin?getSkin():'gold';document.querySelectorAll('.skin-opt').forEach(b=>b.classList.toggle('active',b.dataset.skin===cur));}
+function renderSkinOpts(){const cur=window.getSkin?getSkin():'gold';document.querySelectorAll('.skin-opt[data-skin]').forEach(b=>b.classList.toggle('active',b.dataset.skin===cur));renderFsOpts();}
+function getFontSize(){let v=13;try{v=parseFloat(localStorage.getItem('tc_fs'))||13;}catch(e){}return v;}
+function renderFsOpts(){const cur=getFontSize();document.querySelectorAll('.fs-opt').forEach(b=>b.classList.toggle('active',parseFloat(b.dataset.fs)===cur));}
+function chooseFontSize(v){try{localStorage.setItem('tc_fs',String(v));}catch(e){}document.documentElement.style.setProperty('--fs',v+'px');renderFsOpts();showMiniToast('Đã đổi cỡ chữ & số: '+({12:'Nhỏ',13:'Vừa',14.5:'Lớn',16:'Rất lớn'}[v]||v+'px'));}
 function chooseSkin(s){if(window.setSkin)setSkin(s);renderSkinOpts();showMiniToast('Đã đổi sang giao diện '+({sky:'Xanh trắng',red:'Đỏ trắng'}[s]||'Vàng đen'));}
 function toggleTuTien(){
   const on=!isTuTien();
@@ -2716,7 +2719,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='50';
+const APP_VERSION='51';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
