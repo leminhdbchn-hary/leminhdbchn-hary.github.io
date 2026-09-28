@@ -935,3 +935,16 @@ html.skin-sky .tx-amt.fam,html.skin-red .tx-amt.fam{color:#c2508f!important;}
 .fs-opt .fs-a{font-weight:700;}
 .fs-preview{font-size:var(--fs);color:var(--sub);text-align:center;}
 .fs-preview b{color:var(--text);}
+
+/* ===== v52: Cài đặt – nhóm mục thu gọn (Sao lưu & đồng bộ, Giao diện màu, Cỡ chữ & số) ===== */
+.more-group{margin-bottom:10px;}
+.more-group>.grp-head{margin-bottom:0;cursor:pointer;}
+.grp-head .grp-val{margin-left:auto;font-size:12.5px;font-weight:500;color:var(--sub);white-space:nowrap;}
+.grp-head .grp-chev{font-size:20px;line-height:1;color:var(--sub);transition:transform .2s ease;margin-left:4px;}
+.more-group.open>.grp-head .grp-chev{transform:rotate(90deg);}
+.grp-body{display:none;padding:8px 0 0 14px;margin-left:10px;border-left:2px solid rgba(194,154,92,.25);}
+.more-group.open>.grp-body{display:block;}
+.grp-body>.more-item{margin-bottom:8px;font-size:14px;padding:13px 14px;}
+.grp-body>.more-item:last-of-type{margin-bottom:0;}
+.grp-body>.grp-card{margin-bottom:0;}
+@media (min-width:1000px){#screen-more .more-group.open{grid-column:1/-1;}}

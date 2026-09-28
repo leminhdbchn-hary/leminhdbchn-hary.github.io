@@ -10,18 +10,18 @@
 <meta name="theme-color" content="#0e0d0c">
 <link rel="manifest" href="manifest.json">
 <meta name="format-detection" content="telephone=no">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=51">
-<link rel="icon" type="image/png" href="favicon.png?v=51">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=52">
+<link rel="icon" type="image/png" href="favicon.png?v=52">
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=51">
-<script src="skin.js?v=51"></script>
+<link rel="stylesheet" href="app.css?v=52">
+<script src="skin.js?v=52"></script>
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');var _f=localStorage.getItem('tc_fs');if(_f)document.documentElement.style.setProperty('--fs',_f+'px');if(localStorage.getItem('tc_ls_partial')==='1')document.documentElement.classList.add('idb-wait');}catch(e){}</script>
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=51" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=52" alt="">
   <div class="lock-title" id="lockTitle">Nhập mật khẩu</div>
   <div class="lock-sub" id="lockSub">Nhập mật khẩu để mở sổ thu chi</div>
   <input id="lockUser" class="lock-user" type="text" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" style="display:none" onkeydown="if(event.key==='Enter'){if(pinMode==='setUser')pinUserNext();else this.blur();}">
@@ -33,7 +33,7 @@
 <script>try{if(localStorage.getItem('tc_pin_hash'))document.documentElement.classList.add('is-locked');}catch(e){}</script>
 
 <div id="cloudGateScreen" class="cloud-gate">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=51" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=52" alt="">
   <div class="lock-title">Sổ Thu Chi</div>
   <div class="lock-sub" id="gateSub">Đang kiểm tra đăng nhập...</div>
   <div id="gateBtnWrap" style="display:none;width:100%;max-width:300px;">
@@ -459,24 +459,6 @@
     <div class="mode-txt"><b>Chế độ Tu tiên 🐾</b><small id="modeDesc">Đang tắt · Bật để nuôi linh thú, sưu tầm nhân vật và xem video</small></div>
     <span class="switch" id="modeSwitch" role="switch" aria-checked="false"><span></span></span>
   </div>
-  <div class="skin-card">
-    <div class="mode-txt"><b>Giao diện màu</b></div>
-    <div class="skin-opts">
-      <button class="skin-opt" data-skin="gold" onclick="chooseSkin('gold')"><span class="sw sw-gold"></span>Vàng đen</button>
-      <button class="skin-opt" data-skin="sky" onclick="chooseSkin('sky')"><span class="sw sw-sky"></span>Xanh trắng</button>
-      <button class="skin-opt" data-skin="red" onclick="chooseSkin('red')"><span class="sw sw-red"></span>Đỏ trắng</button>
-    </div>
-  </div>
-  <div class="skin-card">
-    <div class="mode-txt"><b>Cỡ chữ &amp; số</b></div>
-    <div class="skin-opts">
-      <button class="skin-opt fs-opt" data-fs="12" onclick="chooseFontSize(12)"><span class="fs-a" style="font-size:13px">A</span>Nhỏ</button>
-      <button class="skin-opt fs-opt" data-fs="13" onclick="chooseFontSize(13)"><span class="fs-a" style="font-size:15px">A</span>Vừa</button>
-      <button class="skin-opt fs-opt" data-fs="14.5" onclick="chooseFontSize(14.5)"><span class="fs-a" style="font-size:17px">A</span>Lớn</button>
-      <button class="skin-opt fs-opt" data-fs="16" onclick="chooseFontSize(16)"><span class="fs-a" style="font-size:19px">A</span>Rất lớn</button>
-    </div>
-    <div class="fs-preview">Ăn sáng · <b>15.000 VND</b></div>
-  </div>
   <div class="more-item tt-only" onclick="showScreen('reward')" id="more-reward">Nuôi Linh Thú 🐾</div>
   <div class="more-item tt-only" onclick="showScreen('chars')" id="more-chars">Bộ sưu tập nhân vật</div>
   <div class="more-item" onclick="showScreen('budget')" id="more-budget">Ngân sách</div>
@@ -491,12 +473,43 @@
   <div class="more-item" onclick="showScreen('loans')" id="more-loans">Vay ngân hàng</div>
   <div class="more-item" onclick="showScreen('history')" id="more-hist">Lịch sử giao dịch</div>
   <div class="more-item" onclick="openPinSettings()" id="more-lock">Mật khẩu vào app</div>
+  <div class="more-group" id="grp-backup">
+  <div class="more-item grp-head" id="more-backup" onclick="toggleMoreGroup('grp-backup')"></div>
+  <div class="grp-body">
   <div class="more-item" onclick="openBackups()" id="more-autobk">Bản sao lưu tự động</div>
   <div class="more-item" onclick="exportCSV()" id="more-exportcsv">Xuất dữ liệu (CSV / Excel)</div>
   <div class="more-item" onclick="exportJSON()" id="more-exportjson">Sao lưu dữ liệu (JSON)</div>
   <div class="more-item" onclick="triggerImport()" id="more-import">Khôi phục dữ liệu (JSON)</div>
   <input type="file" id="importFileInput" accept="application/json" style="display:none" onchange="onImportFile(event)">
   <div class="more-item" onclick="showScreen('cloud')" id="more-cloud">☁️ Đồng bộ nhiều thiết bị (Cloud)</div>
+  </div>
+  </div>
+  <div class="more-group" id="grp-skin">
+  <div class="more-item grp-head" id="more-skin" onclick="toggleMoreGroup('grp-skin')"></div>
+  <div class="grp-body">
+  <div class="skin-card grp-card">
+    <div class="skin-opts">
+      <button class="skin-opt" data-skin="gold" onclick="chooseSkin('gold')"><span class="sw sw-gold"></span>Vàng đen</button>
+      <button class="skin-opt" data-skin="sky" onclick="chooseSkin('sky')"><span class="sw sw-sky"></span>Xanh trắng</button>
+      <button class="skin-opt" data-skin="red" onclick="chooseSkin('red')"><span class="sw sw-red"></span>Đỏ trắng</button>
+    </div>
+  </div>
+  </div>
+  </div>
+  <div class="more-group" id="grp-fs">
+  <div class="more-item grp-head" id="more-fs" onclick="toggleMoreGroup('grp-fs')"></div>
+  <div class="grp-body">
+  <div class="skin-card grp-card">
+    <div class="skin-opts">
+      <button class="skin-opt fs-opt" data-fs="12" onclick="chooseFontSize(12)"><span class="fs-a" style="font-size:13px">A</span>Nhỏ</button>
+      <button class="skin-opt fs-opt" data-fs="13" onclick="chooseFontSize(13)"><span class="fs-a" style="font-size:15px">A</span>Vừa</button>
+      <button class="skin-opt fs-opt" data-fs="14.5" onclick="chooseFontSize(14.5)"><span class="fs-a" style="font-size:17px">A</span>Lớn</button>
+      <button class="skin-opt fs-opt" data-fs="16" onclick="chooseFontSize(16)"><span class="fs-a" style="font-size:19px">A</span>Rất lớn</button>
+    </div>
+    <div class="fs-preview">Ăn sáng · <b>15.000 VND</b></div>
+  </div>
+  </div>
+  </div>
   <div class="more-item" onclick="checkUpdate(true)" id="more-update">Cập nhật app</div>
   <div class="more-item" onclick="clearAll()" id="more-trash" style="color:var(--red);">Xoá toàn bộ dữ liệu</div>
   </div>
@@ -550,9 +563,9 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=51"></script>
-<script src="store.js?v=51"></script>
-<script src="app.js?v=51"></script>
-<script src="features.js?v=51"></script>
+<script type="module" src="cloud.js?v=52"></script>
+<script src="store.js?v=52"></script>
+<script src="app.js?v=52"></script>
+<script src="features.js?v=52"></script>
 </body>
 </html>

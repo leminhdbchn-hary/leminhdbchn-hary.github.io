@@ -87,6 +87,9 @@ function migrateCategories(){
   return changed;
 }
 const ICONS={
+palette:'<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5C21 6.4 17 3 12 3z"/><circle cx="7.5" cy="11.5" r="1.2"/><circle cx="10" cy="7.5" r="1.2"/><circle cx="14.5" cy="7.5" r="1.2"/>',
+textsize:'<path d="M4 7V5h10v2"/><path d="M9 5v14"/><path d="M7 19h4"/><path d="M14 12v-1h7v1"/><path d="M17.5 11v8"/><path d="M16 19h3"/>',
+cloudsync:'<path d="M7 18a4.5 4.5 0 1 1 .9-8.9A6 6 0 0 1 19.5 11 3.5 3.5 0 0 1 18 18H7z"/><path d="M10 14l2-2 2 2"/><path d="M12 12v5"/>',
   handshake:'<path d="M11 17l2 2a1.4 1.4 0 002-2"/><path d="M14 14l2.5 2.5a1.4 1.4 0 002-2l-3.9-3.9a2.8 2.8 0 00-4 0l-.9.9a1.4 1.4 0 01-2-2l2.8-2.8a4 4 0 015.2-.4l.5.4"/><path d="M21 11l-2 1"/><path d="M3 11l5 5 1 1a1.4 1.4 0 002-2"/><path d="M3 5l3 3 3-2"/><path d="M21 5l-3 3"/>',
   lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/><circle cx="12" cy="16" r="1.3"/>',
   paw:'<circle cx="7" cy="9" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="9" r="2"/><path d="M8 17c0-3 1.8-5 4-5s4 2 4 5c0 1.7-1.4 2.5-4 2.5S8 18.7 8 17z"/>',
@@ -320,7 +323,7 @@ function showScreen(name,isBack){
   if(name==='debts')renderDebts();
   if(name==='loans')renderLoans();
   if(name==='reward')renderReward();
-  if(name==='more'){updateLockMenu();renderModeSwitch();renderSkinOpts();}
+  if(name==='more'){updateLockMenu();renderModeSwitch();renderSkinOpts();renderMoreGroups();}
   if(name==='chars')renderChars();
   if(name==='cloud')renderCloudScreen();
   if(window.screenHooks&&screenHooks[name]){try{screenHooks[name]();}catch(e){console.error(e);}}
@@ -950,7 +953,15 @@ function renderModeSwitch(){
 function renderSkinOpts(){const cur=window.getSkin?getSkin():'gold';document.querySelectorAll('.skin-opt[data-skin]').forEach(b=>b.classList.toggle('active',b.dataset.skin===cur));renderFsOpts();}
 function getFontSize(){let v=13;try{v=parseFloat(localStorage.getItem('tc_fs'))||13;}catch(e){}return v;}
 function renderFsOpts(){const cur=getFontSize();document.querySelectorAll('.fs-opt').forEach(b=>b.classList.toggle('active',parseFloat(b.dataset.fs)===cur));}
-function chooseFontSize(v){try{localStorage.setItem('tc_fs',String(v));}catch(e){}document.documentElement.style.setProperty('--fs',v+'px');renderFsOpts();showMiniToast('Đã đổi cỡ chữ & số: '+({12:'Nhỏ',13:'Vừa',14.5:'Lớn',16:'Rất lớn'}[v]||v+'px'));}
+const FS_NAMES={12:'Nhỏ',13:'Vừa',14.5:'Lớn',16:'Rất lớn'},SKIN_NAMES={gold:'Vàng đen',sky:'Xanh trắng',red:'Đỏ trắng'};
+function toggleMoreGroup(id){const g=document.getElementById(id);if(g)g.classList.toggle('open');}
+function renderMoreGroups(){
+  const h=(id,ic,txt,val)=>{const e=document.getElementById(id);if(e)e.innerHTML='<span>'+icon(ic,'#c29a5c',20)+'</span><span>'+txt+'</span><span class="grp-val">'+(val||'')+'</span><span class="grp-chev">›</span>';};
+  h('more-backup','cloudsync','Sao lưu và đồng bộ','');
+  h('more-skin','palette','Giao diện màu',SKIN_NAMES[window.getSkin?getSkin():'gold']||'');
+  h('more-fs','textsize','Cỡ chữ & số',FS_NAMES[getFontSize()]||(getFontSize()+'px'));
+}
+function chooseFontSize(v){try{localStorage.setItem('tc_fs',String(v));}catch(e){}document.documentElement.style.setProperty('--fs',v+'px');renderFsOpts();renderMoreGroups();showMiniToast('Đã đổi cỡ chữ & số: '+(FS_NAMES[v]||v+'px'));}
 function chooseSkin(s){if(window.setSkin)setSkin(s);renderSkinOpts();showMiniToast('Đã đổi sang giao diện '+({sky:'Xanh trắng',red:'Đỏ trắng'}[s]||'Vàng đen'));}
 function toggleTuTien(){
   const on=!isTuTien();
@@ -2709,7 +2720,7 @@ function updateLockMenu(){const e=document.getElementById('more-lock');if(e)e.in
 function updateCloudMenu(){
   const e=document.getElementById('more-cloud');if(!e)return;
   const on=window.Cloud&&window.Cloud.isLoggedIn();
-  e.innerHTML='<span>☁️</span><span>Đồng bộ nhiều thiết bị (Cloud)</span><span style="margin-left:auto;font-size:12.5px;color:'+(on?'var(--green)':'var(--sub)')+'">'+(on?'Đang bật':'Chưa bật')+'</span>';
+  e.innerHTML='<span>'+icon('cloudsync','#c29a5c',20)+'</span><span>Đồng bộ nhiều thiết bị (Cloud)</span><span style="margin-left:auto;font-size:12.5px;color:'+(on?'var(--green)':'var(--sub)')+'">'+(on?'Đang bật':'Chưa bật')+'</span>';
 }
 // Khoá lại khi rời app quá 1 phút
 document.addEventListener('visibilitychange',()=>{if(!pinIsSet())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>60000){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
@@ -2719,7 +2730,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='51';
+const APP_VERSION='52';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -2768,6 +2779,7 @@ document.getElementById('more-borrow').innerHTML='<span>'+icon('wallet','#c29a5c
 document.getElementById('more-loans').innerHTML='<span>'+icon('bank','#c29a5c',20)+'</span><span>Vay ngân hàng</span>';
 document.getElementById('more-reward').innerHTML='<span>'+icon('paw','#c29a5c',20)+'</span><span>Nuôi Linh Thú</span>';
 document.getElementById('more-chars').innerHTML='<span>'+icon('trophy','#c29a5c',20)+'</span><span>Bộ sưu tập nhân vật</span>';
+renderMoreGroups();
 document.getElementById('more-trash').innerHTML='<span>'+icon('trash','var(--red)',20)+'</span><span>Xoá toàn bộ dữ liệu</span>';
 document.querySelectorAll('.more-item').forEach(el=>el.style.gap='12px');
 renderHome();
