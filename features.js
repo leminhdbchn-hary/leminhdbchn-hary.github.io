@@ -477,7 +477,12 @@ function prevRange(){
 function inDates(t,a,b){const d=new Date((t.date||'')+'T00:00:00');return d>=a&&d<=b;}
 function walletBalanceHistory(months){
   /* Ước tính tổng số dư các ví ở cuối mỗi tháng: lấy số dư hiện tại trừ ngược các giao dịch phát sinh sau đó */
-  const now=walletTotal();const eff=t=>{if(!t.walletId&&t.type!=='family')return 0;if(t.type==='thu')return t.walletId?t.amount:0;if(t.type==='chi')return t.walletId?-t.amount:0;if(t.type==='family')return t.walletId?(t.dir==='in'?t.amount:-t.amount):0;return 0;};
+  const now=walletTotal();const wById=id=>wallets.find(w=>String(w.id)===String(id));const wByName=n=>wallets.find(w=>w.name===n);
+  const eff=t=>{
+    /* Thẻ tín dụng không nằm trong tổng số dư: chi bằng thẻ = 0, trả nợ thẻ (ví → thẻ) = trừ tiền ví */
+    if(t.type==='transfer'){const f=isCredit(wByName(t.fromName)),to=isCredit(wByName(t.toName));return f===to?0:(to?-t.amount:t.amount);}
+    if(t.walletId&&isCredit(wById(t.walletId)))return 0;
+    if(!t.walletId&&t.type!=='family')return 0;if(t.type==='thu')return t.walletId?t.amount:0;if(t.type==='chi')return t.walletId?-t.amount:0;if(t.type==='family')return t.walletId?(t.dir==='in'?t.amount:-t.amount):0;return 0;};
   const out=[];const t0=new Date();
   for(let i=months-1;i>=0;i--){
     const end=new Date(t0.getFullYear(),t0.getMonth()-i+1,0);const endS=end.getFullYear()+'-'+String(end.getMonth()+1).padStart(2,'0')+'-'+String(end.getDate()).padStart(2,'0');

@@ -1,6 +1,6 @@
 /* Sổ Thu Chi – service worker: chạy khi mất mạng, tải nhanh hơn */
-const CACHE='stc-v54';
-const CORE=['./','index.html','app.css?v=54','app.js?v=54','cloud.js?v=54','skin.js?v=54','store.js?v=54','features.js?v=54','manifest.json','icon-192.png?v=54','icon-512.png?v=54','apple-touch-icon.png?v=54','favicon.png?v=54','pets/stage1.jpg','characters/char1.jpg'];
+const CACHE='stc-v55';
+const CORE=['./','index.html','app.css?v=55','app.js?v=55','cloud.js?v=55','skin.js?v=55','store.js?v=55','features.js?v=55','manifest.json','icon-192.png?v=55','icon-512.png?v=55','apple-touch-icon.png?v=55','favicon.png?v=55','pets/stage1.jpg','characters/char1.jpg'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))));

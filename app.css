@@ -969,3 +969,10 @@ html.skin-sky .tx-amt.fam,html.skin-red .tx-amt.fam{color:#c2508f!important;}
 .ms-reset{background:none;border:1.5px solid rgba(194,154,92,.35);color:var(--text);}
 .ms-done{border:none;background:var(--blue,#2d8cf0);color:#fff;}
 @media (min-width:1000px){#screen-more .more-head,#screen-more .more-sort{grid-column:1/-1;}}
+
+/* v55: thẻ tín dụng */
+.wcard-credit{border-color:rgba(224,72,60,.45);}
+.cc-bar{height:5px;margin:0 14px 10px;border-radius:3px;background:rgba(194,154,92,.18);overflow:hidden;}
+.cc-bar i{display:block;height:100%;background:#e0483c;border-radius:3px;}
+.cc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.cc-pay{flex:none;border:0;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;background:#c29a5c;color:#1a1714;cursor:pointer;}
