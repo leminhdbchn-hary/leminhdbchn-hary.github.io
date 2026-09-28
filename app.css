@@ -913,7 +913,7 @@ html.idb-wait body::after{content:'Đang tải dữ liệu…';position:fixed;in
 
 /* Tổng số dư các ví: chữ & số trắng nổi trên nền màu (mọi giao diện) */
 .total-card,.total-card .tc-l,.total-card .tc-l span,.total-card .tc-v,.total-card .tc-v .eye-btn,.total-card .cur,.total-card sup{color:#fff!important;}
-.total-card .tc-v{font-size:28px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.18);}
-/* Số tiền trong danh sách giao dịch to, rõ hơn */
-.tx-item>.tx-amt,.tx-amt{font-size:17px!important;font-weight:700!important;}
+.total-card .tc-v{font-size:26px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.18);}
+/* Số tiền trong danh sách giao dịch: to hơn bản gốc một chút nhưng vừa mắt, đồng nhất với các số khác */
+.tx-item>.tx-amt,.tx-amt{font-size:15.5px;font-weight:700;}
 html.skin-sky .tx-amt.fam,html.skin-red .tx-amt.fam{color:#c2508f!important;}
