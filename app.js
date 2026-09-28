@@ -12,7 +12,7 @@ const CAT_DEF={
     ['Nhà cửa','🏡','#0e6fb8',[['Mua sắm đồ đạc','🛋️'],['Sửa chữa nhà cửa','🔨'],['Thuê nhà','🔑']]],
     ['Con cái','👶','#e0a000',[['Học phí','🎓'],['Sách vở','📚'],['Sữa','🍼'],['Tiền tiêu vặt','💵'],['Đồ chơi','🧸']]],
     ['Hưởng thụ','🏖️','#7b2d8e',[['Du lịch','🗺️'],['Làm đẹp','💆'],['Mỹ phẩm','💄'],['Phim ảnh, ca nhạc','🎬'],['Vui chơi giải trí','🎵']]],
-    ['Ngân hàng','🏦','#0a4f8c',[['Phí chuyển khoản','💸'],['Thanh toán thẻ tín dụng','💳']]],
+    ['Ngân hàng','🏦','#0a4f8c',[['Phí chuyển khoản','💸'],['Thanh toán thẻ tín dụng','💳'],['Trả lãi vay','📈']]],
     ['Phát triển bản thân','🌱','#22a765',[['Giao lưu, quan hệ','🤝'],['Học hành','✏️']]],
     ['Sức khỏe','❤️','#e0483c',[['Khám chữa bệnh','🩺'],['Thuốc men','💊'],['Thể thao','⚽']]],
     ['Trang phục','👔','#1b6fb5',[['Giày dép','👟'],['Phụ kiện khác','🕶️'],['Quần áo','👕']]],
@@ -72,6 +72,7 @@ function legacyTarget(type,group,item){
 function migrateCategories(){
   let changed=false;
   (txs||[]).forEach(t=>{if(t.item==='Đi vay cá nhân'){t.item='Vay nợ khác';changed=true;}else if(t.item==='Trả nợ cá nhân'){t.item='Trả nợ vay khác';changed=true;}});
+  (txs||[]).forEach(t=>{if(t.type==='chi'&&t.loanId&&t.item==='Trả lãi vay'&&t.group!=='Ngân hàng'){t.group='Ngân hàng';t.icon='';changed=true;}});
   (txs||[]).forEach(t=>{
     if(t.type!=='chi'&&t.type!=='thu')return;
     const to=legacyTarget(t.type,t.group,t.item);
@@ -1747,7 +1748,7 @@ function payLoanCore(l,principal,interest,walletId,date,coverUntil){
   if(ext)h.external=true;
   if(principal>0&&!ext){h.txP=Date.now()+Math.random();txs.unshift({id:h.txP,type:'chi',amount:principal,group:'Khác',item:'Trả nợ gốc vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId,note:'Trả gốc: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});}
   if(interest>0&&ext){l.iPaid=Math.min(sch.length,ip+iCount);}
-  if(interest>0&&!ext){h.txI=Date.now()+Math.random()+1;txs.unshift({id:h.txI,type:'chi',amount:interest,group:'Ngân hàng',item:'Trả lãi vay',icon:'bank',accent:'#0a4f8c',bg:'rgba(34,167,101,.16)',walletId,note:'Trả lãi: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});l.iPaid=Math.min(sch.length,ip+iCount);}
+  if(interest>0&&!ext){h.txI=Date.now()+Math.random()+1;txs.unshift({id:h.txI,type:'chi',amount:interest,group:'Ngân hàng',item:'Trả lãi vay',icon:'e:'+itemEmoji('chi','Ngân hàng','Trả lãi vay'),accent:'#0a4f8c',bg:itemTint('chi','Ngân hàng','Trả lãi vay'),walletId,note:'Trả lãi: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});l.iPaid=Math.min(sch.length,ip+iCount);}
   l.history=l.history||[];l.history.unshift(h);
   recalcLoan(l);
   return true;
@@ -1765,7 +1766,7 @@ function setHistTx(l,h,item,txKey,amount,date){
   if(t){if(w)w.balance+=t.amount;
     if(amount>0){t.amount=amount;t.date=date;t.loanHistId=h.id;h[txKey]=t.id;if(w)w.balance-=amount;}
     else{txs=txs.filter(x=>x!==t);h[txKey]=null;}}
-  else if(amount>0){const id=Date.now()+Math.random()+(txKey==='txI'?1:0);const isI=txKey==='txI';txs.unshift({id,type:'chi',amount,group:isI?'Ngân hàng':'Khác',item,icon:isI?'bank':'khac',accent:isI?'#0a4f8c':'#7c8b98',bg:isI?'rgba(34,167,101,.16)':'#e7e9ee',walletId:h.walletId,note:(txKey==='txP'?'Trả gốc: ':'Trả lãi: ')+l.name,date,time:nowTime(),loanId:l.id,loanHistId:h.id});h[txKey]=id;if(w)w.balance-=amount;}
+  else if(amount>0){const id=Date.now()+Math.random()+(txKey==='txI'?1:0);const isI=txKey==='txI';txs.unshift({id,type:'chi',amount,group:isI?'Ngân hàng':'Khác',item,icon:isI?'e:'+itemEmoji('chi','Ngân hàng','Trả lãi vay'):'khac',accent:isI?'#0a4f8c':'#7c8b98',bg:isI?itemTint('chi','Ngân hàng','Trả lãi vay'):'#e7e9ee',walletId:h.walletId,note:(txKey==='txP'?'Trả gốc: ':'Trả lãi: ')+l.name,date,time:nowTime(),loanId:l.id,loanHistId:h.id});h[txKey]=id;if(w)w.balance-=amount;}
 }
 function histICount(h){if(h.iCount!=null)return h.iCount;if(h.iPeriod!==undefined)return h.iPeriod?1:0;return h.interest>0?1:0;}
 function saveLoanHist(loanId,hid){
@@ -2730,7 +2731,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='53';
+const APP_VERSION='54';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
