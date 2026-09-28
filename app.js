@@ -1747,7 +1747,7 @@ function payLoanCore(l,principal,interest,walletId,date,coverUntil){
   if(ext)h.external=true;
   if(principal>0&&!ext){h.txP=Date.now()+Math.random();txs.unshift({id:h.txP,type:'chi',amount:principal,group:'Khác',item:'Trả nợ gốc vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId,note:'Trả gốc: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});}
   if(interest>0&&ext){l.iPaid=Math.min(sch.length,ip+iCount);}
-  if(interest>0&&!ext){h.txI=Date.now()+Math.random()+1;txs.unshift({id:h.txI,type:'chi',amount:interest,group:'Khác',item:'Trả lãi vay',icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId,note:'Trả lãi: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});l.iPaid=Math.min(sch.length,ip+iCount);}
+  if(interest>0&&!ext){h.txI=Date.now()+Math.random()+1;txs.unshift({id:h.txI,type:'chi',amount:interest,group:'Ngân hàng',item:'Trả lãi vay',icon:'bank',accent:'#0a4f8c',bg:'rgba(34,167,101,.16)',walletId,note:'Trả lãi: '+l.name,date,time:nowTime(),loanId:l.id,loanHistId:hid});l.iPaid=Math.min(sch.length,ip+iCount);}
   l.history=l.history||[];l.history.unshift(h);
   recalcLoan(l);
   return true;
@@ -1765,7 +1765,7 @@ function setHistTx(l,h,item,txKey,amount,date){
   if(t){if(w)w.balance+=t.amount;
     if(amount>0){t.amount=amount;t.date=date;t.loanHistId=h.id;h[txKey]=t.id;if(w)w.balance-=amount;}
     else{txs=txs.filter(x=>x!==t);h[txKey]=null;}}
-  else if(amount>0){const id=Date.now()+Math.random()+(txKey==='txI'?1:0);txs.unshift({id,type:'chi',amount,group:'Khác',item,icon:'khac',accent:'#7c8b98',bg:'#e7e9ee',walletId:h.walletId,note:(txKey==='txP'?'Trả gốc: ':'Trả lãi: ')+l.name,date,time:nowTime(),loanId:l.id,loanHistId:h.id});h[txKey]=id;if(w)w.balance-=amount;}
+  else if(amount>0){const id=Date.now()+Math.random()+(txKey==='txI'?1:0);const isI=txKey==='txI';txs.unshift({id,type:'chi',amount,group:isI?'Ngân hàng':'Khác',item,icon:isI?'bank':'khac',accent:isI?'#0a4f8c':'#7c8b98',bg:isI?'rgba(34,167,101,.16)':'#e7e9ee',walletId:h.walletId,note:(txKey==='txP'?'Trả gốc: ':'Trả lãi: ')+l.name,date,time:nowTime(),loanId:l.id,loanHistId:h.id});h[txKey]=id;if(w)w.balance-=amount;}
 }
 function histICount(h){if(h.iCount!=null)return h.iCount;if(h.iPeriod!==undefined)return h.iPeriod?1:0;return h.interest>0?1:0;}
 function saveLoanHist(loanId,hid){
