@@ -894,6 +894,7 @@ function txItemHTML(t){
   if(t.type==='family'){
     const w=wallets.find(x=>String(x.id)===String(t.walletId));
     return '<div class="tx-item" onclick="openEditTx('+t.id+')"><div class="tx-icon" style="background:rgba(214,120,170,.15)">'+icon('house','#d678aa',19)+'</div><div class="tx-info"><div class="cat">'+(t.dir==='in'?'Nhận từ ':'Đưa cho ')+t.person+(t.repay?' <span class="fam-tag">'+(t.settled?'đã trả xong':(t.dir==='in'?'mượn':'cho mượn'))+'</span>':'')+'</div><div class="note">'+(t.note?t.note+' • ':'')+dmy(t.date)+(w?' • '+w.name:'')+'</div></div><div class="tx-amt fam">'+(t.dir==='in'?'+':'-')+fmt(t.amount)+'</div>'+
+      '<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button>'+
       '<button class="icon-btn" onclick="event.stopPropagation();if(confirm(\'Xoá giao dịch này?\'))deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
   }
   if(t.type==='transfer'){
@@ -2715,7 +2716,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='47';
+const APP_VERSION='48';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
