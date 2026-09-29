@@ -2407,7 +2407,9 @@ function renderCloudScreen(){
       '<div class="field"><label>Đồng bộ lần gần nhất</label><div class="more-item" id="cloudLastSync" style="margin-bottom:0;">'+(last?cloudFmtTime(last):'Chưa đồng bộ lần nào')+'</div></div>'+
       '<button class="save-btn" onclick="cloudManualPush()">☁️ Sao lưu ngay</button>'+
       '<button class="save-btn" style="background:var(--card2,#333);color:var(--text,#fff);margin-top:10px;" onclick="cloudManualPull()">⬇️ Khôi phục từ cloud</button>'+
-      '<button class="save-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:10px;" onclick="cloudLogoutUI()">Đăng xuất</button>';
+      '<button class="save-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:10px;" onclick="cloudLogoutUI()">Đăng xuất</button>'+
+      '<h3 style="margin:26px 2px 10px;font-size:16px;">📲 Widget ghi nhanh trên iPhone</h3><div id="widgetSetup"></div>';
+    if(window.renderWidgetSetup)renderWidgetSetup();
   }else{
     el.innerHTML=
       '<button class="save-btn" id="cloudGoogleBtn" style="background:#fff;color:#1f1f1f;border:1px solid #dadce0;" onclick="cloudGoogleLoginUI()">'+GOOGLE_ICON_SVG+'Đăng nhập bằng Google</button>'+
@@ -2526,14 +2528,16 @@ let cloudLoggingIn=false,cloudLastAuto=0,cloudAutoBusy=false;
 async function cloudAutoSync(force){
   const C=window.Cloud;if(!C||!C.isLoggedIn()||cloudLoggingIn||cloudAutoBusy||!navigator.onLine)return;
   if(!force&&Date.now()-cloudLastAuto<20000)return;cloudLastAuto=Date.now();cloudAutoBusy=true;
+  let synced=false; /* chỉ lấy khoản từ widget khi máy đã khớp với cloud (tránh sinh xung đột) */
   try{
     const m=await C.readMeta();const dirty=C.isDirty();const mine=C.localRev();
-    if(!m){if(dirty||txs.length||wallets.length)await C.pushState(buildCloudPayload(),{force:true});return;}
-    if(m.rev&&m.rev===mine){if(dirty)await C.flushPush();return;}
-    if(mine&&!dirty){const d=await C.pullState();if(d){cloudApply(d);showMiniToast('🔄 Đã đồng bộ dữ liệu mới từ '+(d.dev||'thiết bị khác'));}return;}
+    if(!m){if(dirty||txs.length||wallets.length)await C.pushState(buildCloudPayload(),{force:true});synced=true;return;}
+    if(m.rev&&m.rev===mine){if(dirty)await C.flushPush();synced=true;return;}
+    if(mine&&!dirty){const d=await C.pullState();if(d){cloudApply(d);showMiniToast('🔄 Đã đồng bộ dữ liệu mới từ '+(d.dev||'thiết bị khác'));}synced=true;return;}
     cloudShowConflict(m);
   }catch(e){console.warn('cloudAutoSync',e);}
-  finally{cloudAutoBusy=false;try{updateCloudMenu();if(currentScreen()==='cloud')renderCloudScreen();}catch(e){}}
+  finally{cloudAutoBusy=false;try{updateCloudMenu();if(currentScreen()==='cloud')renderCloudScreen();}catch(e){}
+    if(synced&&window.inboxSync)setTimeout(()=>inboxSync(),300);}
 }
 window.addEventListener('cloud-sync-done',()=>{try{const el=document.getElementById('cloudLastSync');if(el)el.textContent=cloudFmtTime(Date.now());updateCloudMenu();}catch(e){}});
 window.addEventListener('cloud-conflict',ev=>cloudShowConflict(ev.detail&&ev.detail.meta));
@@ -2799,7 +2803,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='55';
+const APP_VERSION='56';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

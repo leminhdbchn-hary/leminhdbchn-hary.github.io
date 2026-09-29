@@ -12,6 +12,25 @@ service cloud.firestore {
                            && chunkId.matches('^[0-9]{1,2}$');
       }
     }
+    // Hộp thư widget: inbox/{mã bí mật} thuộc về 1 người dùng.
+    // Phím tắt iPhone (không đăng nhập) chỉ được THÊM dòng mới nếu biết mã; chỉ chủ tài khoản đọc/xoá được.
+    match /inbox/{key} {
+      allow create: if request.auth != null && key.size() >= 24
+                    && request.resource.data.keys().hasOnly(['uid', 'at'])
+                    && request.resource.data.uid == request.auth.uid;
+      allow read, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+
+      match /items/{itemId} {
+        allow create: if exists(/databases/$(database)/documents/inbox/$(key))
+                      && request.resource.data.keys().hasOnly(['t', 'd'])
+                      && request.resource.data.t is string
+                      && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 200
+                      && (!('d' in request.resource.data)
+                          || (request.resource.data.d is string && request.resource.data.d.size() <= 30));
+        allow read, delete: if request.auth != null
+                            && get(/databases/$(database)/documents/inbox/$(key)).data.uid == request.auth.uid;
+      }
+    }
     // Mọi thứ khác: cấm
     match /{document=**} {
       allow read, write: if false;
