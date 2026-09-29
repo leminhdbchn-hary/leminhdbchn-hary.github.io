@@ -7,7 +7,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, writeBatch, setDoc, deleteDoc, collection, query, where, getDocs, runTransaction, addDoc
+  getFirestore, doc, getDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -171,82 +171,6 @@ function queuePush(getPayloadFn) {
   pushTimer = setTimeout(flushPush, 2500);
 }
 
-
-/* ---------- HỘP THƯ WIDGET ----------
-   Phím tắt trên iPhone gửi 1 dòng (vd "phở 40k") vào inbox/{mã}/items mà không cần đăng nhập.
-   Mã bí mật chỉ cho phép THÊM dòng mới; chỉ chủ tài khoản mới đọc/xoá được.
-   Khi mở app, các dòng này được lấy về, ghi vào sổ rồi xoá khỏi hộp thư. */
-const inboxLsKey = () => 'tc_inbox_key_' + (currentUser ? currentUser.uid : '');
-function newInboxKey() {
-  const a = new Uint8Array(24); crypto.getRandomValues(a);
-  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-  return Array.from(a, b => c[b % c.length]).join('') + Date.now().toString(36);
-}
-async function inboxFindKey() {
-  if (!currentUser) return null;
-  const cached = ls.get(inboxLsKey());
-  if (cached) return cached;
-  const q = await getDocs(query(collection(db, 'inbox'), where('uid', '==', currentUser.uid)));
-  const k = q.empty ? null : q.docs[0].id;
-  if (k) ls.set(inboxLsKey(), k);
-  return k;
-}
-async function inboxCreateKey() {
-  if (!currentUser) throw new Error('NOT_LOGGED_IN');
-  const k = newInboxKey();
-  await setDoc(doc(db, 'inbox', k), { uid: currentUser.uid, at: Date.now() });
-  ls.set(inboxLsKey(), k);
-  return k;
-}
-/* Lấy các dòng đang chờ. Mỗi dòng được xoá trong 1 giao dịch → 2 máy mở cùng lúc cũng không ghi trùng */
-async function inboxTake(key) {
-  if (!currentUser) return [];
-  key = key || await inboxFindKey();
-  if (!key) return [];
-  const snap = await getDocs(collection(db, 'inbox', key, 'items'));
-  const out = [];
-  for (const d of snap.docs) {
-    try {
-      const data = await runTransaction(db, async (tr) => {
-        const s = await tr.get(d.ref);
-        if (!s.exists()) return null;
-        tr.delete(d.ref);
-        return s.data();
-      });
-      if (data) out.push(Object.assign({ id: d.id }, data));
-    } catch (e) { console.warn('inboxTake', e); }
-  }
-  return out;
-}
-/* Đổi mã: lấy hết dòng còn chờ ở mã cũ, xoá mã cũ, tạo mã mới */
-async function inboxResetKey() {
-  const old = await inboxFindKey();
-  let left = [];
-  if (old) {
-    left = await inboxTake(old);
-    try { await deleteDoc(doc(db, 'inbox', old)); } catch (e) {}
-    ls.set(inboxLsKey(), null);
-  }
-  const k = await inboxCreateKey();
-  return { key: k, left };
-}
-/* Gửi 1 dòng vào hộp thư (dùng cho trang Ghi chi đã đăng nhập). Mã cũ bị đổi → tìm lại mã mới rồi gửi lại */
-async function inboxSend(text, stamp) {
-  if (!currentUser) throw new Error('NOT_LOGGED_IN');
-  const data = stamp ? { t: text, d: stamp } : { t: text };
-  for (let i = 0; i < 2; i++) {
-    let k = await inboxFindKey();
-    if (!k) k = await inboxCreateKey();
-    try { await addDoc(collection(db, 'inbox', k, 'items'), data); return true; }
-    catch (e) {
-      if (i === 0 && e && e.code === 'permission-denied') { ls.set(inboxLsKey(), null); continue; }
-      throw e;
-    }
-  }
-}
-const INBOX_URL = (k) => 'https://firestore.googleapis.com/v1/projects/' + firebaseConfig.projectId +
-  '/databases/(default)/documents/inbox/' + k + '/items?key=' + firebaseConfig.apiKey;
-
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   emit('cloud-auth-changed', { email: user ? user.email : null });
@@ -262,6 +186,5 @@ const Cloud = window.Cloud = {
   applying: false,
   isLoggedIn: () => !!currentUser,
   currentEmail: () => (currentUser ? (currentUser.email || currentUser.displayName || '') : ''),
-  localRev, isDirty,
-  inboxFindKey, inboxCreateKey, inboxTake, inboxResetKey, inboxSend, inboxUrl: INBOX_URL
+  localRev, isDirty
 };

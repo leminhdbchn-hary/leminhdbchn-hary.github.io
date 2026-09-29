@@ -2,7 +2,7 @@
    1. Nhập nhanh 1 dòng + giọng nói      2. Ngoại tệ quy đổi VND        3. Đọc số tiền trên ảnh hoá đơn
    4. Sao lưu tự động trong máy          5. Quản lý hạng mục tự tạo      6. Mục tiêu tiết kiệm
    7. Chia tiền nhóm                     8. Báo cáo mở rộng + cảnh báo chi tiêu bất thường
-   9. Nhắc ghi chép buổi tối (trong app)   10. Widget ghi nhanh trên iPhone (hộp thư qua Firebase)
+   9. Nhắc ghi chép buổi tối (trong app)
    File này chạy sau app.js và dùng lại các hàm/biến của app.js. */
 
 function escH(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -95,8 +95,8 @@ function qeFindAmount(n){
   for(const t of tries){const m=n.match(t.re);if(m){const v=Math.round(t.f(m));if(v>0)return {value:v,start:m.index,end:m.index+m[0].length};}}
   return null;
 }
-function qeFindDate(n,base){
-  const today=base||todayStr();
+function qeFindDate(n){
+  const today=todayStr();
   const rel=[[/\bhom kia\b/,-2],[/\bhom qua\b/,-1],[/\bhom nay\b/,0]];
   for(const [re,d] of rel){const m=n.match(re);if(m)return {date:addDays(today,d),start:m.index,end:m.index+m[0].length,label:d===0?'hôm nay':d===-1?'hôm qua':'hôm kia'};}
   const m=n.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/);
@@ -104,11 +104,11 @@ function qeFindDate(n,base){
     if(dd>=1&&dd<=31&&mm>=1&&mm<=12){const s=yy+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0');const chk=new Date(s+'T00:00:00');if(chk.getDate()===dd)return {date:s,start:m.index,end:m.index+m[0].length,label:dmy(s)};}}
   return null;
 }
-function qeParse(text,base){
+function qeParse(text){
   const orig=String(text||'');const n=normKeepLen(orig);
   const res={type:null,group:null,item:null,amount:0,date:null,dateLabel:'',note:'',fx:null};
   const cut=[];
-  const d=qeFindDate(n,base);if(d){res.date=d.date;res.dateLabel=d.label;cut.push([d.start,d.end]);}
+  const d=qeFindDate(n);if(d){res.date=d.date;res.dateLabel=d.label;cut.push([d.start,d.end]);}
   let n2=n;cut.forEach(([a,b])=>{n2=n2.slice(0,a)+' '.repeat(b-a)+n2.slice(b);});
   const a=qeFindAmount(n2);
   if(a){cut.push([a.start,a.end]);if(a.cur){res.fx={cur:a.cur,amt:a.fxAmt};}else res.amount=a.value;}
@@ -588,129 +588,6 @@ function moreDragStart(ev){const row=ev.target.closest('.ms-row');if(!row)return
   window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);}
 try{applyMoreOrder();}catch(e){}
 
-
-/* =====================================================================
-   10. WIDGET GHI NHANH TRÊN IPHONE
-   Phím tắt (Shortcuts) gửi 1 dòng như "phở 40k" lên hộp thư Firebase, không cần mở app.
-   Mở app → lấy các dòng chờ → dùng bộ nhập nhanh để ghi vào sổ.
-   ===================================================================== */
-/* d = thời điểm bấm widget, dạng "2026-09-29 21:30" (có thể thiếu giờ) */
-function inboxParseStamp(d){const m=String(d||'').match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{1,2}:\d{2}))?/);if(!m)return {};const t=m[2]?m[2].padStart(5,'0'):null;return {date:m[1],time:t};}
-function inboxWallet(type,group,item){
-  const sp=getSpendableWallets();if(!sp.length)return null;
-  const last=txs.find(t=>t.type===type&&t.group===group&&t.item===item&&t.walletId&&sp.some(w=>String(w.id)===String(t.walletId)));
-  if(last)return sp.find(w=>String(w.id)===String(last.walletId));
-  const any=txs.find(t=>t.type===type&&t.walletId&&sp.some(w=>String(w.id)===String(t.walletId)));
-  return any?sp.find(w=>String(w.id)===String(any.walletId)):sp[0];
-}
-/* Ghi 1 dòng vào sổ. Trả về giao dịch đã ghi, hoặc null nếu không đọc được số tiền */
-function inboxApplyText(text,stamp){
-  const st=inboxParseStamp(stamp);
-  const r=qeParse(text,st.date||undefined);
-  let amount=r.amount,fx=null;
-  if(r.fx){const rate=(fxRates()||{})[r.fx.cur];if(!rate)return null;amount=Math.round(r.fx.amt*rate);fx={cur:r.fx.cur,amt:r.fx.amt,rate};}
-  if(!amount||amount<=0)return null;
-  const type=r.type==='thu'?'thu':'chi';
-  const list=GROUPS[type]||[];
-  let g=r.group?list.find(x=>x.name===r.group):null,item=r.item;
-  if(!g){g=list.find(x=>x.name==='Khác')||list[list.length-1];item=(g.items&&g.items[0])||g.name;}
-  const w=inboxWallet(type,g.name,item);
-  const tx={id:Date.now()+Math.random(),type,amount,group:g.name,item,
-    icon:'e:'+(item===g.name&&!g.single?g.emoji:itemEmoji(type,g.name,item)),accent:g.accent,bg:item===g.name?g.bg:itemTint(type,g.name,item),
-    walletId:w?w.id:null,person:'',note:r.note||'',receipt:null,date:r.date||st.date||todayStr(),time:st.time||nowTime(),fromWidget:true};
-  if(fx)tx.fx=fx;
-  txs.unshift(tx);
-  if(w)w.balance+=(type==='thu'?amount:-amount);
-  try{awardBaseLinhThach(tx);}catch(e){}
-  return tx;
-}
-let inboxBusy=false;
-async function inboxSync(){
-  const C=window.Cloud;if(!C||!C.isLoggedIn()||!C.inboxTake||inboxBusy||!navigator.onLine)return;
-  inboxBusy=true;
-  try{
-    const items=await C.inboxTake();if(!items.length)return;
-    inboxApplyItems(items);
-  }catch(e){console.warn('inboxSync',e);}
-  finally{inboxBusy=false;}
-}
-function inboxApplyItems(items){
-  items.sort((a,b)=>String(a.d||'').localeCompare(String(b.d||'')));
-  const done=[],bad=[];
-  items.forEach(it=>{const tx=inboxApplyText(it.t,it.d);if(tx)done.push(tx);else bad.push(it);});
-  if(done.length){saveAll();try{renderHome();}catch(e){}try{if(currentScreen()==='history')showScreen('history');}catch(e){}}
-  whenUnlocked(()=>{
-    if(done.length&&!bad.length){showMiniToast('📥 Đã ghi '+done.length+' khoản từ widget: '+done.map(t=>t.item+' '+fmtShort(t.amount)).join(', '));return;}
-    if(!done.length&&!bad.length)return;
-    openModal('<h3>📥 Khoản ghi từ widget</h3>'+
-      (done.length?'<p class="bk-p">Đã ghi vào sổ:</p><div class="more-item" style="display:block">'+done.map(t=>'• '+escH(t.item)+' — '+fmt(t.amount)+(t.note?' <small>('+escH(t.note)+')</small>':'')).join('<br>')+'</div>':'')+
-      '<p class="bk-p">Chưa hiểu số tiền trong các dòng sau, bạn nhập lại giúp nhé:</p><div class="more-item" style="display:block">'+bad.map(it=>'• '+escH(it.t)).join('<br>')+'</div>'+
-      '<div class="edit-modal-actions"><button class="edit-modal-save" onclick="closeAppModal()">Đã hiểu</button></div>');
-  });
-}
-/* Phần cài đặt widget trong màn hình Cloud */
-async function renderWidgetSetup(){
-  const el=document.getElementById('widgetSetup');if(!el)return;
-  const C=window.Cloud;
-  if(!C||!C.isLoggedIn()){el.innerHTML='';return;}
-  const easy='<div class="more-item" style="display:block;line-height:1.55;margin-bottom:12px;">'+
-    '<b>Cách dễ nhất (khuyên dùng):</b> tạo biểu tượng <b>Ghi chi</b> trên màn hình chính, bấm vào là gõ “phở 40k” rồi bấm Ghi.'+
-    '<ol style="padding-left:18px;margin:8px 0 0;">'+
-    '<li>Mở <b>Safari</b>, gõ địa chỉ: <b style="user-select:all;-webkit-user-select:all;">leminhdbchn-hary.github.io/ghi</b></li>'+
-    '<li>Bấm nút <b>Chia sẻ</b> (ô vuông có mũi tên lên) → <b>Thêm vào MH chính</b> → <b>Thêm</b>.</li>'+
-    '<li>Mở biểu tượng <b>Ghi chi</b> vừa tạo, đăng nhập Google <b>cùng tài khoản</b> này (chỉ 1 lần).</li></ol></div>';
-  el.innerHTML=easy+'<div class="more-item">Đang tải…</div>';
-  let key=null;try{key=await C.inboxFindKey();}catch(e){el.innerHTML='<div class="more-item">Không tải được thông tin widget. Kiểm tra mạng rồi thử lại.</div>';return;}
-  if(!key){
-    el.innerHTML=easy+'<p style="color:var(--sub);font-size:12.5px;margin:0 2px 10px;">Tạo widget trên màn hình iPhone để ghi nhanh 1 khoản chi (vd “phở 40k”) mà không cần mở app.</p>'+
-      '<button class="save-btn" style="background:var(--card2,#333);color:var(--text,#fff);" onclick="widgetCreateKey(this)">⚙️ Nâng cao: dùng widget Phím tắt</button>';
-    return;
-  }
-  const url=C.inboxUrl(key);
-  el.innerHTML=easy+
-    '<div class="field"><label>Nâng cao — địa chỉ gửi (dán vào Phím tắt)</label><div class="more-item" style="margin-bottom:6px;word-break:break-all;font-size:11.5px;user-select:all;-webkit-user-select:all;">'+escH(url)+'</div>'+
-    '<button class="save-btn" onclick="widgetCopy(\''+escA(url)+'\')">📋 Sao chép địa chỉ</button></div>'+
-    '<details style="margin:10px 2px;color:var(--sub);font-size:12.5px;"><summary style="cursor:pointer;color:var(--text)">Cách tạo widget Phím tắt (nâng cao)</summary>'+
-    '<ol style="padding-left:18px;line-height:1.55;margin:8px 0;">'+
-    '<li>Mở app <b>Phím tắt</b> → bấm <b>+</b> để tạo phím tắt mới, đặt tên <b>Ghi chi</b>.</li>'+
-    '<li>Thêm tác vụ <b>Yêu cầu đầu vào</b> (Ask for Input), kiểu <b>Văn bản</b>, lời nhắc: <i>Chi gì, bao nhiêu?</i></li>'+
-    '<li>Thêm tác vụ <b>Định dạng ngày</b> (Format Date): ngày = <b>Ngày hiện tại</b>, định dạng <b>Tuỳ chỉnh</b>: <code>yyyy-MM-dd HH:mm</code></li>'+
-    '<li>Thêm tác vụ <b>Nhận nội dung của URL</b> (Get Contents of URL). Dán địa chỉ ở trên vào ô URL. Bấm mũi tên mở rộng:<br>'+
-    '– Phương thức: <b>POST</b><br>– Tiêu đề (Headers): thêm <code>Referer</code> = <code>https://leminhdbchn-hary.github.io/</code><br>'+
-    '– Nội dung yêu cầu: <b>JSON</b>, thêm khoá <code>fields</code> kiểu <b>Từ điển</b>. Bên trong <code>fields</code> thêm:<br>'+
-    '&nbsp;&nbsp;• <code>t</code> kiểu Từ điển, bên trong: <code>stringValue</code> = biến <b>Văn bản đã cung cấp</b><br>'+
-    '&nbsp;&nbsp;• <code>d</code> kiểu Từ điển, bên trong: <code>stringValue</code> = biến <b>Ngày được định dạng</b></li>'+
-    '<li>(Tuỳ chọn) Thêm tác vụ <b>Hiển thị thông báo</b>: <i>Đã ghi ✓</i></li>'+
-    '<li>Ra màn hình chính, giữ vào chỗ trống → <b>Sửa</b> → <b>Thêm tiện ích</b> → <b>Phím tắt</b> → chọn phím tắt <b>Ghi chi</b>.</li></ol>'+
-    'Gõ tự nhiên như trong ô nhập nhanh: “cafe 35k”, “xăng 80k hôm qua”, “lương 15tr”. Khoản sẽ vào sổ khi bạn mở app.</details>'+
-    '<button class="save-btn" style="background:var(--card2,#333);color:var(--text,#fff);" onclick="widgetCheckNow(this)">📥 Lấy khoản từ widget ngay</button>'+
-    '<button class="save-btn" style="background:transparent;color:var(--red);border:1px solid var(--red);margin-top:10px;" onclick="widgetResetKey(this)">🔑 Đổi mã (khi lỡ chia sẻ địa chỉ)</button>';
-}
-async function widgetCreateKey(btn){
-  if(btn){btn.disabled=true;btn.style.opacity='.6';}
-  try{await window.Cloud.inboxCreateKey();showMiniToast('✓ Đã bật widget ghi nhanh');}
-  catch(e){alert('Không bật được widget: '+(e&&e.code==='permission-denied'?'cần cập nhật luật Firestore (firestore.rules) trên Firebase.':(e&&e.message||e)));}
-  renderWidgetSetup();
-}
-function widgetCopy(url){
-  const done=()=>showMiniToast('✓ Đã sao chép địa chỉ');
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,()=>prompt('Sao chép địa chỉ này:',url));
-  else prompt('Sao chép địa chỉ này:',url);
-}
-async function widgetCheckNow(btn){
-  if(btn){btn.disabled=true;btn.style.opacity='.6';}
-  try{const items=await window.Cloud.inboxTake();if(items.length)inboxApplyItems(items);else showMiniToast('Không có khoản nào đang chờ');}
-  catch(e){alert('Không lấy được: '+(e&&e.message||e));}
-  finally{if(btn){btn.disabled=false;btn.style.opacity='';}}
-}
-async function widgetResetKey(btn){
-  if(!confirm('Đổi mã mới? Phím tắt đang dùng sẽ ngừng hoạt động, bạn cần dán địa chỉ mới vào Phím tắt.'))return;
-  if(btn){btn.disabled=true;btn.style.opacity='.6';}
-  try{const r=await window.Cloud.inboxResetKey();if(r.left.length)inboxApplyItems(r.left);showMiniToast('✓ Đã đổi mã, hãy cập nhật Phím tắt');}
-  catch(e){alert('Không đổi được mã: '+(e&&e.message||e));}
-  renderWidgetSetup();
-}
-
 /* =====================================================================
    Kiểm thử tự động (gọi từ tests/run.js)
    ===================================================================== */
@@ -727,12 +604,6 @@ window.__extraTests=async function(){
   r=P('tiền nhà 3 triệu');t('nhập nhanh: tiền nhà',r.item==='Thuê nhà'&&r.amount===3000000,r);
   r=P('20 usd ăn tối');t('nhập nhanh: ngoại tệ',r.fx&&r.fx.cur==='USD'&&r.fx.amt===20&&r.item==='Ăn tối',r);
   r=P('mua quà sinh nhật mẹ 500k 12/9');t('nhập nhanh: ngày 12/9 + ghi chú',r.amount===500000&&r.item==='Biếu tặng'&&r.date&&r.date.slice(5)==='09-12'&&/mẹ/.test(r.note),r);
-  {const n0=txs.length;const tx=inboxApplyText('xăng 80k hôm qua','2026-03-10 07:45');
-   t('widget: ghi theo ngày bấm widget',tx&&tx.item==='Xăng xe'&&tx.amount===80000&&tx.date==='2026-03-09'&&tx.time==='07:45'&&txs.length===n0+1,tx);
-   if(tx){const w=wallets.find(x=>String(x.id)===String(tx.walletId));if(w)w.balance+=tx.amount;txs.shift();}
-   t('widget: bỏ qua dòng không có số tiền',inboxApplyText('cafe với bạn','2026-03-10')===null&&txs.length===n0);
-   const t2=inboxApplyText('abc xyz 50k','2026-03-10 08:00');t('widget: không rõ hạng mục → Khác',t2&&t2.group==='Khác'&&t2.amount===50000,t2);
-   if(t2){const w=wallets.find(x=>String(x.id)===String(t2.walletId));if(w)w.balance+=t2.amount;txs.shift();}}
   t('đọc hoá đơn: tổng tiền',parseReceiptTotal('CUA HANG ABC\nCa phe sua 2 x 25.000 50.000\nTong cong: 85.000\nTien khach dua 100.000\nTien thua 15.000')===85000);
   if(window.StcZip&&StcZip.supported){const s=JSON.stringify({a:'Tiếng Việt có dấu ✓',n:[1,2,3]}).repeat(50);const z=await StcZip.gzipB64(s);t('nén cloud khứ hồi',(await StcZip.gunzipB64(z))===s&&z.length<s.length);}
   if(window.StcStore&&StcStore.available){await storeFlush();const st=await StcStore.get('state');t('IndexedDB đã lưu',st&&st.data&&st.data.txs.length===txs.length,st&&st.data?st.data.txs.length:null);
