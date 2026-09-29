@@ -7,7 +7,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, writeBatch, setDoc, deleteDoc, collection, query, where, getDocs, runTransaction
+  getFirestore, doc, getDoc, writeBatch, setDoc, deleteDoc, collection, query, where, getDocs, runTransaction, addDoc
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -230,6 +230,20 @@ async function inboxResetKey() {
   const k = await inboxCreateKey();
   return { key: k, left };
 }
+/* Gửi 1 dòng vào hộp thư (dùng cho trang Ghi chi đã đăng nhập). Mã cũ bị đổi → tìm lại mã mới rồi gửi lại */
+async function inboxSend(text, stamp) {
+  if (!currentUser) throw new Error('NOT_LOGGED_IN');
+  const data = stamp ? { t: text, d: stamp } : { t: text };
+  for (let i = 0; i < 2; i++) {
+    let k = await inboxFindKey();
+    if (!k) k = await inboxCreateKey();
+    try { await addDoc(collection(db, 'inbox', k, 'items'), data); return true; }
+    catch (e) {
+      if (i === 0 && e && e.code === 'permission-denied') { ls.set(inboxLsKey(), null); continue; }
+      throw e;
+    }
+  }
+}
 const INBOX_URL = (k) => 'https://firestore.googleapis.com/v1/projects/' + firebaseConfig.projectId +
   '/databases/(default)/documents/inbox/' + k + '/items?key=' + firebaseConfig.apiKey;
 
@@ -249,5 +263,5 @@ const Cloud = window.Cloud = {
   isLoggedIn: () => !!currentUser,
   currentEmail: () => (currentUser ? (currentUser.email || currentUser.displayName || '') : ''),
   localRev, isDirty,
-  inboxFindKey, inboxCreateKey, inboxTake, inboxResetKey, inboxUrl: INBOX_URL
+  inboxFindKey, inboxCreateKey, inboxTake, inboxResetKey, inboxSend, inboxUrl: INBOX_URL
 };

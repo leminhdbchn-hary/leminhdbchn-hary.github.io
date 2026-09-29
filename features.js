@@ -653,18 +653,24 @@ async function renderWidgetSetup(){
   const el=document.getElementById('widgetSetup');if(!el)return;
   const C=window.Cloud;
   if(!C||!C.isLoggedIn()){el.innerHTML='';return;}
-  el.innerHTML='<div class="more-item">Đang tải…</div>';
+  const easy='<div class="more-item" style="display:block;line-height:1.55;margin-bottom:12px;">'+
+    '<b>Cách dễ nhất (khuyên dùng):</b> tạo biểu tượng <b>Ghi chi</b> trên màn hình chính, bấm vào là gõ “phở 40k” rồi bấm Ghi.'+
+    '<ol style="padding-left:18px;margin:8px 0 0;">'+
+    '<li>Mở <b>Safari</b>, gõ địa chỉ: <b style="user-select:all;-webkit-user-select:all;">leminhdbchn-hary.github.io/ghi</b></li>'+
+    '<li>Bấm nút <b>Chia sẻ</b> (ô vuông có mũi tên lên) → <b>Thêm vào MH chính</b> → <b>Thêm</b>.</li>'+
+    '<li>Mở biểu tượng <b>Ghi chi</b> vừa tạo, đăng nhập Google <b>cùng tài khoản</b> này (chỉ 1 lần).</li></ol></div>';
+  el.innerHTML=easy+'<div class="more-item">Đang tải…</div>';
   let key=null;try{key=await C.inboxFindKey();}catch(e){el.innerHTML='<div class="more-item">Không tải được thông tin widget. Kiểm tra mạng rồi thử lại.</div>';return;}
   if(!key){
-    el.innerHTML='<p style="color:var(--sub);font-size:12.5px;margin:0 2px 10px;">Tạo widget trên màn hình iPhone để ghi nhanh 1 khoản chi (vd “phở 40k”) mà không cần mở app.</p>'+
-      '<button class="save-btn" onclick="widgetCreateKey(this)">📲 Bật widget ghi nhanh</button>';
+    el.innerHTML=easy+'<p style="color:var(--sub);font-size:12.5px;margin:0 2px 10px;">Tạo widget trên màn hình iPhone để ghi nhanh 1 khoản chi (vd “phở 40k”) mà không cần mở app.</p>'+
+      '<button class="save-btn" style="background:var(--card2,#333);color:var(--text,#fff);" onclick="widgetCreateKey(this)">⚙️ Nâng cao: dùng widget Phím tắt</button>';
     return;
   }
   const url=C.inboxUrl(key);
-  el.innerHTML=
-    '<div class="field"><label>Địa chỉ gửi (dán vào Phím tắt)</label><div class="more-item" style="margin-bottom:6px;word-break:break-all;font-size:11.5px;user-select:all;-webkit-user-select:all;">'+escH(url)+'</div>'+
+  el.innerHTML=easy+
+    '<div class="field"><label>Nâng cao — địa chỉ gửi (dán vào Phím tắt)</label><div class="more-item" style="margin-bottom:6px;word-break:break-all;font-size:11.5px;user-select:all;-webkit-user-select:all;">'+escH(url)+'</div>'+
     '<button class="save-btn" onclick="widgetCopy(\''+escA(url)+'\')">📋 Sao chép địa chỉ</button></div>'+
-    '<details style="margin:10px 2px;color:var(--sub);font-size:12.5px;"><summary style="cursor:pointer;color:var(--text)">Cách tạo widget trên iPhone</summary>'+
+    '<details style="margin:10px 2px;color:var(--sub);font-size:12.5px;"><summary style="cursor:pointer;color:var(--text)">Cách tạo widget Phím tắt (nâng cao)</summary>'+
     '<ol style="padding-left:18px;line-height:1.55;margin:8px 0;">'+
     '<li>Mở app <b>Phím tắt</b> → bấm <b>+</b> để tạo phím tắt mới, đặt tên <b>Ghi chi</b>.</li>'+
     '<li>Thêm tác vụ <b>Yêu cầu đầu vào</b> (Ask for Input), kiểu <b>Văn bản</b>, lời nhắc: <i>Chi gì, bao nhiêu?</i></li>'+
