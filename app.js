@@ -308,6 +308,7 @@ function goBack(){
 }
 function showScreen(name,isBack){
   if((name==='reward'||name==='chars')&&!isTuTien()){name='home';}
+  if(name==='admin'&&!isOwner()){name='home';}
   const cur=currentScreen();
   if(!isBack&&cur!==name){if(TAB_SCREENS.includes(name))navStack=[];else{navStack.push(cur);if(navStack.length>20)navStack.shift();}}
   window.scrollTo(0,0);
@@ -1011,7 +1012,16 @@ function clearHistF(){histF.q='';histF.type='';histF.group='';histF.month='';con
 
 
 /* ---------- CHẾ ĐỘ: Bình thường (mặc định) / Tu tiên (linh thú, nhân vật, video) ---------- */
-function isTuTien(){try{return localStorage.getItem('tc_mode')==='tutien';}catch(e){return false;}}
+/* v63: Chế độ Tu tiên & trang Admin chỉ dành cho chủ app (đăng nhập đúng Gmail chủ). Người dùng khác không thấy. */
+function isOwner(){try{if(window.Cloud&&Cloud.isLoggedIn())return Cloud.isOwner();return localStorage.getItem('tc_owner')==='1';}catch(e){return false;}}
+function isTuTien(){try{return isOwner()&&localStorage.getItem('tc_mode')==='tutien';}catch(e){return false;}}
+function updateOwnerUI(){
+  const own=isOwner();
+  const m=document.getElementById('more-mode');if(m)m.style.display=own?'':'none';
+  const a=document.getElementById('more-admin');if(a)a.style.display=own?'':'none';
+  if(!own)stopTuTienMedia();
+  renderModeSwitch();
+}
 function stopTuTienMedia(){
   ['homePetVid','petVid','balChar'].forEach(id=>{const v=document.getElementById(id);if(!v)return;try{v.pause();v.removeAttribute('src');v.removeAttribute('poster');delete v.dataset.st;v.load();}catch(e){}});
 }
@@ -1034,6 +1044,7 @@ function renderMoreGroups(){
 function chooseFontSize(v){try{localStorage.setItem('tc_fs',String(v));}catch(e){}document.documentElement.style.setProperty('--fs',v+'px');renderFsOpts();renderMoreGroups();showMiniToast('Đã đổi cỡ chữ & số: '+(FS_NAMES[v]||v+'px'));}
 function chooseSkin(s){if(window.setSkin)setSkin(s);renderSkinOpts();showMiniToast('Đã đổi sang giao diện '+({sky:'Xanh trắng',red:'Đỏ trắng'}[s]||'Vàng đen'));}
 function toggleTuTien(){
+  if(!isOwner()){showMiniToast('Chế độ Tu tiên chỉ dành cho chủ app',true);return;}
   const on=!isTuTien();
   try{localStorage.setItem('tc_mode',on?'tutien':'normal');}catch(e){}
   if(!on)stopTuTienMedia();
@@ -2540,7 +2551,7 @@ window.addEventListener('cloud-sync-done',()=>{try{const el=document.getElementB
 window.addEventListener('cloud-conflict',ev=>cloudShowConflict(ev.detail&&ev.detail.meta));
 window.addEventListener('cloud-sync-error',ev=>{const d=ev.detail||{};if(d.error&&d.error.message==='CLOUD_TOO_BIG')showMiniToast(cloudErrMsg(d.error),true);try{updateCloudMenu();}catch(e){}});
 window.addEventListener('cloud-resume',()=>cloudAutoSync());
-window.addEventListener('cloud-auth-changed',()=>{try{renderProfile();}catch(e){}try{cloudGateUpdate();if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
+window.addEventListener('cloud-auth-changed',()=>{try{updateOwnerUI();try{renderHome();}catch(e){}if(currentScreen()==='admin'&&!isOwner())showScreen('home');}catch(e){}try{renderProfile();}catch(e){}try{cloudGateUpdate();if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
   let redir=null;try{redir=localStorage.getItem('tc_cloud_redirect');}catch(e){}
   if(!redir)setTimeout(()=>cloudAutoSync(true),800);});
 window.addEventListener('cloud-redirect-login',async()=>{
@@ -2707,6 +2718,39 @@ function openCharView(id){
 function closeCharView(){document.getElementById('charView').classList.remove('show');document.getElementById('cvSheet').innerHTML='';}
 function setCompanion(id){try{localStorage.setItem('tc_companion',id);}catch(e){}closeCharView();renderChars();applyCompanion();showMiniToast('✅ Đã đổi bạn đồng hành');}
 
+/* ---------- ADMIN: ai đang dùng app (chỉ chủ app) ---------- */
+let adminTimer=null;
+function openAdmin(){if(!isOwner()){showMiniToast('Chỉ chủ app mới mở được trang này',true);return;}showScreen('admin');renderAdmin();clearInterval(adminTimer);adminTimer=setInterval(()=>{if(currentScreen()==='admin')renderAdmin(true);else{clearInterval(adminTimer);adminTimer=null;}},30000);}
+function adminAgo(ms){const s=Math.max(0,Math.round((Date.now()-ms)/1000));if(s<60)return 'vừa xong';if(s<3600)return Math.floor(s/60)+' phút trước';if(s<86400)return Math.floor(s/3600)+' giờ trước';return Math.floor(s/86400)+' ngày trước';}
+async function renderAdmin(silent){
+  const box=document.getElementById('adminBody');if(!box)return;
+  if(!silent)box.innerHTML='<p style="color:var(--sub);font-size:13px;">Đang tải danh sách...</p>';
+  let list;
+  try{list=await window.Cloud.adminListUsers();}
+  catch(e){
+    box.innerHTML='<div class="tip" style="text-align:left;line-height:1.5;"><b>Chưa đọc được danh sách người dùng.</b><br>Hãy vào Firebase Console → Firestore Database → Rules, dán nội dung file <b>firestore.rules</b> mới rồi bấm <b>Publish</b>. Sau đó bấm Tải lại.<br><small style="color:var(--sub);">'+pfEsc((e&&e.code)||(e&&e.message)||'')+'</small></div><button class="save-btn" onclick="renderAdmin()">Tải lại</button>';
+    return;
+  }
+  list.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
+  const ONLINE=6*60*1000,now=Date.now();
+  const online=list.filter(u=>now-(u.lastSeen||0)<ONLINE).length;
+  const rows=list.map(u=>{
+    const on=now-(u.lastSeen||0)<ONLINE;
+    const nm=u.name||String(u.email||'?').split('@')[0];
+    const av=u.photo?'<img src="'+pfEsc(u.photo)+'" referrerpolicy="no-referrer" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">':pfInitialHtml(nm);
+    return '<div class="ad-row" style="display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid rgba(194,154,92,.18);">'+
+      '<div style="position:relative;flex:none;width:38px;height:38px;">'+av+'<i style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--bg,#0e0d0c);background:'+(on?'#4cd08a':'#6b6259')+'"></i></div>'+
+      '<div style="min-width:0;flex:1;"><div style="font-weight:700;">'+pfEsc(nm)+(u.email&&u.email.toLowerCase()==='leminhdbchn@gmail.com'?' <small style="color:#c29a5c;">(Admin)</small>':'')+'</div>'+
+      '<div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;">'+pfEsc(u.email||'')+'</div>'+
+      '<div style="font-size:11.5px;color:var(--sub);margin-top:2px;">'+pfEsc(u.device||'?')+(u.standalone?' · App':' · Web')+' · v'+pfEsc(u.version||'?')+(u.firstSeen?' · từ '+dmy(new Date(u.firstSeen).toISOString().slice(0,10)):'')+'</div></div>'+
+      '<div style="flex:none;text-align:right;font-size:12px;color:'+(on?'#4cd08a':'var(--sub)')+';font-weight:'+(on?700:400)+'">'+(on?'● Đang online':adminAgo(u.lastSeen||0))+'</div></div>';
+  }).join('');
+  box.innerHTML='<div class="total-card"><div class="tc-l">Đang online / Tổng người dùng</div><div class="tc-v">'+online+' / '+list.length+'</div></div>'+
+    '<p style="color:var(--sub);font-size:12px;margin:8px 0 4px;">Chỉ gồm người đã đăng nhập Google. Người bấm “Dùng thử không cần đăng nhập” không được ghi nhận. Tự làm mới mỗi 30 giây.</p>'+
+    (rows||'<p style="color:var(--sub);">Chưa có ai.</p>')+
+    '<button class="save-btn ghost-btn" style="margin-top:14px;" onclick="renderAdmin()">↻ Tải lại</button>';
+}
+
 /* ---------- MẬT KHẨU (PIN 6 số) ---------- */
 const PIN_LEN=6;let pinBuf='',pinMode='unlock',pinFirst='',pinFails=0,pinLockUntil=0,pinHiddenAt=0,pendingUser='',userOnlyChange=false;
 function userIsSet(){try{return !!localStorage.getItem('tc_user_hash');}catch(e){return false;}}
@@ -2857,10 +2901,11 @@ document.addEventListener('visibilitychange',()=>{if(!lockOn())return;if(documen
 if(lockOn())pinShow('unlock');
 updateLockMenu();
 updateCloudMenu();
+try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='62';
+const APP_VERSION='63';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

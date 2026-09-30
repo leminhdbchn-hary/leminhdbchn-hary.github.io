@@ -7,7 +7,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, writeBatch
+  getFirestore, doc, getDoc, setDoc, writeBatch, collection, getDocs
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -171,19 +171,62 @@ function queuePush(getPayloadFn) {
   pushTimer = setTimeout(flushPush, 2500);
 }
 
+/* ---------- ADMIN: theo dõi ai đang dùng app ----------
+   Mỗi người dùng đã đăng nhập Google tự ghi 1 dòng "có mặt" vào presence/{uid} (email, tên, thiết bị, lần cuối hoạt động).
+   Chỉ tài khoản chủ app (OWNER_EMAIL) đọc được toàn bộ danh sách (do Firestore Rules chặn phía server). */
+const OWNER_EMAIL = 'leminhdbchn@gmail.com';
+const isOwnerUser = (u) => !!(u && u.email && u.email.toLowerCase() === OWNER_EMAIL && u.emailVerified !== false);
+let lastPresence = 0;
+async function touchPresence(force) {
+  if (!currentUser) return;
+  const now = Date.now();
+  if (!force && now - lastPresence < 60000) return;
+  lastPresence = now;
+  try {
+    const ref = doc(db, 'presence', currentUser.uid);
+    let first = ls.get('tc_first_seen');
+    if (!first) {
+      try { const s = await getDoc(ref); if (s.exists() && s.data().firstSeen) first = String(s.data().firstSeen); } catch (e) {}
+      if (!first) first = String(now);
+      ls.set('tc_first_seen', first);
+    }
+    await setDoc(ref, {
+      email: currentUser.email || '', name: currentUser.displayName || '', photo: currentUser.photoURL || '',
+      firstSeen: Number(first) || now, lastSeen: now, device: devName(),
+      standalone: !!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches)),
+      version: String(window.APP_VERSION || '')
+    }, { merge: true });
+  } catch (e) { /* chưa cập nhật Firestore Rules hoặc mất mạng: bỏ qua, không ảnh hưởng app */ }
+}
+async function adminListUsers() {
+  if (!isOwnerUser(currentUser)) throw new Error('NOT_OWNER');
+  const snap = await getDocs(collection(db, 'presence'));
+  const out = [];
+  snap.forEach((d) => out.push(Object.assign({ uid: d.id }, d.data())));
+  return out;
+}
+
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
+  ls.set('tc_owner', isOwnerUser(user) ? '1' : null);
   emit('cloud-auth-changed', { email: user ? user.email : null });
+  if (user) touchPresence(true);
 });
+setInterval(() => { if (document.visibilityState === 'visible') touchPresence(false); }, 4 * 60 * 1000);
 window.addEventListener('online', () => { flushPush(); emit('cloud-resume'); });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') flushPush(); // rời app → lưu ngay
-  else emit('cloud-resume');
+  else {
+    emit('cloud-resume');
+    touchPresence(false);
+  }
 });
 
 const Cloud = window.Cloud = {
   signInGoogle, logout, pushState, pullState, queuePush, flushPush, readMeta, markApplied,
   applying: false,
+  touchPresence, adminListUsers,
+  isOwner: () => isOwnerUser(currentUser),
   isLoggedIn: () => !!currentUser,
   currentUserInfo: () => (currentUser ? { email: currentUser.email || '', name: currentUser.displayName || '', photo: currentUser.photoURL || '' } : null),
   currentEmail: () => (currentUser ? (currentUser.email || currentUser.displayName || '') : ''),
