@@ -185,6 +185,7 @@ const Cloud = window.Cloud = {
   signInGoogle, logout, pushState, pullState, queuePush, flushPush, readMeta, markApplied,
   applying: false,
   isLoggedIn: () => !!currentUser,
+  currentUserInfo: () => (currentUser ? { email: currentUser.email || '', name: currentUser.displayName || '', photo: currentUser.photoURL || '' } : null),
   currentEmail: () => (currentUser ? (currentUser.email || currentUser.displayName || '') : ''),
   localRev, isDirty
 };

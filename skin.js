@@ -94,6 +94,8 @@
       h+' .home-head{background:linear-gradient(135deg,'+aL+','+aD+')!important;}',
       h+' .home-head .hh-title{color:#ffffff!important;}',
       h+' .home-head .hh-sub{color:rgba(255,255,255,.85)!important;}',
+      h+' .home-head .pf-name{color:#ffffff!important;}',
+      h+' .home-head .pf-hi{color:rgba(255,255,255,.85)!important;}',
       h+' .balance-card{box-shadow:0 8px 22px rgba('+sh+',.14)!important;}',
       h+' input,'+h+' select,'+h+' textarea{color:'+P.text+';}',
       h+' [stroke="#e2c28b"],'+h+' [stroke="#c29a5c"]{stroke:'+a+';}',

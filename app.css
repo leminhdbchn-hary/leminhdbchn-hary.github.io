@@ -976,3 +976,31 @@ html.skin-sky .tx-amt.fam,html.skin-red .tx-amt.fam{color:#c2508f!important;}
 .cc-bar i{display:block;height:100%;background:#e0483c;border-radius:3px;}
 .cc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .cc-pay{flex:none;border:0;border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;background:#c29a5c;color:#1a1714;cursor:pointer;}
+
+/* v59: hồ sơ người dùng (tên + ảnh đại diện) */
+.pf-chip{display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;max-width:100%;}
+.pf-av{flex:0 0 auto;width:48px;height:48px;border-radius:50%;overflow:hidden;display:inline-flex;border:2px solid rgba(255,255,255,.85);box-shadow:0 2px 8px rgba(0,0,0,.25);background:#fff;}
+.pf-av img,.pf-big img{width:100%;height:100%;object-fit:cover;display:block;}
+.pf-ini{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;}
+.pf-txt{display:flex;flex-direction:column;min-width:0;}
+.pf-hi{font-size:13.5px;opacity:.85;color:#bfb2a0;}
+.pf-name{font-size:21px;font-weight:700;color:#e2c28b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.home-head .hh-sub{margin-top:10px;}
+.pf-chip-tt{position:relative;z-index:2;margin-bottom:10px;align-self:flex-start;background:rgba(0,0,0,.35);padding:5px 14px 5px 5px;border-radius:30px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);gap:9px;}
+.pf-chip-tt .pf-av{width:34px;height:34px;border-width:1.5px;}
+.pf-chip-tt .pf-ini{font-size:15px;}
+.pf-chip-tt .pf-hi{font-size:11px;color:#fff;}
+.pf-chip-tt .pf-name{font-size:14px;color:#fff;max-width:52vw;}
+.pf-more{gap:12px;}
+.pf-more .pf-av{width:44px;height:44px;border-color:var(--blue);}
+.pf-more .pf-name{font-size:16px;color:var(--text);}
+.pf-more small{font-weight:400;font-size:12.5px;color:var(--sub);margin-top:2px;}
+.pf-sheet{background:var(--bg);color:var(--text);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:22px 16px calc(22px + env(safe-area-inset-bottom,0px));text-align:center;max-height:92vh;overflow:auto;}
+.pf-big{position:relative;width:112px;height:112px;margin:0 auto;border-radius:50%;cursor:pointer;}
+.pf-big>img,.pf-big>.pf-ini{border-radius:50%;border:3px solid var(--blue);font-size:44px;}
+.pf-cam{position:absolute;right:2px;bottom:2px;width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);}
+.pf-src{font-size:12.5px;color:var(--sub);margin-top:10px;word-break:break-all;}
+.pf-acts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;}
+.pf-acts button{border:1px solid var(--blue);background:transparent;color:var(--blue);border-radius:20px;padding:8px 14px;font:inherit;font-size:13.5px;font-weight:600;}
+.pf-hint{font-size:12px;color:var(--sub);text-align:left;margin:-4px 4px 6px;}
+@media (min-width:700px){.pf-sheet{border-radius:20px;margin-bottom:40px;}}

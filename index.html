@@ -10,18 +10,18 @@
 <meta name="theme-color" content="#0e0d0c">
 <link rel="manifest" href="manifest.json">
 <meta name="format-detection" content="telephone=no">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=58">
-<link rel="icon" type="image/png" href="favicon.png?v=58">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=59">
+<link rel="icon" type="image/png" href="favicon.png?v=59">
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="app.css?v=58">
-<script src="skin.js?v=58"></script>
+<link rel="stylesheet" href="app.css?v=59">
+<script src="skin.js?v=59"></script>
 <script>try{if(localStorage.getItem('tc_mode')==='tutien')document.documentElement.classList.add('tt');var _f=localStorage.getItem('tc_fs');if(_f)document.documentElement.style.setProperty('--fs',_f+'px');if(localStorage.getItem('tc_ls_partial')==='1')document.documentElement.classList.add('idb-wait');}catch(e){}</script>
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=58" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=59" alt="">
   <div class="lock-title" id="lockTitle">Nhập mật khẩu</div>
   <div class="lock-sub" id="lockSub">Nhập mật khẩu để mở sổ thu chi</div>
   <input id="lockUser" class="lock-user" type="text" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" style="display:none" onkeydown="if(event.key==='Enter'){if(pinMode==='setUser')pinUserNext();else this.blur();}">
@@ -33,7 +33,7 @@
 <script>try{if(localStorage.getItem('tc_pin_hash'))document.documentElement.classList.add('is-locked');}catch(e){}</script>
 
 <div id="cloudGateScreen" class="cloud-gate">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=58" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=59" alt="">
   <div class="lock-title">Sổ Thu Chi</div>
   <div class="lock-sub" id="gateSub">Đang kiểm tra đăng nhập...</div>
   <div id="gateBtnWrap" style="display:none;width:100%;max-width:300px;">
@@ -46,11 +46,11 @@
 
 <!-- TỔNG QUAN -->
 <div class="screen active" id="screen-home">
-  <div class="home-head normal-only"><div class="hh-title">Sổ Thu Chi</div><div class="hh-sub" id="homeHeadSub"></div></div>
+  <div class="home-head normal-only"><div class="pf-chip" onclick="openProfileSheet()" role="button" aria-label="Hồ sơ của bạn"><span class="pf-av" data-pf-av></span><span class="pf-txt"><span class="pf-hi">Xin chào!</span><span class="pf-name" data-pf-name></span></span></div><div class="hh-sub" id="homeHeadSub"></div></div>
   <div class="hero hero-pet tt-only" onclick="showScreen('reward')">
     <video id="homePetVid" class="hero-bg" muted loop playsinline autoplay preload="auto"></video><img id="homePetImg" class="hero-bg" alt="">
     <div class="hero-shade"></div>
-    
+    <div class="pf-chip pf-chip-tt" onclick="event.stopPropagation();openProfileSheet()" role="button" aria-label="Hồ sơ của bạn"><span class="pf-av" data-pf-av></span><span class="pf-txt"><span class="pf-hi">Xin chào!</span><span class="pf-name" data-pf-name></span></span></div>
     <div class="home-pet">
       <div class="home-pet-info">
         <div class="home-pet-name" id="homePetName">Linh Thú</div>
@@ -456,6 +456,8 @@
 </div>
 <div id="charView" class="char-view" onclick="if(event.target===this)closeCharView()"><div class="cv-sheet" id="cvSheet"></div></div>
 <div id="miniToast" class="mini-toast"></div>
+<div id="profileView" class="char-view" onclick="if(event.target===this)closeProfileSheet()"><div class="pf-sheet" id="pfSheet"></div></div>
+<input type="file" id="pfFile" accept="image/*" style="display:none" onchange="onProfileFile(this)">
 <!-- KHÁC -->
 <div class="screen" id="screen-more">
   <div class="inner">
@@ -465,6 +467,7 @@
     <div id="moreSortList"></div>
     <div class="ms-acts"><button class="ms-reset" onclick="resetMoreOrder()">Về thứ tự gợi ý</button><button class="ms-done" onclick="toggleMoreSort()">Xong</button></div>
   </div>
+  <div class="more-item pf-more" onclick="openProfileSheet()" id="more-profile"><span class="pf-av" data-pf-av></span><span class="pf-txt"><span class="pf-name" data-pf-name></span><small>Đổi tên hiển thị &amp; ảnh đại diện</small></span><span style="margin-left:auto;opacity:.5;">›</span></div>
   <div class="mode-card" id="more-mode" onclick="toggleTuTien()">
     <div class="mode-txt"><b>Chế độ Tu tiên 🐾</b><small id="modeDesc">Đang tắt · Bật để nuôi linh thú, sưu tầm nhân vật và xem video</small></div>
     <span class="switch" id="modeSwitch" role="switch" aria-checked="false"><span></span></span>
@@ -573,9 +576,9 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=58"></script>
-<script src="store.js?v=58"></script>
-<script src="app.js?v=58"></script>
-<script src="features.js?v=58"></script>
+<script type="module" src="cloud.js?v=59"></script>
+<script src="store.js?v=59"></script>
+<script src="app.js?v=59"></script>
+<script src="features.js?v=59"></script>
 </body>
 </html>

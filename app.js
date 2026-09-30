@@ -230,7 +230,7 @@ async function storeInit(){
   if(storeReady){storePending=false;storeFlush().then(()=>{try{autoBackupCheck();}catch(e){}});}
 }
 function buildCloudPayload(){
-  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals};
+  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,profile:profileExport()};
 }
 function applyCloudPayload(data){
   txs=data.txs||[];wallets=data.wallets||[];budgets=data.budgets||{};recurring=data.recurring||[];
@@ -241,6 +241,7 @@ function applyCloudPayload(data){
   /* bản từ máy chưa cập nhật có thể thiếu 2 mục này → giữ nguyên dữ liệu đang có */
   if(data.customCats&&typeof data.customCats==='object'){customCats=data.customCats;rebuildGroups();}
   if(Array.isArray(data.goals))goals=data.goals;
+  if(data.profile&&typeof data.profile==='object')profileImport(data.profile);
   try{migrateCategories();}catch(e){}
   setTimeout(()=>{try{shrinkOldReceipts();}catch(e){}},3000);
 }
@@ -2539,7 +2540,7 @@ window.addEventListener('cloud-sync-done',()=>{try{const el=document.getElementB
 window.addEventListener('cloud-conflict',ev=>cloudShowConflict(ev.detail&&ev.detail.meta));
 window.addEventListener('cloud-sync-error',ev=>{const d=ev.detail||{};if(d.error&&d.error.message==='CLOUD_TOO_BIG')showMiniToast(cloudErrMsg(d.error),true);try{updateCloudMenu();}catch(e){}});
 window.addEventListener('cloud-resume',()=>cloudAutoSync());
-window.addEventListener('cloud-auth-changed',()=>{try{cloudGateUpdate();if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
+window.addEventListener('cloud-auth-changed',()=>{try{renderProfile();}catch(e){}try{cloudGateUpdate();if(currentScreen()==='cloud')renderCloudScreen();updateCloudMenu();}catch(e){}
   let redir=null;try{redir=localStorage.getItem('tc_cloud_redirect');}catch(e){}
   if(!redir)setTimeout(()=>cloudAutoSync(true),800);});
 window.addEventListener('cloud-redirect-login',async()=>{
@@ -2714,7 +2715,7 @@ async function pinUserNext(){
   const u=normUser(document.getElementById('lockUser').value);
   if(u.length<3){pinSub('Tên đăng nhập cần ít nhất 3 ký tự',true);return;}
   pendingUser=u;
-  if(userOnlyChange){localStorage.setItem('tc_user_hash',await pinHash('u:'+u));pendingUser='';userOnlyChange=false;pinHide();updateLockMenu();showMiniToast('✅ Đã đổi tên đăng nhập');return;}
+  if(userOnlyChange){localStorage.setItem('tc_user_hash',await pinHash('u:'+u));profileSetLoginName(u);pendingUser='';userOnlyChange=false;pinHide();updateLockMenu();showMiniToast('✅ Đã đổi tên đăng nhập');return;}
   pinShow('set',true);
 }
 async function pinHash(pin){
@@ -2762,17 +2763,18 @@ async function pinKey(k){
     if(!pinFirst){pinFirst=entered;pinBuf='';pinRender();document.getElementById('lockTitle').textContent='Nhập lại mật khẩu';pinSub('Xác nhận '+PIN_LEN+' số vừa nhập');return;}
     if(entered!==pinFirst){pinFirst='';document.getElementById('lockTitle').textContent='Đặt mật khẩu mới';pinWrong('Hai lần nhập không khớp, nhập lại từ đầu');return;}
     localStorage.setItem('tc_pin_hash',await pinHash(entered));
-    if(pendingUser){localStorage.setItem('tc_user_hash',await pinHash('u:'+pendingUser));pendingUser='';}
+    if(pendingUser){localStorage.setItem('tc_user_hash',await pinHash('u:'+pendingUser));profileSetLoginName(pendingUser);pendingUser='';}
     pinHide();updateLockMenu();
     showRewardToast({custom:'🔒 Đã bật mật khẩu. Hãy nhớ kỹ, quên sẽ phải xoá dữ liệu!'});return;
   }
   let ok=(await pinHash(entered))===localStorage.getItem('tc_pin_hash');
   if(ok&&pinMode==='unlock'&&userIsSet()){ok=(await pinHash('u:'+normUser(document.getElementById('lockUser').value)))===localStorage.getItem('tc_user_hash');}
+  if(ok&&pinMode==='unlock'&&userIsSet())profileSetLoginName(normUser(document.getElementById('lockUser').value));
   if(!ok){pinFails++;if(pinFails>=5){pinFails=0;pinLockUntil=Date.now()+30000;pinWrong('Sai 5 lần. Vui lòng đợi 30 giây');}else pinWrong((pinMode==='unlock'&&userIsSet()?'Sai tên đăng nhập hoặc mật khẩu (':'Sai mật khẩu (')+pinFails+'/5)');return;}
   pinFails=0;
   if(pinMode==='unlock'){pinHide();petPlayVideo();return;}
   if(pinMode==='verifyChangeUser'){userOnlyChange=true;pinShow('setUser');return;}
-  if(pinMode==='verifyOff'){localStorage.removeItem('tc_pin_hash');localStorage.removeItem('tc_user_hash');pinHide();updateLockMenu();showRewardToast({custom:'🔓 Đã tắt đăng nhập'});return;}
+  if(pinMode==='verifyOff'){localStorage.removeItem('tc_pin_hash');localStorage.removeItem('tc_user_hash');profileSetLoginName('');pinHide();updateLockMenu();showRewardToast({custom:'🔓 Đã tắt đăng nhập'});return;}
   if(pinMode==='verifyChange'){pinShow('set');return;}
 }
 function pinForgot(){
@@ -3023,3 +3025,89 @@ function openNwDetail(kind){
     '<div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Đóng</button><button class="edit-modal-save" onclick="closeAppModal();showScreen(\'accounts\')">Mở Ví tiền</button></div>';
   document.getElementById('appModal').classList.add('show');
 }
+
+
+/* ---------- v59: HỒ SƠ NGƯỜI DÙNG (tên hiển thị + ảnh đại diện) ----------
+   Tên: tên tự đặt → Gmail (phần trước @) → tên đăng nhập (mật khẩu) → "User" + số ngẫu nhiên
+   Ảnh: ảnh tự chọn → ảnh tài khoản Google → chữ cái đầu trên nền màu */
+function pfGet(k){try{return localStorage.getItem(k)||'';}catch(e){return '';}}
+function pfSet(k,v){try{if(v)localStorage.setItem(k,v);else localStorage.removeItem(k);}catch(e){}}
+function pfGoogle(){try{return window.Cloud&&window.Cloud.currentUserInfo?window.Cloud.currentUserInfo():null;}catch(e){return null;}}
+function profileGuestName(){let n=pfGet('tc_guest_name');if(!n){n='User'+Math.floor(100000+Math.random()*900000);pfSet('tc_guest_name',n);}return n;}
+function profileAutoName(){
+  const g=pfGoogle();if(g&&g.email)return g.email.split('@')[0];
+  const u=pfGet('tc_user_name');if(u)return u;
+  return profileGuestName();
+}
+function profileName(){return pfGet('tc_profile_name')||profileAutoName();}
+function profileAvatar(){const a=pfGet('tc_profile_avatar');if(a)return a;const g=pfGoogle();return g&&g.photo?g.photo:'';}
+function profileSetLoginName(u){pfSet('tc_user_name',u?String(u).slice(0,40):'');renderProfile();}
+function pfEsc(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function pfInitialHtml(name){
+  const ch=(String(name).trim()[0]||'U').toUpperCase();let h=0;for(const c of String(name))h=(h*31+c.charCodeAt(0))%360;
+  return '<span class="pf-ini" style="background:hsl('+h+',55%,45%)">'+pfEsc(ch)+'</span>';
+}
+function pfAvatarHtml(){
+  const src=profileAvatar(),name=profileName();
+  if(!src)return pfInitialHtml(name);
+  return '<img src="'+pfEsc(src)+'" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=pfInitialHtml(profileName())">';
+}
+function renderProfile(){
+  const av=pfAvatarHtml(),nm=profileName();
+  document.querySelectorAll('[data-pf-av]').forEach(e=>{e.innerHTML=av;});
+  document.querySelectorAll('[data-pf-name]').forEach(e=>{e.textContent=nm;});
+}
+function profileExport(){return {name:pfGet('tc_profile_name'),avatar:pfGet('tc_profile_avatar'),at:+pfGet('tc_profile_at')||0};}
+function profileImport(p){
+  /* chỉ nhận nếu bản trên cloud mới hơn bản đang có trên máy */
+  if(!p||(+p.at||0)<(+pfGet('tc_profile_at')||0))return;
+  pfSet('tc_profile_name',p.name||'');pfSet('tc_profile_avatar',p.avatar||'');pfSet('tc_profile_at',String(p.at||''));
+  try{renderProfile();}catch(e){}
+}
+function profileChanged(){
+  pfSet('tc_profile_at',String(Date.now()));renderProfile();
+  try{if(window.Cloud)window.Cloud.queuePush(buildCloudPayload);}catch(e){}
+}
+let pfDraftAvatar=null; /* null = chưa đổi, '' = xoá ảnh, 'data:…' = ảnh mới */
+function openProfileSheet(){
+  pfDraftAvatar=null;renderProfileSheet();
+  document.getElementById('profileView').classList.add('show');
+}
+function closeProfileSheet(){document.getElementById('profileView').classList.remove('show');pfDraftAvatar=null;}
+function renderProfileSheet(){
+  const g=pfGoogle(),custom=pfDraftAvatar!==null?pfDraftAvatar:pfGet('tc_profile_avatar');
+  const src=custom||(g&&g.photo)||'',nameVal=(document.getElementById('pfNameIn')||{}).value;
+  const cur=nameVal!==undefined?nameVal:pfGet('tc_profile_name');
+  const src2=g?('Tài khoản Google: '+(g.email||'')):(pfGet('tc_user_name')?'Tên đăng nhập: '+pfGet('tc_user_name'):'Chưa đăng nhập Google');
+  document.getElementById('pfSheet').innerHTML=
+    '<div class="pf-big" onclick="document.getElementById(\'pfFile\').click()">'+(src?'<img src="'+pfEsc(src)+'" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=pfInitialHtml(profileName())">':pfInitialHtml(cur||profileAutoName()))+
+    '<span class="pf-cam" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span></div>'+
+    '<div class="pf-src">'+pfEsc(src2)+'</div>'+
+    '<div class="pf-acts"><button onclick="document.getElementById(\'pfFile\').click()">📷 Chọn ảnh mới</button>'+
+    (custom?'<button onclick="pfDraftAvatar=\'\';renderProfileSheet()">'+(g&&g.photo?'↺ Dùng ảnh Google':'✕ Xoá ảnh')+'</button>':'')+'</div>'+
+    '<div class="field" style="text-align:left;margin-top:14px;"><label>Tên hiển thị</label><input id="pfNameIn" type="text" maxlength="30" placeholder="'+pfEsc(profileAutoName())+'" value="'+pfEsc(cur)+'"></div>'+
+    '<div class="pf-hint">Để trống sẽ dùng tên tự động: <b>'+pfEsc(profileAutoName())+'</b></div>'+
+    '<button class="save-btn" onclick="saveProfileSheet()">Lưu</button>'+
+    '<button class="save-btn ghost-btn" onclick="closeProfileSheet()">Đóng</button>';
+}
+function onProfileFile(inp){
+  const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
+  if(!/^image\//.test(f.type)&&!/\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name)){showMiniToast('Vui lòng chọn file ảnh',true);return;}
+  const url=URL.createObjectURL(f),img=new Image();
+  img.onload=()=>{
+    const S=192,c=document.createElement('canvas');c.width=c.height=S;const x=c.getContext('2d');
+    const m=Math.min(img.naturalWidth,img.naturalHeight),sx=(img.naturalWidth-m)/2,sy=(img.naturalHeight-m)/2;
+    x.fillStyle='#fff';x.fillRect(0,0,S,S);x.drawImage(img,sx,sy,m,m,0,0,S,S);
+    URL.revokeObjectURL(url);pfDraftAvatar=c.toDataURL('image/jpeg',0.85);renderProfileSheet();
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);showMiniToast('Không đọc được ảnh này, hãy thử ảnh khác',true);};
+  img.src=url;
+}
+function saveProfileSheet(){
+  const n=((document.getElementById('pfNameIn')||{}).value||'').trim().replace(/\s+/g,' ').slice(0,30);
+  pfSet('tc_profile_name',n);
+  if(pfDraftAvatar!==null)pfSet('tc_profile_avatar',pfDraftAvatar);
+  profileChanged();closeProfileSheet();showMiniToast('✅ Đã cập nhật hồ sơ');
+}
+try{renderProfile();}catch(e){}
+setTimeout(()=>{try{renderProfile();}catch(e){}},1500);
