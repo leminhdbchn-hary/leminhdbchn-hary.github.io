@@ -2747,6 +2747,7 @@ function pinShow(mode,keepUser){
   document.getElementById('lockCancel').style.display=mode==='unlock'?'none':'';
   pinBuildPad();pinRender();
   document.getElementById('lockScreen').classList.add('show');
+  bioUpdateBtn();if(mode==='unlock')setTimeout(()=>bioUnlock(true),250);
 }
 function pinSub(t,err){const e=document.getElementById('lockSub');e.textContent=t;e.classList.toggle('err',!!err);}
 function pinHide(){document.getElementById('lockScreen').classList.remove('show');document.documentElement.classList.remove('is-locked');}
@@ -2774,7 +2775,7 @@ async function pinKey(k){
   pinFails=0;
   if(pinMode==='unlock'){pinHide();petPlayVideo();return;}
   if(pinMode==='verifyChangeUser'){userOnlyChange=true;pinShow('setUser');return;}
-  if(pinMode==='verifyOff'){localStorage.removeItem('tc_pin_hash');localStorage.removeItem('tc_user_hash');profileSetLoginName('');pinHide();updateLockMenu();showRewardToast({custom:'🔓 Đã tắt đăng nhập'});return;}
+  if(pinMode==='verifyOff'){localStorage.removeItem('tc_bio_id');localStorage.removeItem('tc_pin_hash');localStorage.removeItem('tc_user_hash');profileSetLoginName('');pinHide();updateLockMenu();showRewardToast({custom:'🔓 Đã tắt đăng nhập'});return;}
   if(pinMode==='verifyChange'){pinShow('set');return;}
 }
 function pinForgot(){
@@ -2793,6 +2794,57 @@ function updateCloudMenu(){
   const on=window.Cloud&&window.Cloud.isLoggedIn();
   e.innerHTML='<span>'+icon('cloudsync','#c29a5c',20)+'</span><span>Đồng bộ nhiều thiết bị (Cloud)</span><span style="margin-left:auto;font-size:12.5px;color:'+(on?'var(--green)':'var(--sub)')+'">'+(on?'Đang bật':'Chưa bật')+'</span>';
 }
+/* ---------- FACE ID / VÂN TAY (WebAuthn) ----------
+   Chỉ là cách mở khoá NHANH thay cho gõ mật khẩu, dùng sinh trắc học của máy (Face ID trên iPhone).
+   Mật khẩu PIN vẫn là chốt chính: quên/không dùng được Face ID vẫn nhập PIN như cũ.
+   Khoá Face ID nằm trong chip của máy; app chỉ nhớ mã nhận dạng (tc_bio_id) trên thiết bị này. */
+const BIO_KEY='tc_bio_id';let bioAvail=false,bioBusy=false;
+function bioB64u(buf){let s='';new Uint8Array(buf).forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function bioFromB64u(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const b=atob(s);return Uint8Array.from(b,c=>c.charCodeAt(0));}
+function bioIsSet(){try{return !!localStorage.getItem(BIO_KEY);}catch(e){return false;}}
+function bioUpdateBtn(){const b=document.getElementById('lockBio');if(b)b.style.display=(pinMode==='unlock'&&bioIsSet())?'':'none';}
+function updateBioMenu(){const e=document.getElementById('more-bio');if(!e)return;
+  const on=bioIsSet();
+  e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Mở khoá bằng Face ID</span><span style="margin-left:auto;font-size:12.5px;color:'+(on?'var(--green)':'var(--sub)')+'">'+(on?'Đang bật':(pinIsSet()?(bioAvail?'Chưa bật':'Máy không hỗ trợ'):'Cần bật mật khẩu'))+'</span>';}
+async function bioCheck(){
+  try{bioAvail=!!(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());}catch(e){bioAvail=false;}
+  updateBioMenu();bioUpdateBtn();
+}
+async function bioEnable(){
+  if(!pinIsSet()){showMiniToast('Hãy bật mật khẩu trước — Face ID chỉ là cách mở nhanh thay cho mật khẩu',true);return;}
+  if(!bioAvail){showMiniToast('Thiết bị hoặc trình duyệt này không hỗ trợ Face ID',true);return;}
+  try{
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'Sổ Thu Chi'},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'so-thu-chi',displayName:'Sổ Thu Chi'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
+      timeout:60000}});
+    localStorage.setItem(BIO_KEY,bioB64u(cred.rawId));
+    showMiniToast('✅ Đã bật mở khoá bằng Face ID');
+  }catch(e){showMiniToast('Chưa bật được Face ID (đã huỷ hoặc không xác thực được)',true);}
+  updateBioMenu();bioUpdateBtn();
+}
+function bioDisable(){
+  if(!confirm('Tắt mở khoá bằng Face ID? (Vẫn dùng mật khẩu như bình thường)'))return;
+  try{localStorage.removeItem(BIO_KEY);}catch(e){}
+  updateBioMenu();bioUpdateBtn();showMiniToast('Đã tắt Face ID');
+}
+function toggleBio(){if(bioIsSet())bioDisable();else bioEnable();}
+async function bioUnlock(silent){
+  if(bioBusy||!bioIsSet()||pinMode!=='unlock')return;
+  bioBusy=true;
+  try{
+    await navigator.credentials.get({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{type:'public-key',id:bioFromB64u(localStorage.getItem(BIO_KEY)),transports:['internal']}],
+      userVerification:'required',timeout:60000}});
+    pinFails=0;pinHide();petPlayVideo();
+  }catch(e){if(!silent)pinSub('Face ID không thành công — hãy nhập mật khẩu',true);}
+  bioBusy=false;
+}
+bioCheck();
 // Khoá lại khi rời app quá 1 phút
 document.addEventListener('visibilitychange',()=>{if(!pinIsSet())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>60000){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
 if(pinIsSet())pinShow('unlock');
@@ -2801,7 +2853,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='58';
+const APP_VERSION='60';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
