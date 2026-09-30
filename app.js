@@ -348,7 +348,7 @@ let selectedWType='cash';
 function selectWType(id){
   selectedWType=id;renderWTypeGrid(id);
   const bs=document.getElementById('bankSelect'),nm=document.getElementById('accNameInput');
-  if(id==='bank'){bs.style.display='block';nm.style.display='none';}
+  if(id==='bank'){bs.style.display='block';nm.style.display='block';nm.placeholder='Tên ví (tuỳ chọn, mặc định là tên ngân hàng)';nm.title='Ví dụ: Lương, Chi tiêu hằng ngày';}
   else{bs.style.display='none';nm.style.display='block';nm.placeholder='Tên '+WTYPES.find(w=>w.id===id).name.toLowerCase();nm.title='Ví dụ: Ví Momo';}
   const cf=document.getElementById('creditFields'),bi=document.getElementById('accBalInput');
   if(cf)cf.style.display=id==='credit'?'block':'none';
@@ -405,7 +405,7 @@ function saveAccount(){
   if(selectedWType==='bank'){
     const v=document.getElementById('bankSelect').value;
     if(v===''){alert('Vui lòng chọn ngân hàng');return;}
-    const b=BANKS[parseInt(v)];name=b.name;code=b.code;color=b.color;
+    const b=BANKS[parseInt(v)];name=document.getElementById('accNameInput').value.trim()||b.name;code=b.code;color=b.color;
   }else{
     name=document.getElementById('accNameInput').value.trim();
     if(!name){alert('Vui lòng đặt tên ví');return;}
@@ -1177,7 +1177,7 @@ function renderHome(){
   const chi=monthTx.filter(t=>t.type==='chi').reduce((s,t)=>s+t.amount,0);
   document.getElementById('mThu').textContent=fmtShort(thu);
   document.getElementById('mChi').textContent=fmtShort(chi);
-  renderFamSupport('homeFam',monthTx,thu-chi);
+  {const hf=document.getElementById('homeFam');if(hf){hf.innerHTML='';hf.style.display='none';}} /* v62: bỏ 'Gia đình hỗ trợ' & 'Còn lại sau hỗ trợ' khỏi Tổng quan */
   const net=document.getElementById('mNet');net.textContent=fmtShort(thu-chi);net.style.color=(thu-chi>=0)?'var(--green)':'var(--red)';
 
   const save=Math.max(thu-chi,0);
@@ -2860,7 +2860,7 @@ updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='61';
+const APP_VERSION='62';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
