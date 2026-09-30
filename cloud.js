@@ -174,7 +174,7 @@ function queuePush(getPayloadFn) {
 /* ---------- ADMIN: theo dõi ai đang dùng app ----------
    Mỗi người dùng đã đăng nhập Google tự ghi 1 dòng "có mặt" vào presence/{uid} (email, tên, thiết bị, lần cuối hoạt động).
    Chỉ tài khoản chủ app (OWNER_EMAIL) đọc được toàn bộ danh sách (do Firestore Rules chặn phía server). */
-const OWNER_EMAIL = 'leminhdbchn@gmail.com';
+const OWNER_EMAIL = 'leminhdbc.hn@gmail.com';
 const isOwnerUser = (u) => !!(u && u.email && u.email.toLowerCase() === OWNER_EMAIL && u.emailVerified !== false);
 let lastPresence = 0;
 async function touchPresence(force) {

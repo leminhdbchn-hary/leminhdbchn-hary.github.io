@@ -2740,7 +2740,7 @@ async function renderAdmin(silent){
     const av=u.photo?'<img src="'+pfEsc(u.photo)+'" referrerpolicy="no-referrer" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">':pfInitialHtml(nm);
     return '<div class="ad-row" style="display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid rgba(194,154,92,.18);">'+
       '<div style="position:relative;flex:none;width:38px;height:38px;">'+av+'<i style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--bg,#0e0d0c);background:'+(on?'#4cd08a':'#6b6259')+'"></i></div>'+
-      '<div style="min-width:0;flex:1;"><div style="font-weight:700;">'+pfEsc(nm)+(u.email&&u.email.toLowerCase()==='leminhdbchn@gmail.com'?' <small style="color:#c29a5c;">(Admin)</small>':'')+'</div>'+
+      '<div style="min-width:0;flex:1;"><div style="font-weight:700;">'+pfEsc(nm)+(u.email&&u.email.toLowerCase()==='leminhdbc.hn@gmail.com'?' <small style="color:#c29a5c;">(Admin)</small>':'')+'</div>'+
       '<div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;">'+pfEsc(u.email||'')+'</div>'+
       '<div style="font-size:11.5px;color:var(--sub);margin-top:2px;">'+pfEsc(u.device||'?')+(u.standalone?' · App':' · Web')+' · v'+pfEsc(u.version||'?')+(u.firstSeen?' · từ '+dmy(new Date(u.firstSeen).toISOString().slice(0,10)):'')+'</div></div>'+
       '<div style="flex:none;text-align:right;font-size:12px;color:'+(on?'#4cd08a':'var(--sub)')+';font-weight:'+(on?700:400)+'">'+(on?'● Đang online':adminAgo(u.lastSeen||0))+'</div></div>';
@@ -2905,7 +2905,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='63';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='64';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

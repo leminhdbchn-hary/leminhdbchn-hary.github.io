@@ -15,11 +15,11 @@ service cloud.firestore {
 
     // v63: "có mặt" của người dùng, để chủ app (admin) biết ai đang dùng.
     //  - Mỗi người chỉ ghi được dòng của chính mình (email phải đúng tài khoản đang đăng nhập).
-    //  - Đọc: chính chủ đọc dòng của mình; ADMIN (leminhdbchn@gmail.com) đọc được tất cả.
+    //  - Đọc: chính chủ đọc dòng của mình; ADMIN (leminhdbc.hn@gmail.com) đọc được tất cả.
     match /presence/{uid} {
       allow read: if request.auth != null
                   && (request.auth.uid == uid
-                      || (request.auth.token.email == 'leminhdbchn@gmail.com'
+                      || (request.auth.token.email == 'leminhdbc.hn@gmail.com'
                           && request.auth.token.email_verified == true));
       allow create, update: if request.auth != null && request.auth.uid == uid
                   && request.resource.data.keys().hasOnly(['email','name','photo','firstSeen','lastSeen','device','standalone','version'])
