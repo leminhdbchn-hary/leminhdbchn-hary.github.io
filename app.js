@@ -2733,24 +2733,26 @@ async function renderAdmin(silent){
   }
   list.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
   const ONLINE=6*60*1000,now=Date.now();
-  const online=list.filter(u=>now-(u.lastSeen||0)<ONLINE).length;
-  const rows=list.map(u=>{
+  const rowH=u=>{
     const on=now-(u.lastSeen||0)<ONLINE;
     const nm=u.name||String(u.email||'?').split('@')[0];
     const av=u.photo?'<img src="'+pfEsc(u.photo)+'" referrerpolicy="no-referrer" style="width:38px;height:38px;border-radius:50%;object-fit:cover;">':pfInitialHtml(nm);
-    return '<div class="ad-row" style="display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid rgba(194,154,92,.18);">'+
+    const when=u.lastSeen?new Date(u.lastSeen):null;
+    const abs=when?(String(when.getHours()).padStart(2,'0')+':'+String(when.getMinutes()).padStart(2,'0')+' '+dmy(when.toISOString().slice(0,10))):'';
+    return '<div class="ad-row" style="display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid rgba(194,154,92,.18);'+(on?'':'opacity:.82;')+'">'+
       '<div style="position:relative;flex:none;width:38px;height:38px;">'+av+'<i style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--bg,#0e0d0c);background:'+(on?'#4cd08a':'#6b6259')+'"></i></div>'+
       '<div style="min-width:0;flex:1;"><div style="font-weight:700;">'+pfEsc(nm)+(u.email&&u.email.toLowerCase()==='leminhdbc.hn@gmail.com'?' <small style="color:#c29a5c;">(Admin)</small>':'')+'</div>'+
       '<div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;">'+pfEsc(u.email||'')+'</div>'+
-      '<div style="font-size:11.5px;color:var(--sub);margin-top:2px;">'+pfEsc(u.device||'?')+(u.standalone?' · App':' · Web')+' · v'+pfEsc(u.version||'?')+(u.firstSeen?' · từ '+dmy(new Date(u.firstSeen).toISOString().slice(0,10)):'')+'</div></div>'+
-      '<div style="flex:none;text-align:right;font-size:12px;color:'+(on?'#4cd08a':'var(--sub)')+';font-weight:'+(on?700:400)+'">'+(on?'● Đang online':adminAgo(u.lastSeen||0))+'</div></div>';
-  }).join('');
-  box.innerHTML='<div class="total-card"><div class="tc-l">Đang online / Tổng người dùng</div><div class="tc-v">'+online+' / '+list.length+'</div></div>'+
-    '<p style="color:var(--sub);font-size:12px;margin:8px 0 4px;">Chỉ gồm người đã đăng nhập Google. Người bấm “Dùng thử không cần đăng nhập” không được ghi nhận. Tự làm mới mỗi 30 giây.</p>'+
-    (rows||'<p style="color:var(--sub);">Chưa có ai.</p>')+
+      '<div style="font-size:11.5px;color:var(--sub);margin-top:2px;">'+pfEsc(u.device||'?')+(u.standalone?' · App':' · Web')+' · v'+pfEsc(u.version||'?')+(u.firstSeen?' · dùng từ '+dmy(new Date(u.firstSeen).toISOString().slice(0,10)):'')+'</div></div>'+
+      '<div style="flex:none;text-align:right;font-size:12px;line-height:1.35;color:'+(on?'#4cd08a':'var(--sub)')+';font-weight:'+(on?700:400)+'">'+(on?'● Đang online':'○ Offline<br><span style="font-size:11px;">'+adminAgo(u.lastSeen||0)+'</span><br><span style="font-size:10.5px;opacity:.8;">'+abs+'</span>')+'</div></div>';
+  };
+  const onl=list.filter(u=>now-(u.lastSeen||0)<ONLINE),off=list.filter(u=>now-(u.lastSeen||0)>=ONLINE);
+  const sec=(title,arr,color)=>'<div style="margin:16px 2px 2px;font-weight:800;font-size:13.5px;color:'+color+';">'+title+' ('+arr.length+')</div>'+(arr.length?arr.map(rowH).join(''):'<p style="color:var(--sub);font-size:12.5px;margin:6px 4px;">Không có ai.</p>');
+  box.innerHTML='<div class="total-card"><div class="tc-l">Online · Offline · Tổng người dùng</div><div class="tc-v"><span style="color:#4cd08a">'+onl.length+'</span> · '+off.length+' · '+list.length+'</div></div>'+
+    '<p style="color:var(--sub);font-size:12px;margin:8px 0 0;">Gồm tất cả người từng đăng nhập Google và mở app từ bản v63 trở lên. Người bấm “Dùng thử không cần đăng nhập” không được ghi nhận. Tự làm mới mỗi 30 giây.</p>'+
+    sec('🟢 Đang online',onl,'#4cd08a')+sec('⚪ Đã dùng, hiện offline',off,'var(--sub)')+
     '<button class="save-btn ghost-btn" style="margin-top:14px;" onclick="renderAdmin()">↻ Tải lại</button>';
 }
-
 /* ---------- MẬT KHẨU (PIN 6 số) ---------- */
 const PIN_LEN=6;let pinBuf='',pinMode='unlock',pinFirst='',pinFails=0,pinLockUntil=0,pinHiddenAt=0,pendingUser='',userOnlyChange=false;
 function userIsSet(){try{return !!localStorage.getItem('tc_user_hash');}catch(e){return false;}}
@@ -2905,7 +2907,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='64';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='65';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
