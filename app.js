@@ -2747,6 +2747,12 @@ function pinShow(mode,keepUser){
   document.getElementById('lockCancel').style.display=mode==='unlock'?'none':'';
   pinBuildPad();pinRender();
   document.getElementById('lockScreen').classList.add('show');
+  if(mode==='unlock'&&!pinIsSet()&&bioIsSet()){
+    ['lockDots','lockPad'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('lockTitle').textContent='Mở khoá bằng Face ID';pinSub('Chạm nút bên dưới để mở sổ thu chi');
+    document.getElementById('lockForgot').textContent='Không dùng được Face ID?';
+  }else document.getElementById('lockForgot').textContent='Quên mật khẩu?';
+  document.getElementById('lockBio').className=(mode==='unlock'&&!pinIsSet()&&bioIsSet())?'lock-next':'';
   bioUpdateBtn();if(mode==='unlock')setTimeout(()=>bioUnlock(true),250);
 }
 function pinSub(t,err){const e=document.getElementById('lockSub');e.textContent=t;e.classList.toggle('err',!!err);}
@@ -2775,7 +2781,7 @@ async function pinKey(k){
   pinFails=0;
   if(pinMode==='unlock'){pinHide();petPlayVideo();return;}
   if(pinMode==='verifyChangeUser'){userOnlyChange=true;pinShow('setUser');return;}
-  if(pinMode==='verifyOff'){localStorage.removeItem('tc_bio_id');localStorage.removeItem('tc_pin_hash');localStorage.removeItem('tc_user_hash');profileSetLoginName('');pinHide();updateLockMenu();showRewardToast({custom:'🔓 Đã tắt đăng nhập'});return;}
+  if(pinMode==='verifyOff'){localStorage.removeItem('tc_pin_hash');localStorage.removeItem('tc_user_hash');profileSetLoginName('');pinHide();updateLockMenu();updateBioMenu();showRewardToast({custom:bioIsSet()?'🔓 Đã tắt mật khẩu (vẫn mở app bằng Face ID)':'🔓 Đã tắt đăng nhập'});return;}
   if(pinMode==='verifyChange'){pinShow('set');return;}
 }
 function pinForgot(){
@@ -2788,6 +2794,7 @@ function openPinSettings(){
   const c=prompt('Đăng nhập đang BẬT'+(userIsSet()?'':' (chưa có tên đăng nhập)')+'.\nGõ 1 để đổi mật khẩu\nGõ 2 để '+(userIsSet()?'đổi':'đặt')+' tên đăng nhập\nGõ 3 để tắt đăng nhập','1');
   if(c==='1')pinShow('verifyChange');else if(c==='2')pinShow('verifyChangeUser');else if(c==='3')pinShow('verifyOff');
 }
+function lockOn(){return pinIsSet()||bioIsSet();}
 function updateLockMenu(){const e=document.getElementById('more-lock');if(e)e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Tên đăng nhập & mật khẩu</span><span style="margin-left:auto;font-size:12.5px;color:'+(pinIsSet()?'var(--green)':'var(--sub)')+'">'+(pinIsSet()?(userIsSet()?'Đang bật':'Chưa có tên'):'Chưa bật')+'</span>';}
 function updateCloudMenu(){
   const e=document.getElementById('more-cloud');if(!e)return;
@@ -2805,13 +2812,12 @@ function bioIsSet(){try{return !!localStorage.getItem(BIO_KEY);}catch(e){return 
 function bioUpdateBtn(){const b=document.getElementById('lockBio');if(b)b.style.display=(pinMode==='unlock'&&bioIsSet())?'':'none';}
 function updateBioMenu(){const e=document.getElementById('more-bio');if(!e)return;
   const on=bioIsSet();
-  e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Mở khoá bằng Face ID</span><span style="margin-left:auto;font-size:12.5px;color:'+(on?'var(--green)':'var(--sub)')+'">'+(on?'Đang bật':(pinIsSet()?(bioAvail?'Chưa bật':'Máy không hỗ trợ'):'Cần bật mật khẩu'))+'</span>';}
+  e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Mở khoá bằng Face ID</span><span style="margin-left:auto;font-size:12.5px;color:'+(on?'var(--green)':'var(--sub)')+'">'+(on?'Đang bật':(bioAvail?'Chưa bật':'Máy không hỗ trợ'))+'</span>';}
 async function bioCheck(){
   try{bioAvail=!!(window.PublicKeyCredential&&PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());}catch(e){bioAvail=false;}
   updateBioMenu();bioUpdateBtn();
 }
 async function bioEnable(){
-  if(!pinIsSet()){showMiniToast('Hãy bật mật khẩu trước — Face ID chỉ là cách mở nhanh thay cho mật khẩu',true);return;}
   if(!bioAvail){showMiniToast('Thiết bị hoặc trình duyệt này không hỗ trợ Face ID',true);return;}
   try{
     const cred=await navigator.credentials.create({publicKey:{
@@ -2826,8 +2832,9 @@ async function bioEnable(){
   }catch(e){showMiniToast('Chưa bật được Face ID (đã huỷ hoặc không xác thực được)',true);}
   updateBioMenu();bioUpdateBtn();
 }
-function bioDisable(){
-  if(!confirm('Tắt mở khoá bằng Face ID? (Vẫn dùng mật khẩu như bình thường)'))return;
+async function bioDisable(){
+  if(!confirm(pinIsSet()?'Tắt mở khoá bằng Face ID? (Vẫn dùng mật khẩu như bình thường)':'Tắt Face ID sẽ TẮT LUÔN khoá app (vì bạn chưa đặt mật khẩu). Tiếp tục?'))return;
+  if(!pinIsSet()){try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:bioFromB64u(localStorage.getItem(BIO_KEY)),transports:['internal']}],userVerification:'required',timeout:60000}});}catch(e){showMiniToast('Cần xác thực Face ID để tắt',true);return;}}
   try{localStorage.removeItem(BIO_KEY);}catch(e){}
   updateBioMenu();bioUpdateBtn();showMiniToast('Đã tắt Face ID');
 }
@@ -2846,14 +2853,14 @@ async function bioUnlock(silent){
 }
 bioCheck();
 // Khoá lại khi rời app quá 1 phút
-document.addEventListener('visibilitychange',()=>{if(!pinIsSet())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>60000){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
-if(pinIsSet())pinShow('unlock');
+document.addEventListener('visibilitychange',()=>{if(!lockOn())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>60000){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
+if(lockOn())pinShow('unlock');
 updateLockMenu();
 updateCloudMenu();
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='60';
+const APP_VERSION='61';
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
