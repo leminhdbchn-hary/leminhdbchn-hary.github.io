@@ -1888,17 +1888,34 @@ function repairLoanTxAmounts(){
   loans.forEach(l=>{if(l.v!==2){ensureLoanV2(l);fixed=true;}});
   if(fixed)saveAll();
 }
+let loanAckPending=[];
 function checkLoanPaymentsDue(){
-  const t=todayStr();const due=[];
+  const t=todayStr();const due=[];loanAckPending=[];
   loans.forEach(ensureLoanV2);
   loans.filter(l=>l.status==='active').forEach(l=>{
     const np=nextPrincipalDue(l),ni=nextInterestDue(l);
     if(np&&np.due<=t&&np.amount>0)due.push(l.name+' – trả gốc '+fmtShort(np.amount)+' VND ('+dmy(np.due)+')');
-    if(ni&&ni.due<=t)due.push(l.name+' – trả lãi ~'+fmtShort(ni.amount)+' VND ('+dmy(ni.due)+')');
+    /* Đã bấm "Đã đủ tiền trả lãi" cho đúng kỳ này thì không nhắc lại nữa */
+    if(ni&&ni.due<=t&&l.interestAck!==ni.due){due.push(l.name+' – trả lãi ~'+fmtShort(ni.amount)+' VND ('+dmy(ni.due)+')');loanAckPending.push({id:l.id,due:ni.due});}
   });
   saveAll();
   if(!due.length)return;
-  alert('Khoản vay đến hạn:\n• '+due.join('\n• ')+'\n\nVào mục "Vay ngân hàng" để ghi nhận trả nợ.');
+  const html='<h3>🏦 Khoản vay đến hạn</h3>'+
+    '<div class="rp-list">'+due.map(x=>'<div class="rp-row"><span>'+x+'</span></div>').join('')+'</div>'+
+    '<div class="loan-hint" style="margin:8px 0 12px;">Vào mục "Vay ngân hàng" để ghi nhận trả nợ.'+(loanAckPending.length?' Nếu tiền trả lãi đã sẵn sàng (ngân hàng tự thu cuối ngày), bấm "Đã đủ tiền trả lãi" để không nhắc lại kỳ này.':'')+'</div>'+
+    '<div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Đóng</button>'+
+    (loanAckPending.length?'<button class="edit-modal-save" onclick="ackLoanInterest()">Đã đủ tiền trả lãi</button>':'<button class="edit-modal-save" onclick="closeAppModal();showScreen(\'loans\')">Mở Vay ngân hàng</button>')+'</div>';
+  const show=(n)=>{const m=document.getElementById('appModal');
+    if(m&&m.classList.contains('show')&&n>0){setTimeout(()=>show(n-1),1500);return;}/* chờ cửa sổ khác đóng */
+    document.getElementById('appModalBody').innerHTML=html;if(m)m.classList.add('show');};
+  show(20);
+}
+function ackLoanInterest(){
+  loanAckPending.forEach(a=>{const l=loans.find(x=>x.id===a.id);if(l)l.interestAck=a.due;});
+  loanAckPending=[];
+  saveAll();closeAppModal();
+  try{renderReminders();}catch(e){}
+  showMiniToast('✓ Đã ghi nhớ: đủ tiền trả lãi kỳ này');
 }
 
 /* ---------- SAVING POINTS / REWARD ---------- */
@@ -2907,7 +2924,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='65';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='66';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
