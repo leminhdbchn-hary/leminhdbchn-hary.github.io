@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.leminhdbchn_hary.sothuchi",
+      "sha256_cert_fingerprints": ["54:2A:4F:52:5C:52:C5:80:AB:B0:DD:EF:8A:DA:5C:B2:E5:B7:FD:81:2B:AA:23:02:46:A1:1A:F7:44:1A:BA:DA"]
+    }
+  }
+]

@@ -1,0 +1,5 @@
+# Bubblewrap sinh ra khi build – không commit
+*
+!.gitignore
+!twa-manifest.json
+!README.md

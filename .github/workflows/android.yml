@@ -1,0 +1,95 @@
+# Đóng gói Sổ Thu Chi thành app Android (Trusted Web Activity, dùng Bubblewrap).
+# App chạy chính trang https://leminhdbchn-hary.github.io/ bằng Chrome, toàn màn hình, không thanh địa chỉ.
+# Cần 2 secret trong Settings → Secrets and variables → Actions:
+#   ANDROID_KEYSTORE_BASE64   – file android.keystore mã hoá base64
+#   ANDROID_KEYSTORE_PASSWORD – mật khẩu keystore (cũng là mật khẩu key)
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - version.json
+      - manifest.json
+      - android/twa-manifest.json
+      - .github/workflows/android.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Kiểm tra secret ký app
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KS" ] || [ -z "$PW" ]; then
+            echo "::error::Thiếu secret ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD (xem android/README.md)"
+            exit 1
+          fi
+
+      - name: Cài Bubblewrap và Android build-tools
+        run: |
+          npm install -g @bubblewrap/cli@1.25.0
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.1.0" "platforms;android-36" > /dev/null
+          mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
+
+      - name: Lấy số phiên bản từ version.json
+        id: ver
+        run: |
+          V=$(jq -r .v version.json)
+          echo "v=$V" >> "$GITHUB_OUTPUT"
+          jq --arg v "$V" '.appVersionName=$v | .appVersionCode=($v|tonumber)' android/twa-manifest.json > android/tmp.json
+          mv android/tmp.json android/twa-manifest.json
+
+      - name: Build APK + AAB
+        working-directory: android
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KS" | base64 -d > android.keystore
+          bubblewrap update --skipVersionUpgrade
+          bubblewrap build --skipPwaValidation
+          mv app-release-signed.apk "SoThuChi-v${{ steps.ver.outputs.v }}.apk"
+          mv app-release-bundle.aab "SoThuChi-v${{ steps.ver.outputs.v }}.aab"
+          rm -f android.keystore
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SoThuChi-android-v${{ steps.ver.outputs.v }}
+          path: |
+            android/*.apk
+            android/*.aab
+
+      - name: Đăng bản phát hành (link tải APK trực tiếp)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-v${{ steps.ver.outputs.v }}
+          name: Sổ Thu Chi Android v${{ steps.ver.outputs.v }}
+          body: Tải file .apk về điện thoại Android và mở để cài đặt.
+          files: |
+            android/*.apk
+            android/*.aab
