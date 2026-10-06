@@ -1030,3 +1030,7 @@ html.skin-mono .total-card{background:#1e1c1a!important;color:#f2efe9!important;
 html.skin-mono .total-card *{color:inherit;}
 html.skin-mono .total-card .tc-l{color:#9b968e!important;}
 html.skin-mono #more-sms{filter:grayscale(1);}
+
+/* Giao diện màu: lưới 2 cột, không tràn viền */
+.skin-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;}
+.skin-opt{min-width:0;width:100%;white-space:normal;}
