@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
-<head>
+v73: thêm điều chỉnh lãi suất vay ngân hàng vào giao diện<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,22 +9,22 @@
 <meta name="theme-color" content="#0e0d0c">
 <link rel="manifest" href="manifest.json">
 <meta name="format-detection" content="telephone=no">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=72">
-<link rel="icon" type="image/png" href="favicon.png?v=72">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=73">
+<link rel="icon" type="image/png" href="favicon.png?v=73">
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<link rel="modulepreload" href="cloud.js?v=72">
+<link rel="modulepreload" href="cloud.js?v=73">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
-<link rel="stylesheet" href="app.css?v=72">
-<script src="skin.js?v=72"></script>
+<link rel="stylesheet" href="app.css?v=73">
+<script src="skin.js?v=73"></script>
 <script>try{if(localStorage.getItem('tc_mode')==='tutien'&&localStorage.getItem('tc_owner')==='1')document.documentElement.classList.add('tt');var _f=localStorage.getItem('tc_fs');if(_f)document.documentElement.style.setProperty('--fs',_f+'px');if(localStorage.getItem('tc_ls_partial')==='1')document.documentElement.classList.add('idb-wait');}catch(e){}</script>
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=72" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=73" alt="">
   <div class="lock-title" id="lockTitle">Nhập mật khẩu</div>
   <div class="lock-sub" id="lockSub">Nhập mật khẩu để mở sổ thu chi</div>
   <input id="lockUser" class="lock-user" type="text" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" style="display:none" onkeydown="if(event.key==='Enter'){if(pinMode==='setUser')pinUserNext();else this.blur();}">
@@ -37,7 +36,7 @@
 <script>try{if(localStorage.getItem('tc_pin_hash')||localStorage.getItem('tc_bio_id'))document.documentElement.classList.add('is-locked');}catch(e){}</script>
 
 <div id="cloudGateScreen" class="cloud-gate">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=72" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=73" alt="">
   <div class="lock-title">Sổ Thu Chi</div>
   <div class="lock-sub" id="gateSub">Đang kiểm tra đăng nhập...</div>
   <div id="gateBtnWrap" style="display:none;width:100%;max-width:300px;">
@@ -380,6 +379,11 @@
     <input id="loanTerm" type="number" min="1" max="600" inputmode="numeric" placeholder="" title="Ví dụ: 12" oninput="updateLoanPreview()">
     <label class="fl">Lãi suất (%/năm)</label>
     <input id="loanRate" type="number" step="0.01" inputmode="decimal" placeholder="" title="Ví dụ: 9.5" oninput="updateLoanPreview()">
+    <label class="fl">Điều chỉnh lãi suất (khi ngân hàng đổi lãi suất)</label>
+    <div class="loan-hint">Từ ngày áp dụng trở đi, lãi tính theo lãi suất mới; các ngày trước đó vẫn tính theo lãi suất cũ.</div>
+    <div id="loanRateChgList"></div>
+    <div style="display:flex;gap:8px;"><input id="loanRateNew" type="number" step="0.01" inputmode="decimal" placeholder="Lãi suất mới (%/năm)" style="flex:1;min-width:0;"><input id="loanRateNewDate" type="date" title="Ngày áp dụng lãi suất mới" style="flex:1;min-width:0;"></div>
+    <button type="button" class="save-btn ghost-btn" style="margin-top:0;margin-bottom:10px;" onclick="addLoanRateChange()">+ Thêm lần điều chỉnh lãi suất</button>
     <label class="fl" id="loanDayLabel">Ngày trả lãi cố định hàng tháng (1–31)</label>
     <input id="loanInterestDay" type="number" min="1" max="31" inputmode="numeric" placeholder="" title="Ví dụ: 25" oninput="updateLoanPreview()">
     <div class="loan-hint">Nếu ngày này rơi vào Thứ 7, Chủ nhật hoặc ngày nghỉ lễ theo lịch nhà nước thì tự dời sang ngày làm việc tiếp theo.</div>
@@ -596,11 +600,11 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=72"></script>
-<script src="store.js?v=72"></script>
-<script src="app.js?v=72"></script>
-<script src="features.js?v=72"></script>
-<script src="sms.js?v=72"></script>
-<script src="ux.js?v=72"></script>
+<script type="module" src="cloud.js?v=73"></script>
+<script src="store.js?v=73"></script>
+<script src="app.js?v=73"></script>
+<script src="features.js?v=73"></script>
+<script src="sms.js?v=73"></script>
+<script src="ux.js?v=73"></script>
 </body>
 </html>
