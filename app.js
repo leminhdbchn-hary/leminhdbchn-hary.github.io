@@ -1448,12 +1448,12 @@ function renderDebts(){
     if(a.status!==b.status)return a.status==='pending'?-1:1;
     return new Date(a.dueDate)-new Date(b.dueDate);
   });
-  const walletOpts=()=>getSpendableWallets().map(x=>'<option value="'+x.id+'">'+x.name+'</option>').join('')||'<option value="">Chưa có ví</option>';
+  const walletOpts=(sel)=>getSpendableWallets().map(x=>'<option value="'+x.id+'"'+(sel&&String(x.id)===String(sel)?' selected':'')+'>'+x.name+'</option>').join('')||'<option value="">Chưa có ví</option>';
   list.innerHTML=sorted.map(d=>{
     const st=debtStatusInfo(d);
     let payRow='';
     if(d.status==='pending'){
-      payRow='<div class="debt-pay-row"><select id="payWallet_'+d.id+'">'+walletOpts()+'</select><button onclick="markDebtPaid('+d.id+')">'+(inn?'Đã trả nợ':'Đã trả')+'</button></div>';
+      payRow='<div class="debt-pay-row"><select id="payWallet_'+d.id+'">'+walletOpts(d.sourceWalletId)+'</select><button onclick="markDebtPaid('+d.id+')">'+(inn?'Đã trả nợ':'Đã trả')+'</button></div>';
     }
     return '<div class="debt-item'+(inn?' debt-in':'')+'"><div class="debt-top"><div><div class="debt-person">'+(inn?'Vay của ':'')+d.person+'</div><div class="debt-sub">'+(inn?'Vay ngày ':'Cho vay ngày ')+d.date.split('-').reverse().join('/')+(d.note?' • '+d.note:'')+'</div></div><div class="debt-amt">'+fmt(d.amount)+'</div></div>'+
       '<span class="debt-badge '+st.cls+'">'+st.label+'</span>'+
@@ -2924,7 +2924,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='70';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='71';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
