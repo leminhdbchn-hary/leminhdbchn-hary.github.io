@@ -1552,7 +1552,7 @@ function toggleLoanForm(forceOpen){
   }
   if(!open){editingLoanId=null;clearLoanForm();}
 }
-function clearLoanForm(){['loanName','loanPrincipal','loanPaid','loanRate','loanTerm','loanInterestDay','loanNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const p=document.getElementById('loanPreview');if(p)p.innerHTML='';}
+function clearLoanForm(){formRateChanges=[];try{renderRateChgList();}catch(e){}['loanName','loanPrincipal','loanPaid','loanRate','loanTerm','loanInterestDay','loanNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const p=document.getElementById('loanPreview');if(p)p.innerHTML='';}
 
 /* Ngày danh nghĩa kỳ k: ngày D của tháng (tháng giải ngân + k); tháng thiếu ngày thì lấy ngày cuối tháng */
 function nominalDate(startDate,k,day){
@@ -1593,19 +1593,61 @@ function nextPrincipalDue(l){
   while(n<l.termMonths&&cumPrincipal(l,n)<=paid)n++;
   const s=sch[n-1];return {due:s.due,nominal:s.nominal,amount:Math.max(0,cumPrincipal(l,n)-paid),idx:n};
 }
+/* ----- v73: điều chỉnh lãi suất theo ngày (rateChanges: [{date, rate}]) ----- */
+function loanRateChanges(l){return (l.rateChanges||[]).filter(c=>c&&c.date&&c.rate>=0).slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
+/* Lãi suất (%/năm) áp dụng cho ngày date: lần điều chỉnh gần nhất có ngày áp dụng <= date, chưa có thì dùng lãi suất ban đầu */
+function loanRateAt(l,date){let r=l.rate||0;loanRateChanges(l).forEach(c=>{if(c.date<=date)r=c.rate;});return r;}
+/* Lãi của dư nợ bal từ ngày from (tính) đến ngày to (không tính), tách theo từng đoạn lãi suất */
+function loanInterestFor(l,bal,from,to){
+  const days=Math.max(0,daysBetween(from,to));
+  const segs=[];let cur=from,rate=loanRateAt(l,from);
+  loanRateChanges(l).filter(c=>c.date>from&&c.date<to).forEach(c=>{segs.push({from:cur,to:c.date,days:daysBetween(cur,c.date),rate});cur=c.date;rate=c.rate;});
+  segs.push({from:cur,to,days:Math.max(0,daysBetween(cur,to)),rate});
+  let sum=0;segs.forEach(s=>{sum+=bal*s.rate/100*s.days/365;});
+  return {days,amount:Math.round(sum),segs};
+}
+let formRateChanges=[];
+function cleanRateChanges(){return formRateChanges.map(c=>({date:c.date,rate:c.rate})).sort((a,b)=>a.date<b.date?-1:1);}
+function renderRateChgList(){
+  const box=document.getElementById('loanRateChgList');if(!box)return;
+  const a=cleanRateChanges();
+  box.innerHTML=a.length?a.map(c=>'<div class="loan-hist-row"><span>Từ '+dmy(c.date)+'</span><span class="lh-txt">Lãi suất mới '+c.rate+'%/năm</span><button type="button" class="icon-btn" style="color:var(--red)" data-d="'+c.date+'" onclick="removeLoanRateChange(this.dataset.d)" aria-label="Xoá">✕</button></div>').join(''):'<div class="loan-hint" style="margin:0 0 8px;">Chưa có lần điều chỉnh lãi suất nào.</div>';
+}
+function addLoanRateChange(){
+  const r=parseFloat(document.getElementById('loanRateNew').value);const d=document.getElementById('loanRateNewDate').value;
+  if(isNaN(r)||r<0){alert('Vui lòng nhập lãi suất mới (%/năm)');return;}
+  if(!d){alert('Vui lòng chọn ngày áp dụng lãi suất mới');return;}
+  const start=document.getElementById('loanStartDate').value;
+  if(start&&d<=start){alert('Ngày điều chỉnh phải sau ngày giải ngân ('+dmy(start)+')');return;}
+  formRateChanges=formRateChanges.filter(c=>c.date!==d);formRateChanges.push({date:d,rate:r});
+  document.getElementById('loanRateNew').value='';document.getElementById('loanRateNewDate').value='';
+  renderRateChgList();updateLoanPreview();
+}
+function removeLoanRateChange(d){formRateChanges=formRateChanges.filter(c=>c.date!==d);renderRateChgList();updateLoanPreview();}
+function openLoanRateChange(id){
+  openEditLoan(id);
+  setTimeout(()=>{const e=document.getElementById('loanRateNew'),dt=document.getElementById('loanRateNewDate');if(dt&&!dt.value)dt.value=todayStr();if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.focus();}},400);
+}
+function loanRateHistHtml(l){
+  const ch=loanRateChanges(l);if(!ch.length)return '';
+  const today=todayStr();
+  const parts=['Ban đầu '+(l.rate||0)+'%'].concat(ch.map(c=>'từ '+dmy(c.date)+': '+c.rate+'%'+(c.date>today?' (sắp áp dụng)':'')));
+  return '<div class="loan-hint" style="margin-top:6px;">Lịch sử lãi suất: '+parts.join(' → ')+'</div>';
+}
 function nextInterestDue(l){
   if(l.status==='closed')return null;
   const sch=loanSchedule(l);const i=l.iPaid||0;if(i>=sch.length)return null;
   const from=i===0?l.startDate:sch[i-1].due;const s=sch[i];
   const days=Math.max(0,daysBetween(from,s.due));
-  return {due:s.due,nominal:s.nominal,from,days,idx:i+1,amount:Math.round((l.balance||0)*(l.rate||0)/100*days/365)};
+  const calc=loanInterestFor(l,l.balance||0,from,s.due);
+  return {due:s.due,nominal:s.nominal,from,days,idx:i+1,amount:calc.amount,segs:calc.segs};
 }
 /* Lãi ước tính của kỳ j (0-based) */
 function loanPeriodInterest(l,j){
   const sch=loanSchedule(l);const from=j===0?l.startDate:sch[j-1].due;const days=Math.max(0,daysBetween(from,sch[j].due));
   let bal=l.balance||0;
   if(j>(l.iPaid||0)&&l.type==='consumer')bal=Math.max(0,l.principal-Math.max(loanPaidPrincipal(l),cumPrincipal(l,j)));
-  return {days,from,amount:Math.round(bal*(l.rate||0)/100*days/365)};
+  return {days,from,amount:loanInterestFor(l,bal,from,sch[j].due).amount};
 }
 /* Các khoản gốc/lãi chưa trả có hạn đến ngày `until` (gồm cả khoản quá hạn) */
 function loanDueUntil(l,until){
@@ -1675,13 +1717,13 @@ function saveLoan(){
     const l=loans.find(x=>x.id===editingLoanId);if(!l)return;
     const histP=(l.history||[]).reduce((s,h)=>s+(h.principal||0),0);
     if(paid<histP){alert('Số tiền đã trả nợ gốc không được nhỏ hơn tổng gốc đã ghi nhận trong lịch sử trả nợ ('+fmt(histP)+').');return;}
-    Object.assign(l,{type:formLoanType,name,principal,startDate,termMonths:term,rate,interestDay:iDay,note,paidBefore:paid-histP});
+    Object.assign(l,{type:formLoanType,name,principal,startDate,termMonths:term,rate,rateChanges:cleanRateChanges(),interestDay:iDay,note,paidBefore:paid-histP});
     setBank(l);recalcLoan(l);
     const sch=loanSchedule(l);if((l.iPaid||0)>sch.length)l.iPaid=sch.length;
     saveAll();toggleLoanForm(false);renderLoans();renderHome();return;
   }
   const disburseWalletId=document.getElementById('loanDisburseWallet').value||null;
-  const loan={v:2,id:Date.now(),type:formLoanType,name,principal,paidBefore:paid,balance:principal-paid,startDate,termMonths:term,rate,interestDay:iDay,iPaid:0,note,status:'active',history:[],disburseTxId:null};
+  const loan={v:2,id:Date.now(),type:formLoanType,name,principal,paidBefore:paid,balance:principal-paid,startDate,termMonths:term,rate,rateChanges:cleanRateChanges(),interestDay:iDay,iPaid:0,note,status:'active',history:[],disburseTxId:null};
   /* kỳ lãi đã qua trước hôm nay coi như đã trả (khoản vay đang trả dở) */
   loan.iPaid=loanSchedule(loan).filter(s=>s.due<todayStr()).length;
   setBank(loan);recalcLoan(loan);
@@ -1705,6 +1747,7 @@ function openEditLoan(id){
   document.getElementById('loanRate').value=l.rate||'';
   document.getElementById('loanInterestDay').value=l.interestDay||'';
   document.getElementById('loanNote').value=l.note||'';
+  formRateChanges=(l.rateChanges||[]).map(c=>({date:c.date,rate:c.rate}));renderRateChgList();
   document.getElementById('loanDisburseWrap').style.display='none';
   document.getElementById('loanSaveBtn').textContent='Cập nhật khoản vay';
   toggleLoanForm(true);setLoanType(l.type||'consumer');
@@ -1776,7 +1819,7 @@ function renderLoans(){
       const nextD=[np&&np.due,ni&&ni.due].filter(Boolean).sort()[0]||todayStr();
       const dd=loanDueUntil(l,nextD>todayStr()?nextD:todayStr());
       const preP=dd.p,preI=dd.i;
-      const iLbl=dd.iCount>1?' — '+dd.iCount+' kỳ lãi chưa trả, tự tính theo dư nợ, có thể sửa':(ni?' — kỳ '+ni.idx+': '+ni.days+' ngày, tự tính theo dư nợ, có thể sửa':'');
+      const iLbl=dd.iCount>1?' — '+dd.iCount+' kỳ lãi chưa trả, tự tính theo dư nợ, có thể sửa':(ni?' — kỳ '+ni.idx+': '+ni.days+' ngày'+(ni.segs&&ni.segs.length>1?' (có đổi lãi suất giữa kỳ)':'')+', tự tính theo dư nợ, có thể sửa':'');
       payBox='<div class="loan-pay-box" id="loanPayBox_'+l.id+'" style="display:none;">'+
         '<div class="field"><label>Ngày trả</label><input type="date" id="loanPayDate_'+l.id+'" value="'+todayStr()+'"></div>'+
         '<div class="field"><label>Trả nợ gốc (VND)'+(l.type==='consumer'?' — trả nhiều hơn sẽ lùi lịch trả gốc':'')+'</label><input type="tel" inputmode="numeric" id="loanPayPrincipal_'+l.id+'" value="'+(preP?fmtShort(preP):'')+'" placeholder="0" oninput="fmtInput(this)"></div>'+
@@ -1790,12 +1833,12 @@ function renderLoans(){
     return '<div class="loan-item">'+
       '<div class="loan-top"><div><div class="loan-name">'+l.name+' <span class="loan-type-chip">'+(LOAN_TYPES[l.type]||'')+'</span></div><div class="loan-bank">'+(l.bankName?l.bankName+' • ':'')+(l.termMonths?l.termMonths+' tháng • đáo hạn '+dmy(loanMaturity(l)):'')+'</div></div><div class="loan-bal">'+fmt(l.balance)+'<div style="font-size:11px;font-weight:500;color:var(--sub);">dư nợ</div></div></div>'+
       '<div class="loan-grid"><div><span>Số tiền vay ban đầu</span><b>'+fmt(l.principal)+'</b></div><div><span>Đã trả nợ gốc</span><b>'+fmt(paid)+' ('+pctPaid+'%)</b></div>'+
-      '<div><span>Lãi suất</span><b>'+(l.rate||0)+'%/năm</b></div><div><span>'+(l.type==='consumer'?'Gốc mỗi tháng':'Ngày trả lãi')+'</span><b>'+(l.type==='consumer'?fmt(loanMonthlyPrincipal(l)):'Ngày '+l.interestDay+' hàng tháng')+'</b></div></div>'+
+      '<div><span>Lãi suất hiện tại</span><b>'+loanRateAt(l,todayStr())+'%/năm</b></div><div><span>'+(l.type==='consumer'?'Gốc mỗi tháng':'Ngày trả lãi')+'</span><b>'+(l.type==='consumer'?fmt(loanMonthlyPrincipal(l)):'Ngày '+l.interestDay+' hàng tháng')+'</b></div></div>'+
       '<div class="bar-bg" style="margin-top:8px;"><div class="bar-fill" style="width:'+pctPaid+'%;background:var(--blue)"></div></div>'+
-      badges+prepaid+
+      loanRateHistHtml(l)+badges+prepaid+
       (l.note?'<div class="debt-sub" style="margin-top:6px;">'+l.note+'</div>':'')+
       (histRows?'<div style="margin-top:8px;">'+histRows+'</div>':'')+
-      '<div class="loan-actions">'+(l.status!=='closed'?'<button onclick="toggleLoanPayBox('+l.id+')">Ghi nhận trả nợ</button>':'')+(incomplete?'':'<button onclick="toggleLoanSched('+l.id+')">Lịch trả nợ</button>')+'<button onclick="openEditLoan('+l.id+')">Sửa khoản vay</button><button onclick="deleteLoan('+l.id+')">Xoá khoản vay</button></div>'+
+      '<div class="loan-actions">'+(l.status!=='closed'?'<button onclick="toggleLoanPayBox('+l.id+')">Ghi nhận trả nợ</button>':'')+(incomplete?'':'<button onclick="toggleLoanSched('+l.id+')">Lịch trả nợ</button>')+''+(l.status!=='closed'?'<button onclick="openLoanRateChange('+l.id+')">Đổi lãi suất</button>':'')+'<button onclick="openEditLoan('+l.id+')">Sửa khoản vay</button><button onclick="deleteLoan('+l.id+')">Xoá khoản vay</button></div>'+
       (incomplete?'':loanScheduleHtml(l))+payBox+
       '</div>';
   }).join('');
@@ -2924,7 +2967,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='72';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='73';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
