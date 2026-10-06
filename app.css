@@ -1005,23 +1005,7 @@ html.skin-sky .tx-amt.fam,html.skin-red .tx-amt.fam{color:#c2508f!important;}
 .pf-hint{font-size:12px;color:var(--sub);text-align:left;margin:-4px 4px 6px;}
 @media (min-width:700px){.pf-sheet{border-radius:20px;margin-bottom:40px;}}
 
-/* ===== v67: Trợ lý hỏi đáp + Dán SMS ===== */
-.as-bar{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:12px 14px;margin:0 0 12px;cursor:pointer;font-size:13.5px;color:var(--sub);border:1px solid rgba(194,154,92,.25);}
-.as-bar-t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.as-bar-go{opacity:.6}
-.as-wrap{display:flex;flex-direction:column}
-.as-clear{margin-left:auto;background:none;border:none;color:var(--sub);font-size:12.5px;text-decoration:underline;padding:6px}
-.as-log{display:flex;flex-direction:column;gap:10px;padding:12px 0 6px;min-height:40vh}
-.as-msg{display:flex;flex-direction:column;max-width:92%}.as-msg.me{align-self:flex-end;align-items:flex-end}.as-msg.bot{align-self:flex-start}
-.as-bub{background:var(--card);color:var(--text);border-radius:16px;padding:11px 14px;font-size:14px;line-height:1.55;word-break:break-word}
-.as-msg.me .as-bub{background:var(--blue);color:#fff;border-bottom-right-radius:4px}.as-msg.bot .as-bub{border-bottom-left-radius:4px}
-.as-ul{margin:6px 0 2px;padding-left:18px}.as-ul li{margin:3px 0}
-.as-sub{margin-top:8px;font-weight:600;color:var(--sub);font-size:12.5px}.as-note{margin-top:8px;font-size:13px;color:var(--sub)}
-.as-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-.as-acts button,.as-chips button{border:1px solid rgba(194,154,92,.4);background:transparent;color:var(--blue);border-radius:18px;padding:7px 12px;font-size:12.5px;font-family:inherit;cursor:pointer}
-.as-chips{display:flex;gap:8px;overflow-x:auto;padding:6px 0 8px;scrollbar-width:none}.as-chips::-webkit-scrollbar{display:none}.as-chips button{flex-shrink:0;white-space:nowrap}
-.as-form{display:flex;gap:8px;position:sticky;bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--bg);padding:6px 0;z-index:5}
-.as-form input{flex:1;border:1px solid rgba(194,154,92,.35);background:var(--card);color:var(--text);border-radius:22px;padding:12px 16px;font-size:15px;font-family:inherit;outline:none}
-.as-form button{width:46px;border:none;border-radius:50%;background:var(--blue);color:#1a1612;font-size:18px}
+/* ===== v67: Dán SMS ===== */
 .sms-open{width:100%;border:1px dashed rgba(194,154,92,.5);background:transparent;color:var(--blue);border-radius:12px;padding:11px;margin:0 0 12px;font-size:13.5px;font-family:inherit;cursor:pointer}
 .sms-box textarea{width:100%;box-sizing:border-box;border:1px solid rgba(194,154,92,.35);background:var(--card);color:var(--text);border-radius:12px;padding:10px;font-size:14px;font-family:inherit;resize:vertical}
 .sms-sub{font-size:12.5px;color:var(--sub);margin-bottom:8px}.sms-row{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px}.sms-row select{flex:1}
@@ -1030,3 +1014,19 @@ html.skin-sky .tx-amt.fam,html.skin-red .tx-amt.fam{color:#c2508f!important;}
 .sms-hd{display:flex;align-items:center;gap:8px;font-size:13px}.sms-amt{font-weight:700;font-size:15px}.sms-amt.chi{color:var(--red)}.sms-amt.thu{color:var(--green)}.sms-meta{color:var(--sub);font-size:12px}
 .sms-ed{display:flex;gap:6px;margin:6px 0}.sms-ed select{flex:1;min-width:0;font-size:13px}.sms-note{width:100%;box-sizing:border-box;font-size:13px;padding:6px 8px;border-radius:8px;border:1px solid rgba(194,154,92,.25);background:transparent;color:var(--text)}
 .sms-w{font-size:12px;color:var(--sub);margin-top:5px}.sms-raw{font-size:12px;color:var(--sub);word-break:break-all}.sms-t{font-weight:600;font-size:13px}
+
+.sw-mono{background:linear-gradient(135deg,#121212 50%,#ece8e1 50%);border:1px solid #3a3733}
+
+/* ===== v70: Tối giản (nền tối, trắng kem) – cùng một tông cho giao diện và icon ===== */
+html.skin-mono .tx-icon,html.skin-mono .cat-emoji,html.skin-mono .acc-icon{background:rgba(255,255,255,.06)!important;}
+html.skin-mono .emo-ic,html.skin-mono .tx-icon,html.skin-mono .cat-emoji,html.skin-mono .acc-icon,html.skin-mono .tab-icon,html.skin-mono .icon-btn,html.skin-mono .donut,html.skin-mono .bar-fill,html.skin-mono .minibar-fill,html.skin-mono .sms-open,html.skin-mono .donut-legend i,html.skin-mono .trend-leg,html.skin-mono .trend-bars,html.skin-mono svg,html.skin-mono img,html.skin-mono video,html.skin-mono canvas{filter:grayscale(1);}
+html.skin-mono .pf-av img{filter:none;}
+html.skin-mono .pf-ini{background:#3a3733!important;color:#f2efe9!important;}
+html.skin-mono .minibar-fill{opacity:.85;}
+html.skin-mono .type-tabs button.active,html.skin-mono .chip.active,html.skin-mono .save-btn,html.skin-mono .period-tabs button.active,html.skin-mono .edit-modal-save,html.skin-mono .theme-toggle button.active,html.skin-mono .debt-pay-row button,html.skin-mono .pf-cam,html.skin-mono .rl-tabs button.active,html.skin-mono [style*="background:var(--blue)"],html.skin-mono [style*="background:var(--green)"],html.skin-mono [style*="background:var(--red)"]{color:#121212!important;}
+html.skin-mono .save-btn.ghost-btn,html.skin-mono .save-btn[style*="transparent"]{color:var(--text)!important;}
+html.skin-mono .type-tabs button.active.fam{background:#ece8e1!important;}
+html.skin-mono .total-card{background:#1e1c1a!important;color:#f2efe9!important;}
+html.skin-mono .total-card *{color:inherit;}
+html.skin-mono .total-card .tc-l{color:#9b968e!important;}
+html.skin-mono #more-sms{filter:grayscale(1);}
