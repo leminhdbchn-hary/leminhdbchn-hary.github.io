@@ -1298,11 +1298,25 @@ function renderRepDetail(inRange){
   const top=list.slice().sort((a,b)=>b.amount-a.amount||(b.date||'').localeCompare(a.date||'')).slice(0,5);
   box.innerHTML='<div class="rep-detail-t">'+(type==='thu'?'Thu gì':'Chi gì')+' · tổng '+fmt(total)+'<button class="icon-btn" onclick="toggleRepDetail(\''+type+'\')" aria-label="Đóng">✕</button></div>'+
     rows.map(([k,o])=>{const open=repOpenItems.has(k);
-      const sub=open?'<div class="rep-sub">'+list.filter(t=>(t.item||t.group||'Khác')===k).sort((a,b)=>b.amount-a.amount||(b.date||'').localeCompare(a.date||'')).map(repTopItem).join('')+'</div>':'';
+      const its=open?list.filter(t=>(t.item||t.group||'Khác')===k).sort((a,b)=>b.amount-a.amount||(b.date||'').localeCompare(a.date||'')):[];
+      const sub=open?'<div class="rep-sub">'+its.map(repTxRow).join('')+'<button class="rep-nocf-all" data-k="'+encodeURIComponent(k)+'" onclick="repExcludeItem(this)">Không tính cả mục «'+k+'» vào thu chi ('+its.length+' giao dịch trong kỳ)</button></div>':'';
       return '<div class="tx-item rep-cat" data-k="'+encodeURIComponent(k)+'" onclick="toggleRepItem(this)" style="cursor:pointer"><div class="tx-icon" style="background:'+o.bg+'">'+icon(o.icon,o.accent,19)+'</div><div class="tx-info"><div class="cat">'+k+' <span class="rep-caret">'+(open?'▾':'▸')+'</span></div><div class="note">'+(o.g&&o.g!==k?o.g+' • ':'')+o.n+' giao dịch • '+Math.round(o.v/total*100)+'%</div></div><div class="tx-amt '+(type==='thu'?'in':'out')+'">'+fmt(o.v)+'</div></div>'+sub;}).join('')+
     '<div class="loan-hint" style="margin:4px 0 0;">Bấm vào từng hạng mục để xem chi tiết các giao dịch.</div>'+
     '<div class="rep-detail-t" style="margin-top:12px;">'+(top.length<5?top.length:5)+' khoản '+word+' lớn nhất</div>'+
-    top.map((t,i)=>'<div class="rep-top"><span class="rep-rank">'+(i+1)+'</span>'+repTopItem(t)+'</div>').join('');
+    top.map((t,i)=>'<div class="rep-top"><span class="rep-rank">'+(i+1)+'</span>'+repTxRow(t)+'</div>').join('');
+}
+/* Giao dịch trong bảng chi tiết kèm nút "Không tính thu chi": bấm là giao dịch biến khỏi báo cáo (số dư ví giữ nguyên) */
+function repTxRow(t){return '<div class="rep-txw">'+repTopItem(t)+'<button class="rep-nocf" onclick="repExclude(['+t.id+'])">Không tính thu chi</button></div>';}
+function repExclude(ids,silent){
+  const n=ids.length;ids.forEach(id=>{const t=txs.find(x=>x.id===id);if(t)t.noCF=true;});
+  saveAll();renderReport();try{renderHome();}catch(e){}
+  if(!silent)showMiniToast('✓ Đã bỏ '+(n>1?n+' giao dịch':'giao dịch')+' khỏi thu chi. Muốn tính lại: sửa giao dịch, bỏ tích "Không tính vào thu chi"');
+}
+function repExcludeItem(el){
+  const k=decodeURIComponent(el.dataset.k);
+  const ids=repInRange.filter(t=>t.type===repDetailType&&isCashFlow(t)&&(t.item||t.group||'Khác')===k).map(t=>t.id);
+  if(!ids.length||!confirm('Không tính '+ids.length+' giao dịch «'+k+'» trong kỳ này vào thu chi? Số dư ví vẫn giữ nguyên.'))return;
+  repExclude(ids);
 }
 function repTopItem(t){const h=txItemHTML(t),n='<div class="note">';return h.includes(n+t.date)?h.replace(n+t.date,n+dmy(t.date)):h.replace(n,n+dmy(t.date)+' • ');}
 function sumRange(a,b,type){return txs.filter(t=>t.type===type&&isCashFlow(t)&&(()=>{const d=new Date(t.date+'T00:00:00');return d>=a&&d<=b;})()).reduce((x,t)=>x+t.amount,0);}
@@ -3010,7 +3024,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='76';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='77';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

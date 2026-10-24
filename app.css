@@ -1050,3 +1050,7 @@ html.skin-mono #more-sms{filter:grayscale(1);}
 .nocf-row input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:var(--gold,#c29a5c);}
 .nocf-row b{display:block;font-size:13.5px;font-weight:600;}
 .nocf-row small{display:block;font-size:11.5px;color:var(--sub);margin-top:2px;line-height:1.35;}
+.rep-txw{flex:1;min-width:0;}
+.rep-nocf,.rep-nocf-all{background:none;border:1px dashed var(--sub);color:var(--sub);border-radius:999px;font:inherit;font-size:11.5px;padding:3px 10px;margin:-2px 0 8px 48px;cursor:pointer;}
+.rep-nocf-all{margin:4px 0 6px;width:100%;padding:7px 10px;}
+.rep-nocf:hover,.rep-nocf-all:hover{color:var(--text);border-color:var(--text);}
