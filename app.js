@@ -1270,8 +1270,10 @@ function renderReport(){
   if(window.reportExtras){try{reportExtras(inRange,start,end);}catch(e){console.error(e);}}
 }
 /* Bấm ô Thu / Chi ở Báo cáo: xem thu gì, chi gì và 5 khoản lớn nhất trong kỳ */
-let repDetailType=null,repInRange=[];
-function toggleRepDetail(type){repDetailType=repDetailType===type?null:type;renderRepDetail(repInRange);}
+let repDetailType=null,repInRange=[],repOpenItems=new Set();
+function toggleRepDetail(type){repDetailType=repDetailType===type?null:type;repOpenItems.clear();renderRepDetail(repInRange);}
+/* Bấm một hạng mục (vd. Khác) để xem từng giao dịch trong đó */
+function toggleRepItem(el){const k=decodeURIComponent(el.dataset.k);if(repOpenItems.has(k))repOpenItems.delete(k);else repOpenItems.add(k);renderRepDetail(repInRange);}
 function renderRepDetail(inRange){
   repInRange=inRange;const box=document.getElementById('repDetail');if(!box)return;
   ['thu','chi'].forEach(k=>{const b=document.getElementById(k==='thu'?'repThuBox':'repChiBox');if(b)b.classList.toggle('on',repDetailType===k);});
@@ -1285,7 +1287,10 @@ function renderRepDetail(inRange){
   const rows=Object.entries(by).sort((a,b)=>b[1].v-a[1].v);
   const top=list.slice().sort((a,b)=>b.amount-a.amount||(b.date||'').localeCompare(a.date||'')).slice(0,5);
   box.innerHTML='<div class="rep-detail-t">'+(type==='thu'?'Thu gì':'Chi gì')+' · tổng '+fmt(total)+'<button class="icon-btn" onclick="toggleRepDetail(\''+type+'\')" aria-label="Đóng">✕</button></div>'+
-    rows.map(([k,o])=>'<div class="tx-item"><div class="tx-icon" style="background:'+o.bg+'">'+icon(o.icon,o.accent,19)+'</div><div class="tx-info"><div class="cat">'+k+'</div><div class="note">'+(o.g&&o.g!==k?o.g+' • ':'')+o.n+' giao dịch • '+Math.round(o.v/total*100)+'%</div></div><div class="tx-amt '+(type==='thu'?'in':'out')+'">'+fmt(o.v)+'</div></div>').join('')+
+    rows.map(([k,o])=>{const open=repOpenItems.has(k);
+      const sub=open?'<div class="rep-sub">'+list.filter(t=>(t.item||t.group||'Khác')===k).sort((a,b)=>b.amount-a.amount||(b.date||'').localeCompare(a.date||'')).map(repTopItem).join('')+'</div>':'';
+      return '<div class="tx-item rep-cat" data-k="'+encodeURIComponent(k)+'" onclick="toggleRepItem(this)" style="cursor:pointer"><div class="tx-icon" style="background:'+o.bg+'">'+icon(o.icon,o.accent,19)+'</div><div class="tx-info"><div class="cat">'+k+' <span class="rep-caret">'+(open?'▾':'▸')+'</span></div><div class="note">'+(o.g&&o.g!==k?o.g+' • ':'')+o.n+' giao dịch • '+Math.round(o.v/total*100)+'%</div></div><div class="tx-amt '+(type==='thu'?'in':'out')+'">'+fmt(o.v)+'</div></div>'+sub;}).join('')+
+    '<div class="loan-hint" style="margin:4px 0 0;">Bấm vào từng hạng mục để xem chi tiết các giao dịch.</div>'+
     '<div class="rep-detail-t" style="margin-top:12px;">'+(top.length<5?top.length:5)+' khoản '+word+' lớn nhất</div>'+
     top.map((t,i)=>'<div class="rep-top"><span class="rep-rank">'+(i+1)+'</span>'+repTopItem(t)+'</div>').join('');
 }
@@ -2995,7 +3000,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='74';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='75';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

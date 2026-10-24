@@ -1044,3 +1044,5 @@ html.skin-mono #more-sms{filter:grayscale(1);}
 .rep-top{display:flex;align-items:center;gap:6px;}
 .rep-top>.tx-item{flex:1;min-width:0;}
 .rep-rank{flex:none;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.rep-sub{margin:0 0 8px 22px;padding-left:10px;border-left:2px solid var(--line,rgba(255,255,255,.12));}
+.rep-caret{font-size:11px;color:var(--sub);}
