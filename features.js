@@ -193,18 +193,19 @@ function fxSet(cur,amt,rate){
   else document.getElementById('fxAmt').value='';
 }
 function txExtras(tx){
+  const nc=document.getElementById('noCfChk');if(nc&&nc.checked&&!nc.disabled)tx.noCF=true;else delete tx.noCF;
   const cur=fxCur();
   if(cur&&cur!=='VND'){const a=fxParse(document.getElementById('fxAmt').value),r=fxParse(document.getElementById('fxRate').value);if(a>0&&r>0){tx.fx={cur,amt:a,rate:r};return;}}
   delete tx.fx;
 }
 function editTxExtras(t){
-  qeReset();
+  qeReset();syncNoCfChk(!!t.noCF);
   if(t.fx&&t.fx.cur)fxSet(t.fx.cur,t.fx.amt,t.fx.rate);else fxSet('VND');
   const ob=document.getElementById('ocrBtn');if(ob)ob.style.display=t.receipt?'block':'none';
 }
 function onTypeExtras(t){
   const normal=t==='chi'||t==='thu';
-  ['qeBar','qeHint','fxRow'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=normal?'':'none';});
+  ['qeBar','qeHint','fxRow','noCfRow'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=normal?'':'none';});
   if(!normal&&fxCur()!=='VND')fxSet('VND');
 }
 

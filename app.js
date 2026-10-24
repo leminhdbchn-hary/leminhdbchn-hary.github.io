@@ -16,7 +16,7 @@ const CAT_DEF={
     ['Phát triển bản thân','🌱','#22a765',[['Giao lưu, quan hệ','🤝'],['Học hành','✏️']]],
     ['Sức khỏe','❤️','#e0483c',[['Khám chữa bệnh','🩺'],['Thuốc men','💊'],['Thể thao','⚽']]],
     ['Trang phục','👔','#1b6fb5',[['Giày dép','👟'],['Phụ kiện khác','🕶️'],['Quần áo','👕']]],
-    ['Khác','📦','#7c8b98',[['Khác','📦']]]
+    ['Khác','📦','#7c8b98',[['Khác','📦'],['Tạm ứng ăn chung','🍻']]]
   ],
   thu:[
     ['Lương','💰','#22a765',[]],['Thưởng','🏅','#e0a000',[]],['Được cho/tặng','🤲','#b0578a',[]],
@@ -69,9 +69,19 @@ function legacyTarget(type,group,item){
   if(gs.some(g=>g.name===group&&(g.items.includes(item)||item===group)))return null;
   const m=(LEGACY_ITEM_MAP[type]||{})[item];return m||null;
 }
-/* Cho vay, thu hồi nợ, vay/trả nợ người khác và chia tiền nhóm chỉ là tiền đi/về, không tính vào thu chi */
-const NON_CF_ITEMS=['Cho vay','Thu hồi nợ','Vay nợ khác','Trả nợ vay khác'];
-function isCashFlow(t){return !(t.debtId||t.split||t.group==='Thu hồi nợ'||NON_CF_ITEMS.includes(t.item));}
+/* Cho vay, thu hồi nợ, vay/trả nợ người khác, chia tiền nhóm, tạm ứng ăn chung và giao dịch được đánh dấu
+   "Không tính vào thu chi" (noCF) chỉ là tiền đi/về: vẫn tính số dư ví nhưng không tính vào thu chi */
+const NON_CF_ITEMS=['Cho vay','Thu hồi nợ','Vay nợ khác','Trả nợ vay khác','Tạm ứng ăn chung'];
+function isCashFlow(t){return !(t.noCF||t.debtId||t.split||t.group==='Thu hồi nợ'||NON_CF_ITEMS.includes(t.item));}
+/* Ô "Không tính vào thu chi" ở màn Thêm giao dịch: mục luôn loại trừ (vd. Tạm ứng ăn chung) thì tự tích và khoá */
+function syncNoCfChk(force){
+  const c=document.getElementById('noCfChk');if(!c)return;
+  const fixed=!!selectedItem&&(NON_CF_ITEMS.includes(selectedItem)||selectedGroup==='Thu hồi nợ');
+  if(force!==undefined)c.checked=!!force;
+  if(fixed)c.checked=true;
+  if(c.disabled&&!fixed&&force===undefined)c.checked=false;
+  c.disabled=fixed;
+}
 function migrateCategories(){
   let changed=false;
   (txs||[]).forEach(t=>{if(t.item==='Đi vay cá nhân'){t.item='Vay nợ khác';changed=true;}else if(t.item==='Trả nợ cá nhân'){t.item='Trả nợ vay khác';changed=true;}});
@@ -252,7 +262,7 @@ function applyCloudPayload(data){
 let currentType='chi', selectedGroup=null, selectedItem=null, receiptData=null, editingTxId=null;
 
 /* ---------- SỬA GIAO DỊCH ---------- */
-function resetEditUI(){
+function resetEditUI(){try{syncNoCfChk(false);}catch(e){}
   editingTxId=null;
   const ti=document.getElementById('addScreenTitle');if(ti)ti.textContent='Thêm giao dịch';
   const bt=document.getElementById('saveTxBtn');if(bt)bt.textContent='Lưu lại';
@@ -701,7 +711,7 @@ function renderCatPicker(){
       return '<div class="cat-btn'+(selectedGroup===g&&selectedItem===it?' selected':'')+'" onclick="pickCat(\''+esc1(g)+'\',\''+esc1(it)+'\')">'+catTile(currentType,g,it)+'<span class="cat-lbl">'+it+'</span></div>';}).join('')+
       '<div class="cat-btn cp-editbtn" onclick="openCatSheet(true)"><span class="cat-emoji"><span class="emo-ic" style="font-size:20px">✏️</span></span><span class="cat-lbl">Sửa</span></div></div>';
   }
-  box.innerHTML=h;
+  box.innerHTML=h;syncNoCfChk();
 }
 function renderGroupChips(){renderCatPicker();}
 function renderItemGrid(){renderCatPicker();}
@@ -922,7 +932,7 @@ function saveTx(){
   txs.unshift(tx);
   if(walletId){const w=wallets.find(x=>String(x.id)===String(walletId));if(w)w.balance+=(currentType==='thu'?amount:-amount);}
   awardBaseLinhThach(tx);
-  saveAll();budgetWarn(tx);
+  saveAll();budgetWarn(tx);syncNoCfChk(false);
   document.getElementById('amountInput').value='';document.getElementById('noteInput').value='';document.getElementById('personInput').value='';
   receiptData=null;document.getElementById('receiptInput').value='';document.getElementById('receiptPreview').style.display='none';{const ri=document.getElementById('receiptInfo');if(ri)ri.textContent='';}
   selectedItem=null;
@@ -978,7 +988,7 @@ function txItemHTML(t){
     return '<div class="tx-item"><div class="tx-icon" style="background:#dceeff">'+icon('transfer','#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+(isCredit(wallets.find(w=>w.name===t.toName))?'Trả nợ thẻ: ':'Chuyển: ')+t.fromName+' → '+t.toName+'</div><div class="note">'+(t.note||t.date)+'</div></div><div class="tx-amt xfer">'+fmt(t.amount)+'</div><button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
   }
   const sign=t.type==='chi'?'-':'+';const cls=t.type==='chi'?'out':'in';
-  return '<div class="tx-item" onclick="if(!event.target.closest(\'button\'))openEditTx('+t.id+')" style="cursor:pointer"><div class="tx-icon" style="background:'+(t.bg||'#e7f2fa')+'">'+icon(t.icon||'khac',t.accent||'#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+t.item+'</div><div class="note">'+(t.note||t.person||t.date)+(t.fx&&t.fx.cur?' · '+t.fx.amt+' '+t.fx.cur:'')+'</div></div><div class="tx-amt '+cls+'">'+sign+fmt(t.amount)+'</div>'+rewardBtnHTML(t)+'<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
+  return '<div class="tx-item" onclick="if(!event.target.closest(\'button\'))openEditTx('+t.id+')" style="cursor:pointer"><div class="tx-icon" style="background:'+(t.bg||'#e7f2fa')+'">'+icon(t.icon||'khac',t.accent||'#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+t.item+(isCashFlow(t)?'':' <span class="fam-tag">không tính thu chi</span>')+'</div><div class="note">'+(t.note||t.person||t.date)+(t.fx&&t.fx.cur?' · '+t.fx.amt+' '+t.fx.cur:'')+'</div></div><div class="tx-amt '+cls+'">'+sign+fmt(t.amount)+'</div>'+rewardBtnHTML(t)+'<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
 }
 function rewardBtnHTML(t){
   if(!isTuTien())return '';
@@ -3000,7 +3010,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='75';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='76';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
