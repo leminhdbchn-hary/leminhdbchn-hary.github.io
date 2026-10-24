@@ -1054,3 +1054,49 @@ html.skin-mono #more-sms{filter:grayscale(1);}
 .rep-nocf,.rep-nocf-all{background:none;border:1px dashed var(--sub);color:var(--sub);border-radius:999px;font:inherit;font-size:11.5px;padding:3px 10px;margin:-2px 0 8px 48px;cursor:pointer;}
 .rep-nocf-all{margin:4px 0 6px;width:100%;padding:7px 10px;}
 .rep-nocf:hover,.rep-nocf-all:hover{color:var(--text);border-color:var(--text);}
+
+/* v78: mẫu ghi nhanh */
+.tpl-bar{margin:0 0 12px;}
+.tpl-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--sub);margin:0 2px 6px;}
+.tpl-head button{background:none;border:0;color:var(--sub);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;padding:0;}
+.tpl-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.tpl-scroll::-webkit-scrollbar{display:none;}
+.tpl-chip{flex:none;white-space:nowrap;background:var(--card);color:var(--text);border:1px solid transparent;border-radius:999px;padding:8px 13px;font:inherit;font-size:13px;cursor:pointer;}
+.tpl-chip.chi{border-color:rgba(224,72,60,.35);}
+.tpl-chip.thu{border-color:rgba(34,167,101,.4);}
+.tpl-chip.add{border:1px dashed var(--sub);color:var(--sub);background:none;}
+.tpl-hint{font-size:11.5px;color:var(--sub);margin:6px 2px 0;line-height:1.4;}
+.tpl-mrow{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid rgba(127,127,127,.15);}
+.tpl-mn{flex:1;min-width:0;font-size:14px;font-weight:600;}
+.tpl-mn small{display:block;font-weight:400;font-size:11.5px;color:var(--sub);margin-top:2px;}
+/* gợi ý hạng mục theo ghi chú */
+.note-sug{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.45;}
+.note-sug:empty{display:none;}
+.sug-btn{background:none;border:1px solid var(--gold,#c29a5c);color:var(--gold,#c29a5c);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer;margin-left:2px;}
+/* tạm ứng chờ thu */
+.adv-row{background:rgba(127,127,127,.08);border-radius:12px;padding:10px 12px;margin:0 0 10px;}
+.adv-top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;}
+.adv-top b{font-size:15px;}
+.adv-top span{font-size:12px;color:var(--sub);min-width:0;}
+.adv-sub{display:block;font-size:11.5px;color:var(--sub);margin-top:2px;}
+.adv-act{display:flex;gap:8px;margin-top:8px;}
+.adv-act input,.adv-act select{flex:1;min-width:0;padding:8px 10px;border-radius:10px;border:1px solid rgba(127,127,127,.3);background:var(--card);color:var(--text);font:inherit;font-size:13px;}
+.adv-act button{flex:1;padding:8px 10px;border-radius:10px;border:0;font:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+.adv-ok{background:var(--green);color:#fff;}
+.adv-skip{background:none;border:1px solid rgba(127,127,127,.35)!important;color:var(--sub);}
+/* báo cáo: lọc ví, tỷ lệ tiết kiệm */
+.rep-wallet{display:flex;align-items:center;gap:8px;margin:0 0 10px;}
+.rep-wallet label{font-size:12px;color:var(--sub);}
+.rep-wallet select{flex:1;min-width:0;padding:8px 10px;border-radius:10px;border:1px solid rgba(127,127,127,.3);background:var(--card);color:var(--text);font:inherit;font-size:13px;}
+.rep-wallet select.on{border-color:var(--gold,#c29a5c);}
+.sv-now{display:flex;align-items:center;gap:12px;margin:2px 0 10px;}
+.sv-now b{font-size:26px;font-weight:800;}
+.sv-now span{font-size:12px;color:var(--sub);line-height:1.4;}
+.sv-chart{height:120px;}
+/* nhắc trả nợ vay */
+.loan-notify{background:var(--card);border-radius:14px;padding:10px 12px;margin:0 0 12px;}
+.ln-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:600;}
+.ln-row select{padding:6px 8px;border-radius:9px;border:1px solid rgba(127,127,127,.3);background:var(--bg,#111);color:var(--text);font:inherit;font-size:13px;}
+#bwCloudBtn{white-space:nowrap;}
+.backup-warn:has(#bwCloudBtn){flex-wrap:wrap;}
+.backup-warn:has(#bwCloudBtn) #backupWarnTxt{flex:1 1 100%;}

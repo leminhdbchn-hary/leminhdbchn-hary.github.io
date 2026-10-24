@@ -1,12 +1,17 @@
 /* Sổ Thu Chi – service worker: chạy khi mất mạng, tải nhanh hơn */
-const CACHE='stc-v77';
-const CORE=['./','index.html','app.css?v=77','app.js?v=77','cloud.js?v=77','skin.js?v=77','store.js?v=77','features.js?v=77','sms.js?v=77','ux.js?v=77','manifest.json','icon-192.png?v=77','icon-512.png?v=77','apple-touch-icon.png?v=77','favicon.png?v=77','pets/stage1.jpg','characters/char1.jpg'];
+const CACHE='stc-v78';
+const CORE=['./','index.html','app.css?v=78','app.js?v=78','cloud.js?v=78','skin.js?v=78','store.js?v=78','features.js?v=78','sms.js?v=78','ux.js?v=78','more.js?v=78','manifest.json','icon-192.png?v=78','icon-512.png?v=78','apple-touch-icon.png?v=78','favicon.png?v=78','pets/stage1.jpg','characters/char1.jpg'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))));
 });
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+/* bấm thông báo nhắc trả nợ vay → mở app */
+self.addEventListener('notificationclick',e=>{
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{for(const c of cs){if('focus' in c)return c.focus();}return self.clients.openWindow('./');}));
 });
 self.addEventListener('fetch',e=>{
   const req=e.request;if(req.method!=='GET')return;

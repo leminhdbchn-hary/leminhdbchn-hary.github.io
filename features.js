@@ -494,7 +494,7 @@ function walletBalanceHistory(months){
 }
 function reportExtras(inRange,start,end){
   const el=document.getElementById('repExtras');if(!el)return;
-  const P=prevRange();const prev=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&inDates(t,P.start,P.end));const cur=inRange.filter(t=>t.type==='chi'&&isCashFlow(t));
+  const P=prevRange();const prev=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&repWalletOk(t)&&inDates(t,P.start,P.end));const cur=inRange.filter(t=>t.type==='chi'&&isCashFlow(t));
   const by=(list)=>{const m={};list.forEach(t=>{const k=t.group||'Khác';m[k]=(m[k]||0)+t.amount;});return m;};
   const c=by(cur),p=by(prev);const keys=[...new Set(Object.keys(c).concat(Object.keys(p)))].sort((a,b)=>(c[b]||0)-(c[a]||0)||(p[b]||0)-(p[a]||0)).slice(0,10);
   let h='';
@@ -564,8 +564,8 @@ window.screenHooks={
 /* =====================================================================
    v53: Sắp xếp các mục trong Cài đặt (kéo thả / ▲▼), lưu trên máy
    ===================================================================== */
-const MORE_ORDER_DEFAULT=['more-sms','more-acc','more-budget','more-recur','more-hist','more-cats','more-goals','more-loans','more-debts','more-borrow','more-family','more-split','grp-backup','more-lock','more-bio','more-admin','grp-skin','grp-fs','more-mode','more-reward','more-chars','more-update'];
-const MORE_NAMES={'more-sms':'Dán SMS ngân hàng','more-acc':'Quản lý ví tiền','more-budget':'Ngân sách','more-recur':'Thu chi định kỳ','more-hist':'Lịch sử giao dịch','more-cats':'Quản lý hạng mục','more-goals':'Mục tiêu tiết kiệm','more-loans':'Vay ngân hàng','more-debts':'Cho vay','more-borrow':'Vay nợ khác','more-family':'Tiền gia đình','more-split':'Chia tiền nhóm','grp-backup':'Sao lưu và đồng bộ','more-lock':'Tên đăng nhập & mật khẩu','more-bio':'Mở khoá bằng Face ID','more-admin':'Quản trị (Admin)','grp-skin':'Giao diện màu','grp-fs':'Cỡ chữ & số','more-mode':'Chế độ Tu tiên','more-reward':'Nuôi Linh Thú','more-chars':'Bộ sưu tập nhân vật','more-update':'Cập nhật app'};
+const MORE_ORDER_DEFAULT=['more-sms','more-acc','more-budget','more-recur','more-hist','more-cats','more-goals','more-loans','more-debts','more-borrow','more-family','more-split','more-adv','grp-backup','more-lock','more-bio','more-admin','grp-skin','grp-fs','more-mode','more-reward','more-chars','more-update'];
+const MORE_NAMES={'more-sms':'Dán SMS ngân hàng','more-acc':'Quản lý ví tiền','more-budget':'Ngân sách','more-recur':'Thu chi định kỳ','more-hist':'Lịch sử giao dịch','more-cats':'Quản lý hạng mục','more-goals':'Mục tiêu tiết kiệm','more-loans':'Vay ngân hàng','more-debts':'Cho vay','more-borrow':'Vay nợ khác','more-family':'Tiền gia đình','more-split':'Chia tiền nhóm','more-adv':'Tạm ứng chờ thu','grp-backup':'Sao lưu và đồng bộ','more-lock':'Tên đăng nhập & mật khẩu','more-bio':'Mở khoá bằng Face ID','more-admin':'Quản trị (Admin)','grp-skin':'Giao diện màu','grp-fs':'Cỡ chữ & số','more-mode':'Chế độ Tu tiên','more-reward':'Nuôi Linh Thú','more-chars':'Bộ sưu tập nhân vật','more-update':'Cập nhật app'};
 function moreInner(){return document.querySelector('#screen-more .inner');}
 function moreMovables(){const inner=moreInner();return inner?[...inner.children].filter(e=>e.id&&MORE_NAMES[e.id]):[];}
 function getMoreOrder(){let o=null;try{o=JSON.parse(localStorage.getItem('tc_more_order')||'null');}catch(e){}

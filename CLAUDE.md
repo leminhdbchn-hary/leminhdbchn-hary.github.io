@@ -15,4 +15,5 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 ## Cấu trúc
 - `index.html` – giao diện; `app.js` – logic chính; `features.js` – tính năng mở rộng; `sms.js` – dán SMS ngân hàng
 - `skin.js` – giao diện màu (gold, sky, red, mono = Tối giản); `app.css` – style
+- `more.js` – mẫu ghi nhanh, gợi ý hạng mục, tạm ứng chờ thu, lọc báo cáo theo ví, tỷ lệ tiết kiệm, nhắc vay, nhắc sao lưu
 - `cloud.js` – đăng nhập Google / Firestore; `store.js` – IndexedDB; `sw.js` – chạy offline

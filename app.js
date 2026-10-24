@@ -20,7 +20,7 @@ const CAT_DEF={
   ],
   thu:[
     ['Lương','💰','#22a765',[]],['Thưởng','🏅','#e0a000',[]],['Được cho/tặng','🤲','#b0578a',[]],
-    ['Lãi tiết kiệm','🐷','#e0483c',[]],['Tiền lãi','🪙','#1487d8',[]],['Thu hồi nợ','🔁','#0e6fb8',[]],['Khác','🌼','#7c8b98',[]]
+    ['Lãi tiết kiệm','🐷','#e0483c',[]],['Tiền lãi','🪙','#1487d8',[]],['Thu hồi nợ','🔁','#0e6fb8',[]],['Thu lại tạm ứng','🍻','#c9860b',[]],['Khác','🌼','#7c8b98',[]]
   ]
 };
 const ITEM_EMOJI={};
@@ -71,7 +71,7 @@ function legacyTarget(type,group,item){
 }
 /* Cho vay, thu hồi nợ, vay/trả nợ người khác, chia tiền nhóm, tạm ứng ăn chung và giao dịch được đánh dấu
    "Không tính vào thu chi" (noCF) chỉ là tiền đi/về: vẫn tính số dư ví nhưng không tính vào thu chi */
-const NON_CF_ITEMS=['Cho vay','Thu hồi nợ','Vay nợ khác','Trả nợ vay khác','Tạm ứng ăn chung'];
+const NON_CF_ITEMS=['Cho vay','Thu hồi nợ','Vay nợ khác','Trả nợ vay khác','Tạm ứng ăn chung','Thu lại tạm ứng'];
 function isCashFlow(t){return !(t.noCF||t.debtId||t.split||t.group==='Thu hồi nợ'||NON_CF_ITEMS.includes(t.item));}
 /* Ô "Không tính vào thu chi" ở màn Thêm giao dịch: mục luôn loại trừ (vd. Tạm ứng ăn chung) thì tự tích và khoá */
 function syncNoCfChk(force){
@@ -167,6 +167,9 @@ try{loans=JSON.parse(localStorage.getItem('tc_loans')||'[]');}catch(e){loans=[];
 /* Mục tiêu tiết kiệm */
 let goals=[];
 try{goals=JSON.parse(localStorage.getItem('tc_goals')||'[]');}catch(e){goals=[];}
+/* Giao dịch mẫu (more.js): [{id,name,type,group,item,amount,walletId,note,person,noCF}] */
+let txTemplates=[];
+try{txTemplates=JSON.parse(localStorage.getItem('tc_templates')||'[]')||[];}catch(e){txTemplates=[];}
 /* Ví "Tiết kiệm" bị khoá khỏi các thao tác chi tiêu/chuyển tiền thủ công.
    Toàn bộ tiền vào/ra sổ tiết kiệm chỉ được xử lý qua màn hình Ví tiền
    (gửi mới, đáo hạn, tất toán...) để tránh làm sai lệch lãi suất/kỳ hạn. */
@@ -201,7 +204,7 @@ try{userAchievements=JSON.parse(localStorage.getItem('tc_user_achievements')||'[
 
 /* Lưu dữ liệu: localStorage (mở app nhanh) + IndexedDB (dung lượng lớn, bản chính khi localStorage đầy) */
 const LS_KEYS=[['tc_txs',()=>txs],['tc_wallets',()=>wallets],['tc_budgets',()=>budgets],['tc_recurring',()=>recurring],['tc_debts',()=>debts],['tc_loans',()=>loans],
-  ['tc_reward_profile',()=>rewardProfile],['tc_reward_history',()=>rewardHistory],['tc_user_achievements',()=>userAchievements],['tc_custom_cats',()=>customCats],['tc_goals',()=>goals]];
+  ['tc_reward_profile',()=>rewardProfile],['tc_reward_history',()=>rewardHistory],['tc_user_achievements',()=>userAchievements],['tc_custom_cats',()=>customCats],['tc_goals',()=>goals],['tc_templates',()=>txTemplates]];
 let storeReady=false,storePending=false,storeTimer=null,lsPartial=false;
 try{lsPartial=localStorage.getItem('tc_ls_partial')==='1';}catch(e){}
 function saveAll(){
@@ -243,7 +246,7 @@ async function storeInit(){
   if(storeReady){storePending=false;storeFlush().then(()=>{try{autoBackupCheck();}catch(e){}});}
 }
 function buildCloudPayload(){
-  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,profile:profileExport()};
+  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,txTemplates,profile:profileExport()};
 }
 function applyCloudPayload(data){
   txs=data.txs||[];wallets=data.wallets||[];budgets=data.budgets||{};recurring=data.recurring||[];
@@ -254,6 +257,7 @@ function applyCloudPayload(data){
   /* bản từ máy chưa cập nhật có thể thiếu 2 mục này → giữ nguyên dữ liệu đang có */
   if(data.customCats&&typeof data.customCats==='object'){customCats=data.customCats;rebuildGroups();}
   if(Array.isArray(data.goals))goals=data.goals;
+  if(Array.isArray(data.txTemplates))txTemplates=data.txTemplates;
   if(data.profile&&typeof data.profile==='object')profileImport(data.profile);
   try{migrateCategories();}catch(e){}
   setTimeout(()=>{try{shrinkOldReceipts();}catch(e){}},3000);
@@ -1267,7 +1271,7 @@ function getRange(){
 function renderReport(){
   const {start,end,label}=getRange();
   document.getElementById('rangeLabel').textContent=label;
-  const inRange=txs.filter(t=>{if(t.type==='transfer')return false;const td=new Date(t.date+'T00:00:00');return td>=start&&td<=end;});
+  const inRange=txs.filter(t=>{if(t.type==='transfer'||!repWalletOk(t))return false;const td=new Date(t.date+'T00:00:00');return td>=start&&td<=end;});
   const thu=inRange.filter(t=>t.type==='thu'&&isCashFlow(t)).reduce((s,t)=>s+t.amount,0);
   const chi=inRange.filter(t=>t.type==='chi'&&isCashFlow(t)).reduce((s,t)=>s+t.amount,0);
   document.getElementById('repThu').textContent=fmtShort(thu);document.getElementById('repChi').textContent=fmtShort(chi);
@@ -1319,7 +1323,10 @@ function repExcludeItem(el){
   repExclude(ids);
 }
 function repTopItem(t){const h=txItemHTML(t),n='<div class="note">';return h.includes(n+t.date)?h.replace(n+t.date,n+dmy(t.date)):h.replace(n,n+dmy(t.date)+' • ');}
-function sumRange(a,b,type){return txs.filter(t=>t.type===type&&isCashFlow(t)&&(()=>{const d=new Date(t.date+'T00:00:00');return d>=a&&d<=b;})()).reduce((x,t)=>x+t.amount,0);}
+/* Lọc báo cáo theo ví ('' = tất cả ví) */
+let repWalletId='';
+function repWalletOk(t){return !repWalletId||String(t.walletId)===repWalletId;}
+function sumRange(a,b,type){return txs.filter(t=>t.type===type&&isCashFlow(t)&&repWalletOk(t)&&(()=>{const d=new Date(t.date+'T00:00:00');return d>=a&&d<=b;})()).reduce((x,t)=>x+t.amount,0);}
 function renderReportCharts(inRange,thu,chi){
   // So sánh kỳ trước
   const saved=new Date(reportRef),pr=new Date(reportRef);
@@ -2480,7 +2487,7 @@ function updateBackupInfo(){
 }
 function snoozeBackup(){try{localStorage.setItem('tc_backup_snooze',String(Date.now()+864e5));}catch(e){}checkBackupReminder();}
 async function exportJSON(){
-  const data={txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,exportedAt:new Date().toISOString()};
+  const data={txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,txTemplates,profile:profileExport(),exportedAt:new Date().toISOString()};
   const ok=await downloadFile(JSON.stringify(data,null,2),'so-thu-chi-backup-'+todayStr()+'.json','application/json');
   if(ok!==false){try{localStorage.setItem('tc_last_backup',String(Date.now()));}catch(e){}checkBackupReminder();}
 }
@@ -2500,6 +2507,8 @@ function onImportFile(e){
       rewardHistory=data.rewardHistory||[];userAchievements=data.userAchievements||[];
       customCats=(data.customCats&&typeof data.customCats==='object')?data.customCats:{};rebuildGroups();
       goals=Array.isArray(data.goals)?data.goals:[];
+      if(Array.isArray(data.txTemplates))txTemplates=data.txTemplates;
+      if(data.profile&&typeof data.profile==='object'){try{profileImport(data.profile);}catch(e){}}
       try{migrateCategories();}catch(e){}
       saveAll();renderHome();alert('Đã khôi phục dữ liệu thành công.');
     }catch(err){alert('File không hợp lệ hoặc bị lỗi.');}
@@ -3024,7 +3033,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='77';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='78';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
