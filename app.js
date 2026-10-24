@@ -69,6 +69,9 @@ function legacyTarget(type,group,item){
   if(gs.some(g=>g.name===group&&(g.items.includes(item)||item===group)))return null;
   const m=(LEGACY_ITEM_MAP[type]||{})[item];return m||null;
 }
+/* Cho vay, thu hồi nợ, vay/trả nợ người khác và chia tiền nhóm chỉ là tiền đi/về, không tính vào thu chi */
+const NON_CF_ITEMS=['Cho vay','Thu hồi nợ','Vay nợ khác','Trả nợ vay khác'];
+function isCashFlow(t){return !(t.debtId||t.split||t.group==='Thu hồi nợ'||NON_CF_ITEMS.includes(t.item));}
 function migrateCategories(){
   let changed=false;
   (txs||[]).forEach(t=>{if(t.item==='Đi vay cá nhân'){t.item='Vay nợ khác';changed=true;}else if(t.item==='Trả nợ cá nhân'){t.item='Trả nợ vay khác';changed=true;}});
@@ -1003,7 +1006,7 @@ function renderHistory(keepFilters){
     if(q){const hay=stripVN([t.item,t.group,t.note,t.person,t.fromName,t.toName,t.amount,fmtShort(t.amount)].join(' '));if(!q.split(/\s+/).every(w=>hay.includes(w)))return false;}
     return true;});
   const filtered=histF.q||histF.type||histF.month||histF.group;
-  const sumChi=res.filter(t=>t.type==='chi').reduce((s,t)=>s+(t.amount||0),0),sumThu=res.filter(t=>t.type==='thu').reduce((s,t)=>s+(t.amount||0),0);
+  const sumChi=res.filter(t=>t.type==='chi'&&isCashFlow(t)).reduce((s,t)=>s+(t.amount||0),0),sumThu=res.filter(t=>t.type==='thu'&&isCashFlow(t)).reduce((s,t)=>s+(t.amount||0),0);
   const sumEl=document.getElementById('historySum');
   if(sumEl)sumEl.innerHTML=txs.length?'<span>'+res.length+' giao dịch</span><span class="hs-thu">Thu '+fmtShort(sumThu)+'</span><span class="hs-chi">Chi '+fmtShort(sumChi)+'</span>'+(filtered?'<button onclick="clearHistF()">Xoá lọc</button>':''):'';
   list.innerHTML=res.length?txByDayHTML(res):'<div class="empty">'+(txs.length?'Không tìm thấy giao dịch phù hợp.':'Chưa có giao dịch nào.')+'</div>';
@@ -1067,7 +1070,7 @@ function txByDayHTML(list,limit){
   shown.forEach(t=>{const d=t.date||'';if(!byDay[d]){byDay[d]=[];days.push(d);}byDay[d].push(t);});
   return days.map(d=>{
     const all=sorted.filter(t=>(t.date||'')===d);
-    const thu=all.filter(t=>t.type==='thu').reduce((s,t)=>s+(t.amount||0),0),chi=all.filter(t=>t.type==='chi').reduce((s,t)=>s+(t.amount||0),0);
+    const thu=all.filter(t=>t.type==='thu'&&isCashFlow(t)).reduce((s,t)=>s+(t.amount||0),0),chi=all.filter(t=>t.type==='chi'&&isCashFlow(t)).reduce((s,t)=>s+(t.amount||0),0);
     return '<div class="day-group"><div class="day-head"><span class="dh-date">'+dayLabel(d)+'</span><span class="dh-sum">'+(thu?'<i class="pos">+'+fmtShort(thu)+'</i>':'')+(chi?'<i class="neg">−'+fmtShort(chi)+'</i>':'')+'</span></div>'+byDay[d].map(txItemHTML).join('')+'</div>';
   }).join('');
 }
@@ -1184,8 +1187,8 @@ function renderHome(){
   const now=new Date(); const curYm=now.toISOString().slice(0,7);
   document.getElementById('monthTitle').innerHTML='Tháng '+(now.getMonth()+1)+'/'+now.getFullYear()+' <span class="unit">Đơn vị: VND</span>';
   const monthTx=txs.filter(t=>t.type!=='transfer' && ym(t.date)===curYm);
-  const thu=monthTx.filter(t=>t.type==='thu').reduce((s,t)=>s+t.amount,0);
-  const chi=monthTx.filter(t=>t.type==='chi').reduce((s,t)=>s+t.amount,0);
+  const thu=monthTx.filter(t=>t.type==='thu'&&isCashFlow(t)).reduce((s,t)=>s+t.amount,0);
+  const chi=monthTx.filter(t=>t.type==='chi'&&isCashFlow(t)).reduce((s,t)=>s+t.amount,0);
   document.getElementById('mThu').textContent=fmtShort(thu);
   document.getElementById('mChi').textContent=fmtShort(chi);
   {const hf=document.getElementById('homeFam');if(hf){hf.innerHTML='';hf.style.display='none';}} /* v62: bỏ 'Gia đình hỗ trợ' & 'Còn lại sau hỗ trợ' khỏi Tổng quan */
@@ -1199,7 +1202,7 @@ function renderHome(){
   }).join('');
 
   const byGroup={};
-  monthTx.filter(t=>t.type==='chi').forEach(t=>{if(!byGroup[t.group]){const G=GROUPS.chi.find(x=>x.name===t.group);byGroup[t.group]=G?{sum:0,icon:G.icon,accent:G.accent,bg:G.bg}:{sum:0,icon:t.icon,accent:t.accent,bg:t.bg};}byGroup[t.group].sum+=t.amount;});
+  monthTx.filter(t=>t.type==='chi'&&isCashFlow(t)).forEach(t=>{if(!byGroup[t.group]){const G=GROUPS.chi.find(x=>x.name===t.group);byGroup[t.group]=G?{sum:0,icon:G.icon,accent:G.accent,bg:G.bg}:{sum:0,icon:t.icon,accent:t.accent,bg:t.bg};}byGroup[t.group].sum+=t.amount;});
   const rows=Object.entries(byGroup).sort((a,b)=>b[1].sum-a[1].sum).slice(0,4);
   document.getElementById('topSpendList').innerHTML=rows.length?rows.map(([name,d])=>'<div class="tx-item"><div class="tx-icon" style="background:'+d.bg+'">'+icon(d.icon,d.accent,19)+'</div><div class="tx-info"><div class="cat">'+name+'</div></div><div class="tx-amt out">'+fmt(d.sum)+'</div></div>').join(''):'<div class="empty">Chưa có chi tiêu tháng này.</div>';
 
@@ -1219,7 +1222,7 @@ function computeInsights(monthTx,thu,chi,byGroup,now){
     let prevSum=0,prevCount=0;
     for(let i=1;i<=3;i++){
       const d=new Date(now.getFullYear(),now.getMonth()-i,1);const key=d.toISOString().slice(0,7);
-      const s=txs.filter(t=>t.type==='chi'&&t.group===topName&&ym(t.date)===key).reduce((a,t)=>a+t.amount,0);
+      const s=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&t.group===topName&&ym(t.date)===key).reduce((a,t)=>a+t.amount,0);
       if(s>0){prevSum+=s;prevCount++;}
     }
     if(prevCount>0){
@@ -1255,17 +1258,39 @@ function renderReport(){
   const {start,end,label}=getRange();
   document.getElementById('rangeLabel').textContent=label;
   const inRange=txs.filter(t=>{if(t.type==='transfer')return false;const td=new Date(t.date+'T00:00:00');return td>=start&&td<=end;});
-  const thu=inRange.filter(t=>t.type==='thu').reduce((s,t)=>s+t.amount,0);
-  const chi=inRange.filter(t=>t.type==='chi').reduce((s,t)=>s+t.amount,0);
+  const thu=inRange.filter(t=>t.type==='thu'&&isCashFlow(t)).reduce((s,t)=>s+t.amount,0);
+  const chi=inRange.filter(t=>t.type==='chi'&&isCashFlow(t)).reduce((s,t)=>s+t.amount,0);
   document.getElementById('repThu').textContent=fmtShort(thu);document.getElementById('repChi').textContent=fmtShort(chi);
   const net=document.getElementById('repNet');net.textContent=(thu-chi>=0?'+':'')+fmtShort(thu-chi);net.style.color=(thu-chi>=0)?'var(--green)':'var(--red)';
+  renderRepDetail(inRange);
   renderFamSupport('repFam',inRange,thu-chi);
   renderReportCharts(inRange,thu,chi);
   repRenderGroup(inRange,'chi','repCatList','Không có chi tiêu trong kỳ này.');
   repRenderGroup(inRange,'thu','repThuList','Không có khoản thu trong kỳ này.');
   if(window.reportExtras){try{reportExtras(inRange,start,end);}catch(e){console.error(e);}}
 }
-function sumRange(a,b,type){return txs.filter(t=>t.type===type&&(()=>{const d=new Date(t.date+'T00:00:00');return d>=a&&d<=b;})()).reduce((x,t)=>x+t.amount,0);}
+/* Bấm ô Thu / Chi ở Báo cáo: xem thu gì, chi gì và 5 khoản lớn nhất trong kỳ */
+let repDetailType=null,repInRange=[];
+function toggleRepDetail(type){repDetailType=repDetailType===type?null:type;renderRepDetail(repInRange);}
+function renderRepDetail(inRange){
+  repInRange=inRange;const box=document.getElementById('repDetail');if(!box)return;
+  ['thu','chi'].forEach(k=>{const b=document.getElementById(k==='thu'?'repThuBox':'repChiBox');if(b)b.classList.toggle('on',repDetailType===k);});
+  if(!repDetailType){box.style.display='none';box.innerHTML='';return;}
+  const type=repDetailType,word=type==='thu'?'thu':'chi';
+  const list=inRange.filter(t=>t.type===type&&isCashFlow(t));
+  box.style.display='block';
+  if(!list.length){box.innerHTML='<div class="rep-detail-t">Chi tiết '+word+'</div><div class="empty">Không có khoản '+word+' nào trong kỳ này.</div>';return;}
+  const total=list.reduce((s,t)=>s+t.amount,0);
+  const by={};list.forEach(t=>{const k=(t.item||t.group||'Khác');const o=by[k]=by[k]||{v:0,n:0,g:t.group||'',icon:t.icon||'khac',accent:t.accent||'#7c8b98',bg:t.bg||'#e7e9ee'};o.v+=t.amount;o.n++;});
+  const rows=Object.entries(by).sort((a,b)=>b[1].v-a[1].v);
+  const top=list.slice().sort((a,b)=>b.amount-a.amount||(b.date||'').localeCompare(a.date||'')).slice(0,5);
+  box.innerHTML='<div class="rep-detail-t">'+(type==='thu'?'Thu gì':'Chi gì')+' · tổng '+fmt(total)+'<button class="icon-btn" onclick="toggleRepDetail(\''+type+'\')" aria-label="Đóng">✕</button></div>'+
+    rows.map(([k,o])=>'<div class="tx-item"><div class="tx-icon" style="background:'+o.bg+'">'+icon(o.icon,o.accent,19)+'</div><div class="tx-info"><div class="cat">'+k+'</div><div class="note">'+(o.g&&o.g!==k?o.g+' • ':'')+o.n+' giao dịch • '+Math.round(o.v/total*100)+'%</div></div><div class="tx-amt '+(type==='thu'?'in':'out')+'">'+fmt(o.v)+'</div></div>').join('')+
+    '<div class="rep-detail-t" style="margin-top:12px;">'+(top.length<5?top.length:5)+' khoản '+word+' lớn nhất</div>'+
+    top.map((t,i)=>'<div class="rep-top"><span class="rep-rank">'+(i+1)+'</span>'+repTopItem(t)+'</div>').join('');
+}
+function repTopItem(t){const h=txItemHTML(t),n='<div class="note">';return h.includes(n+t.date)?h.replace(n+t.date,n+dmy(t.date)):h.replace(n,n+dmy(t.date)+' • ');}
+function sumRange(a,b,type){return txs.filter(t=>t.type===type&&isCashFlow(t)&&(()=>{const d=new Date(t.date+'T00:00:00');return d>=a&&d<=b;})()).reduce((x,t)=>x+t.amount,0);}
 function renderReportCharts(inRange,thu,chi){
   // So sánh kỳ trước
   const saved=new Date(reportRef),pr=new Date(reportRef);
@@ -1275,7 +1300,7 @@ function renderReportCharts(inRange,thu,chi){
   const cmp=(cur,prev,good)=>{if(!prev)return cur?'<b>mới phát sinh</b>':'không đổi';const d=Math.round((cur-prev)/prev*100);const up=d>0;const ok=good==='up'?up:!up;return '<b style="color:'+(d===0?'var(--sub)':ok?'var(--green)':'var(--red)')+'">'+(up?'▲ ':d<0?'▼ ':'')+Math.abs(d)+'%</b>';};
   document.getElementById('repCompare').innerHTML='So với kỳ trước ('+P.label+'): Chi '+cmp(chi,pChi,'down')+' · Thu '+cmp(thu,pThu,'up');
   // Donut cơ cấu chi
-  const by={};inRange.filter(t=>t.type==='chi').forEach(t=>{const k=t.group||'Khác';by[k]=by[k]||{v:0,c:t.accent||'#7c8b98'};by[k].v+=t.amount;});
+  const by={};inRange.filter(t=>t.type==='chi'&&isCashFlow(t)).forEach(t=>{const k=t.group||'Khác';by[k]=by[k]||{v:0,c:t.accent||'#7c8b98'};by[k].v+=t.amount;});
   const rows=Object.entries(by).sort((a,b)=>b[1].v-a[1].v);
   const dn=document.getElementById('repDonut');
   if(!chi){dn.innerHTML='<div class="empty" style="padding:10px">Chưa có chi tiêu.</div>';}
@@ -1289,7 +1314,7 @@ function renderReportCharts(inRange,thu,chi){
 }
 function repRenderGroup(inRange,type,elId,emptyMsg){
   const byCat={};
-  inRange.filter(t=>t.type===type).forEach(t=>{const k=t.group||'Khác';if(!byCat[k]){const G=(GROUPS[type]||[]).find(x=>x.name===k);byCat[k]=G?{sum:0,icon:G.icon,accent:G.accent,items:{}}:{sum:0,icon:t.icon||'khac',accent:t.accent||'#7c8b98',items:{}};}byCat[k].sum+=t.amount;const it=t.item||k;byCat[k].items[it]=(byCat[k].items[it]||0)+t.amount;});
+  inRange.filter(t=>t.type===type&&isCashFlow(t)).forEach(t=>{const k=t.group||'Khác';if(!byCat[k]){const G=(GROUPS[type]||[]).find(x=>x.name===k);byCat[k]=G?{sum:0,icon:G.icon,accent:G.accent,items:{}}:{sum:0,icon:t.icon||'khac',accent:t.accent||'#7c8b98',items:{}};}byCat[k].sum+=t.amount;const it=t.item||k;byCat[k].items[it]=(byCat[k].items[it]||0)+t.amount;});
   const rows=Object.entries(byCat).sort((a,b)=>b[1].sum-a[1].sum);
   const list=document.getElementById(elId);
   if(!rows.length){list.innerHTML='<div class="empty">'+emptyMsg+'</div>';return;}
@@ -1301,7 +1326,7 @@ function repRenderGroup(inRange,type,elId,emptyMsg){
 /* ---------- BUDGET ---------- */
 function renderBudget(){
   const now=new Date();const curYm=now.toISOString().slice(0,7);
-  const monthChi=txs.filter(t=>t.type==='chi'&&ym(t.date)===curYm);
+  const monthChi=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&ym(t.date)===curYm);
   const totalBudget=GROUPS.chi.reduce((s,g)=>s+(budgets[g.name]||0),0);
   const totalSpent=monthChi.reduce((s,t)=>s+t.amount,0);
   document.getElementById('budgetTotalLine').textContent=fmt(totalSpent)+' / '+fmt(totalBudget);
@@ -1708,6 +1733,9 @@ function saveLoan(){
   const iDay=readDay('loanInterestDay');
   const note=document.getElementById('loanNote').value.trim();
   if(!name){alert('Vui lòng nhập tên khoản vay');return;}
+  /* Đã gõ lãi suất mới nhưng chưa bấm "+ Thêm lần điều chỉnh": tự thêm luôn (chưa chọn ngày thì áp dụng từ hôm nay) */
+  const rNew=document.getElementById('loanRateNew');
+  if(rNew&&rNew.value.trim()!==''){const dEl=document.getElementById('loanRateNewDate');if(!dEl.value)dEl.value=todayStr();addLoanRateChange();if(rNew.value.trim()!=='')return;}
   if(principal<=0){alert('Vui lòng nhập số tiền vay ban đầu');return;}
   if(paid>principal){alert('Số tiền đã trả không được lớn hơn số tiền vay ban đầu');return;}
   if(term<1||term>600){alert('Vui lòng nhập kỳ hạn vay (số tháng)');return;}
@@ -2115,7 +2143,7 @@ function petMood(){
   const last=txs.filter(t=>t.type!=='transfer').map(t=>t.date).sort().pop();
   const idle=last?Math.floor((new Date(today)-new Date(last))/864e5):null;
   if(txs.length&&idle!==null&&idle>=3)return {k:'hungry',e:'🍂',l:'Đói linh khí',flt:'saturate(.5) brightness(.85)',say:'Đã '+idle+' ngày chủ nhân chưa ghi chép… ta đói linh khí quá~'};
-  const curYm=today.slice(0,7);const mChi=txs.filter(t=>t.type==='chi'&&t.date.slice(0,7)===curYm);
+  const curYm=today.slice(0,7);const mChi=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&t.date.slice(0,7)===curYm);
   const over=GROUPS.chi.filter(g=>budgets[g.name]>0&&mChi.filter(t=>t.group===g.name).reduce((a,t)=>a+t.amount,0)>budgets[g.name]).map(g=>g.name);
   if(over.length)return {k:'sad',e:'😢',l:'Buồn bã',flt:'grayscale(.45) brightness(.9)',say:'Linh khí đang tán loạn… nhóm '+over.join(', ')+' đã vượt ngân sách rồi!'};
   const totB=GROUPS.chi.reduce((a,g)=>a+(budgets[g.name]||0),0);
@@ -2138,7 +2166,7 @@ function checkMonthlyBudgetBonus(){
   const pym=prev.getFullYear()+'-'+String(prev.getMonth()+1).padStart(2,'0');
   if(rewardProfile.budget_bonus_month===pym)return;
   const totB=GROUPS.chi.reduce((a,g)=>a+(budgets[g.name]||0),0);
-  const pChi=txs.filter(t=>t.type==='chi'&&t.date.slice(0,7)===pym);
+  const pChi=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&t.date.slice(0,7)===pym);
   if(totB>0&&pChi.length&&pChi.reduce((a,t)=>a+t.amount,0)<=totB){
     rewardProfile.budget_bonus_month=pym;grantLinhLuc(20,'THUONG_NGAN_SACH');
     setTimeout(()=>showRewardToast({custom:'🎁 Tháng trước chi trong ngân sách! <b>+20</b> Linh Lực'}),600);
@@ -2628,13 +2656,13 @@ function budgetWarn(tx){
   if(!tx||tx.type!=='chi')return;
   const ik=itemKey(tx.group,tx.item);
   if(budgets[ik]){const ymI=(tx.date||todayStr()).slice(0,7),bI=budgets[ik];
-    const spI=txs.filter(t=>t.type==='chi'&&t.group===tx.group&&t.item===tx.item&&(t.date||'').slice(0,7)===ymI).reduce((s,t)=>s+(t.amount||0),0);
+    const spI=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&t.group===tx.group&&t.item===tx.item&&(t.date||'').slice(0,7)===ymI).reduce((s,t)=>s+(t.amount||0),0);
     const pI=Math.round(spI/bI*100);
     if(spI>bI){showMiniToast('⚠️ Mục "'+tx.item+'" đã VƯỢT ngân sách: '+fmtShort(spI)+' / '+fmtShort(bI)+' ('+pI+'%)',true);return;}
     if(pI>=80){showMiniToast('⚠️ Mục "'+tx.item+'" đã dùng '+pI+'% ngân sách ('+fmtShort(spI)+' / '+fmtShort(bI)+')',true);return;}}
   if(!budgets[tx.group])return;
   const ym=(tx.date||todayStr()).slice(0,7),bud=budgets[tx.group];
-  const spent=txs.filter(t=>t.type==='chi'&&t.group===tx.group&&(t.date||'').slice(0,7)===ym).reduce((s,t)=>s+(t.amount||0),0);
+  const spent=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&t.group===tx.group&&(t.date||'').slice(0,7)===ym).reduce((s,t)=>s+(t.amount||0),0);
   const pct=Math.round(spent/bud*100);
   if(spent>bud)showMiniToast('⚠️ "'+tx.group+'" đã VƯỢT ngân sách tháng: '+fmtShort(spent)+' / '+fmtShort(bud)+' ('+pct+'%)',true);
   else if(pct>=80)showMiniToast('⚠️ "'+tx.group+'" đã dùng '+(spent===bud?'hết ':'')+pct+'% ngân sách tháng ('+fmtShort(spent)+' / '+fmtShort(bud)+')',true);
@@ -2967,7 +2995,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='73';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='74';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

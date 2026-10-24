@@ -47,8 +47,10 @@ function ok(c, n, x) { if (c) pass++; else { fail++; fails.push(n + (x !== undef
     set('loanRateNew', '12'); set('loanRateNewDate', '2026-02-01'); addLoanRateChange();
     set('loanRateNew', '9'); set('loanRateNewDate', '2026-06-01'); addLoanRateChange();
     set('loanRateNew', '15'); set('loanRateNewDate', '2026-01-10'); addLoanRateChange(); /* trước ngày giải ngân: bị từ chối */
-    saveLoan();
+    saveLoan(); /* v74: còn lãi suất mới không hợp lệ đang gõ dở → chưa lưu */
   });
+  ok(await p.evaluate(() => loans.length) === 0, 'còn lãi suất mới không hợp lệ chưa thêm thì không lưu (không âm thầm bỏ qua)');
+  await p.evaluate(() => { document.getElementById('loanRateNew').value = ''; saveLoan(); });
   const L = await p.evaluate(() => loans[0]);
   ok(L && L.rate === 10 && L.rateChanges.length === 2 && L.rateChanges[0].date === '2026-02-01' && L.rateChanges[1].rate === 9, 'lưu khoản vay kèm các lần điều chỉnh (từ chối ngày trước giải ngân)', L && L.rateChanges);
   ok(await p.evaluate(() => loanRateAt(loans[0], '2026-01-31')) === 10 && await p.evaluate(() => loanRateAt(loans[0], '2026-02-01')) === 12 && await p.evaluate(() => loanRateAt(loans[0], '2026-06-01')) === 9, 'lãi suất theo ngày: 31/1 = 10%, 1/2 = 12%, 1/6 = 9%');
@@ -73,6 +75,16 @@ function ok(c, n, x) { if (c) pass++; else { fail++; fails.push(n + (x !== undef
   await p.waitForTimeout(600);
   ok(await p.evaluate(() => document.getElementById('addLoanForm').style.display === 'block' && document.getElementById('loanRateNewDate').value !== ''), 'nút Đổi lãi suất mở form và điền sẵn ngày hôm nay');
   await p.evaluate(() => toggleLoanForm(false));
+
+  /* 3b. v74: gõ lãi suất mới rồi bấm Cập nhật luôn (không bấm "+ Thêm") vẫn được lưu và lãi đổi theo */
+  const auto = await p.evaluate(() => {
+    const l = loans[0]; const before = l.rateChanges.length;
+    openEditLoan(l.id); document.getElementById('loanRateNew').value = '20'; document.getElementById('loanRateNewDate').value = '2026-03-01'; saveLoan();
+    const L = loans[0]; const c = L.rateChanges.find(x => x.date === '2026-03-01');
+    return { before, after: L.rateChanges.length, rate: c && c.rate, at: loanRateAt(L, '2026-03-02') };
+  });
+  ok(auto.after === auto.before + 1 && auto.rate === 20 && auto.at === 20, 'lãi suất mới gõ dở được tự thêm khi bấm Cập nhật khoản vay', auto);
+  await p.evaluate(() => { loans[0].rateChanges = loans[0].rateChanges.filter(x => x.date !== '2026-03-01'); saveAll(); });
 
   /* 4. Lưu & tải lại; payload cloud khứ hồi giữ nguyên rateChanges */
   await p.reload(); await p.waitForTimeout(1000);

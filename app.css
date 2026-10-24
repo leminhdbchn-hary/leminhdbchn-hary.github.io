@@ -905,6 +905,7 @@ html.idb-wait body::after{content:'Đang tải dữ liệu…';position:fixed;in
 .rep-est{font-weight:400;font-size:11.5px;color:var(--sub);}
 .bh-chart{display:flex;align-items:flex-end;gap:4px;height:150px;padding-top:6px;}
 .bh-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
+.bh-bar{flex:1;min-height:0;width:100%;display:flex;align-items:flex-end;justify-content:center;}
 .bh-col i{display:block;width:70%;max-width:22px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#e2c28b,#9c7640);}
 .bh-col i.neg{background:var(--red);}
 .bh-v{font-size:9.5px;color:var(--sub);white-space:nowrap;}
@@ -1034,3 +1035,12 @@ html.skin-mono #more-sms{filter:grayscale(1);}
 /* Giao diện màu: lưới 2 cột, không tràn viền */
 .skin-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;}
 .skin-opt{min-width:0;width:100%;white-space:normal;}
+
+/* Báo cáo: bấm ô Thu/Chi xem chi tiết */
+.summary-box.rep-tap{cursor:pointer;border:1px solid transparent;transition:border-color .15s;}
+.summary-box.rep-tap.on{border-color:var(--gold,#c29a5c);}
+.rep-detail{background:var(--card);border-radius:14px;padding:12px;margin:0 0 12px;}
+.rep-detail-t{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:6px;}
+.rep-top{display:flex;align-items:center;gap:6px;}
+.rep-top>.tx-item{flex:1;min-width:0;}
+.rep-rank{flex:none;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}

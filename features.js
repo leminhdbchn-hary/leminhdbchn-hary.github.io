@@ -493,7 +493,7 @@ function walletBalanceHistory(months){
 }
 function reportExtras(inRange,start,end){
   const el=document.getElementById('repExtras');if(!el)return;
-  const P=prevRange();const prev=txs.filter(t=>t.type==='chi'&&inDates(t,P.start,P.end));const cur=inRange.filter(t=>t.type==='chi');
+  const P=prevRange();const prev=txs.filter(t=>t.type==='chi'&&isCashFlow(t)&&inDates(t,P.start,P.end));const cur=inRange.filter(t=>t.type==='chi'&&isCashFlow(t));
   const by=(list)=>{const m={};list.forEach(t=>{const k=t.group||'Khác';m[k]=(m[k]||0)+t.amount;});return m;};
   const c=by(cur),p=by(prev);const keys=[...new Set(Object.keys(c).concat(Object.keys(p)))].sort((a,b)=>(c[b]||0)-(c[a]||0)||(p[b]||0)-(p[a]||0)).slice(0,10);
   let h='';
@@ -507,8 +507,11 @@ function reportExtras(inRange,start,end){
   const byP={};cur.forEach(t=>{const k=(t.person||'').trim();if(k)byP[k]=(byP[k]||0)+t.amount;});
   const pRows=Object.entries(byP).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if(pRows.length){const pMax=pRows[0][1];h+='<div class="rep-card"><div class="rep-card-t">Chi theo người/đối tượng</div>'+pRows.map(([k,v])=>'<div class="hb-row"><span class="hb-n">'+escH(k)+'</span><span class="hb-bar"><i style="width:'+Math.max(2,Math.round(v/pMax*100))+'%"></i></span><span class="hb-v">'+fmtShort(v)+'</span></div>').join('')+'</div>';}
-  const hist=walletBalanceHistory(12);const mx=Math.max(1,...hist.map(x=>Math.abs(x.v)));
-  h+='<div class="rep-card"><div class="rep-card-t">Tổng số dư các ví · 12 tháng <small class="rep-est">(ước tính từ giao dịch)</small></div><div class="bh-chart">'+hist.map(x=>'<div class="bh-col" title="'+x.label+': '+fmtShort(x.v)+'"><span class="bh-v">'+(Math.abs(x.v)>=1e6?(x.v/1e6).toFixed(1).replace('.0','')+'tr':fmtShort(Math.round(x.v/1000))+'k')+'</span><i class="'+(x.v<0?'neg':'')+'" style="height:'+Math.max(3,Math.round(Math.abs(x.v)/mx*100))+'%"></i><span class="bh-l">'+x.label+'</span></div>').join('')+'</div></div>';
+  const hist=walletBalanceHistory(12);
+  /* Cột tính từ mức nền (thấp hơn tháng thấp nhất) để thấy rõ chênh lệch giữa các tháng; có tháng âm thì tính từ 0 */
+  const vs=hist.map(x=>x.v),hiV=Math.max(...vs),loV=Math.min(...vs);
+  const base=loV>0&&hiV>loV?Math.max(0,loV-(hiV-loV)*0.5):0;const mx=Math.max(1,...vs.map(v=>Math.abs(v)-base));
+  h+='<div class="rep-card"><div class="rep-card-t">Tổng số dư các ví · 12 tháng <small class="rep-est">(ước tính từ giao dịch)</small></div><div class="bh-chart">'+hist.map(x=>'<div class="bh-col" title="'+x.label+': '+fmtShort(x.v)+'"><span class="bh-v">'+(Math.abs(x.v)>=1e6?(x.v/1e6).toFixed(1).replace('.0','')+'tr':fmtShort(Math.round(x.v/1000))+'k')+'</span><span class="bh-bar"><i class="'+(x.v<0?'neg':'')+'" style="height:'+Math.max(3,Math.round((Math.abs(x.v)-base)/mx*100))+'%"></i></span><span class="bh-l">'+x.label+'</span></div>').join('')+'</div></div>';
   el.innerHTML=h;
 }
 function extraInsights(out,now){
