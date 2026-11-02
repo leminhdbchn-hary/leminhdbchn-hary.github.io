@@ -275,6 +275,7 @@ function resetEditUI(){try{syncNoCfChk(false);}catch(e){}
 function openEditTx(id){
   const t=txs.find(x=>x.id===id);
   if(!t)return;
+  if(t.loanId&&(t.item==='Trả nợ gốc vay'||t.item==='Trả lãi vay')&&openLoanTxEdit(t))return;
   if(t.loanId&&(t.item==='Trả nợ gốc vay'||t.item==='Trả lãi vay')){alert('Giao dịch trả nợ vay được sửa trong mục "Vay ngân hàng" (bấm ✎ ở lịch sử trả nợ) để dư nợ luôn khớp.');showScreen('loans');return;}
   showScreen('add'); // reset về mặc định trước, rồi ghi đè bên dưới
   editingTxId=id;
@@ -453,6 +454,7 @@ function saveAccount(){
     w.dayBasis=dayBasis;w.payTiming=payTiming;w.maturityAction=maturityAction;
     w.sourceWalletId=sourceWalletId;w.payoutWalletId=payoutWalletId;w.note=note;
     w.maturityDate=addMonths(depositDate,term);w.matured=false;w.lastAccrualYm=null;
+    if(payTiming==='monthly')w.lastInterestDate=savLastPaidAnniv(w);
 
     if(sourceWalletId){
       const sw=wallets.find(x=>String(x.id)===String(sourceWalletId));
@@ -465,7 +467,7 @@ function saveAccount(){
       const days=daysBetween(depositDate,w.maturityDate);
       const interest=calcInterest(bal,rate,days,dayBasis);
       if(interest>0){
-        const target=sourceWalletId?wallets.find(x=>String(x.id)===String(sourceWalletId)):null;
+        const target=savPayoutOf(w);
         if(target){target.balance+=interest;txs.unshift(mkSavTx('thu',interest,'Lãi trả trước: '+name,target.id,depositDate));}
         else{w.balance+=interest;txs.unshift(mkSavTx('thu',interest,'Lãi trả trước: '+name,w.id,depositDate));}
       }
@@ -521,7 +523,7 @@ function openWalletEdit(id){
       '<label>Lãi không kỳ hạn (%/năm)</label><input id="weRateNT" class="we-in" type="number" step="0.01" inputmode="decimal" value="'+(w.rateNoTerm!=null?w.rateNoTerm:0.1)+'">'+
       '<label>Trả lãi</label>'+sel('wePay',[['end','Cuối kỳ'],['start','Đầu kỳ'],['monthly','Hàng tháng']],w.payTiming||'end')+
       '<label>Khi đến hạn</label>'+sel('weMat',[['no_renew','Tất toán: gốc về tài khoản, lãi ghi Thu nhập'],['renew_principal','Tái tục gốc, lãi về tài khoản'],['renew_all','Tái tục cả gốc và lãi']],w.maturityAction||'renew_all')+
-      '<label>Khi đáo hạn, chuyển tiền về tài khoản</label><select id="wePayout" class="we-in"><option value="">-- Hỏi tôi khi đáo hạn --</option>'+getCashWallets().map(x=>'<option value="'+x.id+'"'+(String(x.id)===String(w.payoutWalletId||w.sourceWalletId)?' selected':'')+'>'+x.name+'</option>').join('')+'</select>'+
+      '<label>Tài khoản nhận lãi và tiền đáo hạn</label><select id="wePayout" class="we-in"><option value="">-- Hỏi tôi khi đáo hạn --</option>'+getCashWallets().map(x=>'<option value="'+x.id+'"'+(String(x.id)===String(w.payoutWalletId||w.sourceWalletId)?' selected':'')+'>'+x.name+'</option>').join('')+'</select>'+
       '<label>Ghi chú</label><input id="weNote" class="we-in" type="text" value="'+(w.note||'').replace(/"/g,'&quot;')+'">';
   }
   h+='</div><div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Huỷ</button><button class="edit-modal-save" onclick="saveWalletEdit()">Lưu thay đổi</button></div>'+
@@ -557,8 +559,10 @@ function saveWalletEdit(){
     w.depositDate=dep;w.termMonths=term;
     if(changedDates){w.maturityDate=addMonths(dep,term);w.matured=false;}
     w.rate=parseFloat(v('weRate'))||0;w.rateNoTerm=parseFloat(v('weRateNT'))||0;
+    const oldPay=w.payTiming;
     w.payTiming=v('wePay')||w.payTiming;w.maturityAction=v('weMat')||w.maturityAction;
     w.payoutWalletId=v('wePayout')||null;w.note=v('weNote').trim();
+    if(w.payTiming==='monthly'&&(changedDates||oldPay!=='monthly'||!w.lastInterestDate))w.lastInterestDate=savLastPaidAnniv(w);
   }
   saveAll();closeWalletEdit();renderAccounts();renderHome();
   showMiniToast('✓ Đã lưu ví "'+name+'"');
@@ -1888,11 +1892,12 @@ function renderLoans(){
         '<div class="field"><label>Ngày trả</label><input type="date" id="loanPayDate_'+l.id+'" value="'+todayStr()+'"></div>'+
         '<div class="field"><label>Trả nợ gốc (VND)'+(l.type==='consumer'?' — trả nhiều hơn sẽ lùi lịch trả gốc':'')+'</label><input type="tel" inputmode="numeric" id="loanPayPrincipal_'+l.id+'" value="'+(preP?fmtShort(preP):'')+'" placeholder="0" oninput="fmtInput(this)"></div>'+
         '<div class="field"><label>Trả lãi (VND)'+iLbl+'</label><input type="tel" inputmode="numeric" id="loanPayInterest_'+l.id+'" value="'+(preI?fmtShort(preI):'')+'" placeholder="0" oninput="fmtInput(this)"></div>'+
+        '<label class="nocf-row" style="margin:0 0 10px"><input type="checkbox" id="loanPayNoCf_'+l.id+'"><span><b>Không tính tiền lãi vào chi phí</b><small>Vẫn trừ ví, chỉ không cộng tiền lãi vào tổng chi, báo cáo.</small></span></label>'+
         '<div class="field"><label>Trả từ</label><select id="loanPayWallet_'+l.id+'">'+walletOpts().replace('<option value="">Chưa có ví</option>','')+EXT_OPT+'</select></div>'+
         '<button class="save-btn" style="margin-top:4px;" onclick="submitLoanPayment('+l.id+')">Xác nhận đã trả</button>'+
         '</div>';
     }
-    const histRows=(l.history||[]).map(h=>'<div class="loan-hist-row"><span>'+dmy(h.date)+'</span><span class="lh-txt">Gốc '+fmtShort(h.principal)+' VND • Lãi '+fmtShort(h.interest)+' VND'+(h.external?' <span class="fam-tag">người khác trả</span>':'')+'</span><button class="icon-btn" style="color:var(--blue)" onclick="toggleHistEdit(\''+h.id+'\')">✎</button><button class="icon-btn" style="color:var(--sub)" onclick="deleteLoanHist('+l.id+',\''+h.id+'\')">✕</button></div>'+
+    const histRows=(l.history||[]).map(h=>'<div class="loan-hist-row"><span>'+dmy(h.date)+'</span><span class="lh-txt">Gốc '+fmtShort(h.principal)+' VND • Lãi '+fmtShort(h.interest)+' VND'+(h.external?' <span class="fam-tag">người khác trả</span>':'')+(h.txI&&(txs.find(x=>x.id===h.txI)||{}).noCF?' <span class="fam-tag">lãi không tính chi phí</span>':'')+'</span><button class="icon-btn" style="color:var(--blue)" onclick="toggleHistEdit(\''+h.id+'\')">✎</button><button class="icon-btn" style="color:var(--sub)" onclick="deleteLoanHist('+l.id+',\''+h.id+'\')">✕</button></div>'+
       '<div class="loan-hist-edit" id="lhe_'+h.id+'"><input type="date" id="lhd_'+h.id+'" value="'+h.date+'"><input type="tel" inputmode="numeric" id="lhp_'+h.id+'" placeholder="Trả gốc" value="'+fmtShort(h.principal)+'" oninput="fmtInput(this)"><input type="tel" inputmode="numeric" id="lhi_'+h.id+'" placeholder="Trả lãi" value="'+fmtShort(h.interest)+'" oninput="fmtInput(this)"><button onclick="saveLoanHist('+l.id+',\''+h.id+'\')">Lưu</button><button style="background:#3a342d;color:var(--text)" onclick="toggleHistEdit(\''+h.id+'\')">Huỷ</button></div>').join('');
     return '<div class="loan-item">'+
       '<div class="loan-top"><div><div class="loan-name">'+l.name+' <span class="loan-type-chip">'+(LOAN_TYPES[l.type]||'')+'</span></div><div class="loan-bank">'+(l.bankName?l.bankName+' • ':'')+(l.termMonths?l.termMonths+' tháng • đáo hạn '+dmy(loanMaturity(l)):'')+'</div></div><div class="loan-bal">'+fmt(l.balance)+'<div style="font-size:11px;font-weight:500;color:var(--sub);">dư nợ</div></div></div>'+
@@ -1918,6 +1923,8 @@ function submitLoanPayment(id){
   if(principal>l.balance){alert('Số tiền trả gốc lớn hơn dư nợ còn lại ('+fmt(l.balance)+')');return;}
   if(!walletId){alert('Vui lòng chọn ví trả nợ');return;}
   if(!payLoanCore(l,principal,interest,walletId,date))return;
+  const nc=document.getElementById('loanPayNoCf_'+id);
+  if(nc&&nc.checked){const h=l.history[0],t=h&&txs.find(x=>x.id===h.txI);if(t)t.noCF=true;}
   saveAll();renderLoans();renderHome();
 }
 const EXT_PAY='__ext';
@@ -1961,6 +1968,11 @@ function saveLoanHist(loanId,hid){
   const date=document.getElementById('lhd_'+hid).value||h.date;
   const p=num('lhp_'+hid),i=num('lhi_'+hid);
   if(p<=0&&i<=0){alert('Số tiền trả gốc hoặc lãi phải lớn hơn 0. Muốn huỷ lần trả này hãy bấm ✕.');return;}
+  applyLoanHist(l,h,p,i,date);
+  saveAll();renderLoans();renderHome();
+}
+/* Ghi lại 1 lần trả nợ (gốc p, lãi i) và đồng bộ giao dịch ví + số kỳ lãi đã trả */
+function applyLoanHist(l,h,p,i,date){
   setHistTx(l,h,'Trả nợ gốc vay','txP',p,date);setHistTx(l,h,'Trả lãi vay','txI',i,date);
   const cnt=histICount(h);
   if(cnt>0&&i<=0){l.iPaid=Math.max(0,(l.iPaid||0)-cnt);h.iCount=0;}
@@ -1968,7 +1980,34 @@ function saveLoanHist(loanId,hid){
   else h.iCount=cnt;
   delete h.iPeriod;h.principal=p;h.interest=i;h.date=date;
   recalcLoan(l);
-  saveAll();renderLoans();renderHome();
+}
+/* Bấm vào giao dịch Trả lãi vay / Trả nợ gốc vay: sửa số tiền, ngày và chọn "Không tính vào chi phí" ngay tại chỗ */
+function openLoanTxEdit(t){
+  const l=loans.find(x=>x.id===t.loanId);const h=l&&(l.history||[]).find(x=>String(x.id)===String(t.loanHistId));
+  if(!l||!h||h.external)return false;
+  const isI=t.item==='Trả lãi vay';
+  openModal('<h3>'+(isI?'Sửa tiền lãi vay':'Sửa tiền trả gốc vay')+'</h3><div class="we-form">'+
+    '<label>Khoản vay</label><div class="we-in" style="opacity:.8">'+escH(l.name)+'</div>'+
+    '<label>Ngày trả</label><input id="ltDate" class="we-in" type="date" value="'+h.date+'">'+
+    '<label>'+(isI?'Tiền lãi':'Tiền gốc')+' (VND)</label><input id="ltAmt" class="we-in" type="tel" inputmode="numeric" value="'+fmtShort(t.amount)+'" oninput="fmtInput(this)">'+
+    '<label class="nocf-row" style="margin:10px 0 0"><input type="checkbox" id="ltNoCf"'+(t.noCF?' checked':'')+'><span><b>Không tính vào chi phí'+(isI?' lãi vay':'')+'</b><small>Vẫn trừ tiền ví và ghi vào lịch sử trả nợ, nhưng không cộng vào tổng chi, báo cáo, ngân sách.</small></span></label>'+
+    '<div class="we-hint">Sửa ở đây sẽ cập nhật luôn lịch sử trả nợ của khoản vay'+(isI?'':' và dư nợ')+'.</div>'+
+    '</div><div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Huỷ</button><button class="edit-modal-save" onclick="saveLoanTxEdit('+t.id+')">Lưu</button></div>'+
+    '<button class="we-del" onclick="closeAppModal();showScreen(\'loans\')">'+icon('bank','#c29a5c',17)+' Mở khoản vay</button>');
+  return true;
+}
+function saveLoanTxEdit(txId){
+  const t=txs.find(x=>x.id===txId);if(!t)return closeAppModal();
+  const l=loans.find(x=>x.id===t.loanId),h=l&&(l.history||[]).find(x=>String(x.id)===String(t.loanHistId));if(!h)return closeAppModal();
+  const isI=t.item==='Trả lãi vay',amt=num('ltAmt'),date=document.getElementById('ltDate').value||h.date,noCF=document.getElementById('ltNoCf').checked;
+  const p=isI?h.principal:amt,i=isI?amt:h.interest;
+  if(p<=0&&i<=0){alert('Số tiền phải lớn hơn 0. Muốn huỷ lần trả nợ này hãy xoá giao dịch hoặc bấm ✕ trong lịch sử trả nợ.');return;}
+  if(!isI&&amt>(l.balance||0)+(h.principal||0)){alert('Số tiền trả gốc lớn hơn dư nợ ('+fmt((l.balance||0)+(h.principal||0))+')');return;}
+  applyLoanHist(l,h,p,i,date);
+  const nt=txs.find(x=>x.id===(isI?h.txI:h.txP));if(nt){if(noCF)nt.noCF=true;else delete nt.noCF;}
+  saveAll();closeAppModal();renderLoans();renderHome();try{renderHistory();}catch(e){}
+  try{if(currentScreen()==='report')renderReport();}catch(e){}
+  showMiniToast('✓ Đã lưu'+(noCF?' (không tính vào chi phí)':''));
 }
 function deleteLoanHist(loanId,hid,silent){
   const l=loans.find(x=>x.id===loanId);if(!l)return;const h=(l.history||[]).find(x=>String(x.id)===String(hid));if(!h)return;
@@ -2293,7 +2332,7 @@ function renderReward(){
 /* ---------- SỔ TIẾT KIỆM: TỰ ĐỘNG CỘNG LÃI / TẤT TOÁN KHI ĐÁO HẠN ---------- */
 function checkMaturedSavings(){
   const today=todayStr();
-  const payoutOf=w=>{const id=w.payoutWalletId||w.sourceWalletId;return id?wallets.find(x=>String(x.id)===String(id)&&x.type!=='saving'):null;};
+  const payoutOf=savPayoutOf;
   const allDue=wallets.filter(w=>w.type==='saving'&&!w.matured&&w.maturityDate&&w.maturityDate<=today);
   const needPick=allDue.filter(w=>(w.maturityAction||'renew_all')!=='renew_all'&&!payoutOf(w));
   if(needPick.length)askPayoutWallet(needPick);
@@ -2308,7 +2347,8 @@ function checkMaturedSavings(){
       const dayBasis=w.dayBasis||365;
       const days=daysBetween(w.depositDate,w.maturityDate);
       // Nếu trả lãi đầu kỳ thì lãi của kỳ này đã được cộng lúc gửi/tái tục trước đó rồi
-      const interest=(w.payTiming==='start')?0:calcInterest(w.balance,w.rate,days,dayBasis);
+      /* Trả lãi hàng tháng: các tháng trước đã trả vào tài khoản, đến hạn chỉ còn lãi tháng cuối */
+      const interest=(w.payTiming==='start')?0:w.payTiming==='monthly'?calcInterest(w.balance,w.rate,daysBetween(savLastInterest(w),w.maturityDate),dayBasis):calcInterest(w.balance,w.rate,days,dayBasis);
       const action=w.maturityAction||(w.autoRenew===false?'no_renew':'renew_all');
       changed=true;
       if(action==='renew_principal'){
@@ -2317,7 +2357,7 @@ function checkMaturedSavings(){
           if(target){target.balance+=interest;txs.unshift(mkSavTx('thu',interest,'Rút lãi tiết kiệm: '+w.name,target.id,w.maturityDate));}
           else txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm (chưa gán ví nhận): '+w.name,null,w.maturityDate));
         }
-        w.depositDate=w.maturityDate;w.maturityDate=addMonths(w.depositDate,w.termMonths);
+        w.depositDate=w.maturityDate;w.maturityDate=addMonths(w.depositDate,w.termMonths);w.lastInterestDate=w.depositDate;
         if(w.payTiming==='start'&&w.rate>0){
           const newDays=daysBetween(w.depositDate,w.maturityDate);
           const preInterest=calcInterest(w.balance,w.rate,newDays,dayBasis);
@@ -2338,9 +2378,11 @@ function checkMaturedSavings(){
         summary.push(w.name+': gốc '+fmt(principal)+(interest>0?' + lãi '+fmt(interest):'')+' → '+target.name);
         w.matured=true;break;
       }else{ // renew_all
-        w.balance+=interest;
-        if(interest>0){txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm tự động: '+w.name,w.id,w.maturityDate));summary.push(w.name+': lãi '+fmt(interest)+' (tái tục vào sổ)');}
-        w.depositDate=w.maturityDate;w.maturityDate=addMonths(w.depositDate,w.termMonths);
+        const mt=w.payTiming==='monthly'?payoutOf(w):null; /* trả lãi hàng tháng: lãi tháng cuối cũng về tài khoản nhận lãi */
+        if(mt){if(interest>0){mt.balance+=interest;txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm hàng tháng: '+w.name,mt.id,w.maturityDate));summary.push(w.name+': lãi '+fmt(interest)+' → '+mt.name);}}
+        else{w.balance+=interest;
+        if(interest>0){txs.unshift(mkSavTx('thu',interest,'Lãi tiết kiệm tự động: '+w.name,w.id,w.maturityDate));summary.push(w.name+': lãi '+fmt(interest)+' (tái tục vào sổ)');}}
+        w.depositDate=w.maturityDate;w.maturityDate=addMonths(w.depositDate,w.termMonths);w.lastInterestDate=w.depositDate;
         if(w.payTiming==='start'&&w.rate>0){
           const newDays=daysBetween(w.depositDate,w.maturityDate);
           const preInterest=calcInterest(w.balance,w.rate,newDays,dayBasis);
@@ -2355,20 +2397,31 @@ function checkMaturedSavings(){
     renderHome();
   }
 }
-/* Cộng lãi hàng tháng cho sổ chọn "Trả lãi: Hàng tháng" */
+/* Tài khoản nhận lãi / tiền đáo hạn của sổ (không phải sổ tiết kiệm khác) */
+function savPayoutOf(w){const id=w.payoutWalletId||w.sourceWalletId;return id?wallets.find(x=>String(x.id)===String(id)&&x.type!=='saving'):null;}
+/* Ngày nhận lãi hàng tháng gần nhất đã qua (cùng ngày gửi mỗi tháng, trước ngày đáo hạn) */
+function savLastPaidAnniv(w){const today=todayStr();let last=w.depositDate;for(let k=1;k<(w.termMonths||0);k++){const d=addMonths(w.depositDate,k);if(d>today)break;last=d;}return last;}
+function savLastInterest(w){return w.lastInterestDate&&w.lastInterestDate>=w.depositDate?w.lastInterestDate:savLastPaidAnniv(w);}
+/* Sổ "Trả lãi: Hàng tháng": mỗi tháng vào đúng ngày gửi, lãi của tháng đó chuyển vào tài khoản nhận lãi
+   (chưa chọn tài khoản thì cộng vào sổ). Lãi tháng cuối trả khi đáo hạn (checkMaturedSavings). */
 function checkMonthlyInterestAccrual(){
-  const curYm=todayStr().slice(0,7);
-  let changed=false;
-  wallets.filter(w=>w.type==='saving'&&!w.matured&&w.payTiming==='monthly'&&w.lastAccrualYm!==curYm).forEach(w=>{
-    const monthlyInterest=Math.round(w.balance*(w.rate||0)/100/12);
-    if(monthlyInterest>0){
-      w.balance+=monthlyInterest;
-      txs.unshift(mkSavTx('thu',monthlyInterest,'Lãi tiết kiệm hàng tháng: '+w.name,w.id,todayStr()));
-      changed=true;
+  const today=todayStr();let changed=false;const summary=[];
+  wallets.filter(w=>w.type==='saving'&&!w.matured&&w.payTiming==='monthly'&&w.depositDate&&w.termMonths).forEach(w=>{
+    /* dữ liệu từ bản cũ (cộng lãi theo tháng dương lịch): coi như đã nhận đến kỳ gần nhất để không trả trùng */
+    if(!w.lastInterestDate){w.lastInterestDate=savLastPaidAnniv(w);changed=true;return;}
+    const target=savPayoutOf(w);
+    for(let k=1;k<w.termMonths;k++){
+      const d=addMonths(w.depositDate,k);if(d>today)break;if(d<=w.lastInterestDate)continue;
+      const amt=calcInterest(w.balance,w.rate,daysBetween(w.lastInterestDate,d),w.dayBasis||365);
+      if(amt>0){
+        if(target){target.balance+=amt;txs.unshift(mkSavTx('thu',amt,'Lãi tiết kiệm hàng tháng: '+w.name,target.id,d));}
+        else{w.balance+=amt;txs.unshift(mkSavTx('thu',amt,'Lãi tiết kiệm hàng tháng: '+w.name,w.id,d));}
+        summary.push(w.name+' '+fmtShort(amt)+(target?' → '+target.name:' (cộng vào sổ)'));
+      }
+      w.lastInterestDate=d;changed=true;
     }
-    w.lastAccrualYm=curYm;
   });
-  if(changed){saveAll();renderHome();}
+  if(changed){saveAll();renderHome();if(summary.length)showMiniToast('🐷 Đã nhận lãi tiết kiệm: '+summary.join(' · '));}
 }
 /* Sổ đã tất toán/hết kỳ hạn không tái tục: tiếp tục sinh lãi không kỳ hạn nếu còn số dư */
 function checkNoTermAccrual(){
@@ -3033,7 +3086,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='79';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='80';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -3086,7 +3139,11 @@ renderMoreGroups();
 document.getElementById('more-trash').innerHTML='<span>'+icon('trash','var(--red)',20)+'</span><span>Xoá toàn bộ dữ liệu</span>';
 document.querySelectorAll('.more-item').forEach(el=>el.style.gap='12px');
 renderHome();
+/* qua ngày mới mà app vẫn mở: mở lại app thì kiểm tra lãi tiết kiệm đến hạn */
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible'||!bootDone)return;try{checkMaturedSavings();checkMonthlyInterestAccrual();checkNoTermAccrual();}catch(e){console.error(e);}});
+let bootDone=false;
 function bootChecks(){
+  bootDone=true;
   checkDueRecurring();
   checkMonthlyBudgetBonus();
   checkMaturedSavings();

@@ -11,10 +11,10 @@ const OLD = {
     { id: 4, name: 'Sổ TK', type: 'saving', balance: 50000000, rate: 5, termMonths: 6, depositDate: D(-30) }],
   tc_txs: [
     { id: 101, type: 'chi', amount: 50000, group: 'Ăn uống', item: 'Ăn trưa', icon: 'e:🍜', walletId: 1, note: 'cơm', date: D(0), time: '12:00' },
-    { id: 102, type: 'thu', amount: 15000000, group: 'Lương', item: 'Lương', icon: 'e:💰', walletId: 2, note: '', date: D(-3), time: '09:00' },
+    { id: 102, type: 'thu', amount: 15000000, group: 'Lương', item: 'Lương', icon: 'e:💰', walletId: 2, note: '', date: D(0), time: '09:00' },
     { id: 103, type: 'chi', amount: 2000000, group: 'Khác', item: 'Cho vay', icon: 'khac', walletId: 2, person: 'Nam', note: 'Cho vay: Nam', date: D(-2), time: '10:00', debtId: 501 },
     { id: 104, type: 'transfer', amount: 1000000, fromName: 'VCB', toName: 'Tiền mặt', note: '', date: D(-1), time: '08:00' },
-    { id: 105, type: 'chi', amount: 300000, group: 'Đi lại', item: 'Xăng xe', icon: 'e:⛽', walletId: 3, note: 'đổ xăng', date: D(-1), time: '18:00' },
+    { id: 105, type: 'chi', amount: 300000, group: 'Đi lại', item: 'Xăng xe', icon: 'e:⛽', walletId: 3, note: 'đổ xăng', date: D(0), time: '18:00' },
     { id: 106, type: 'family', amount: 500000, dir: 'out', person: 'Vợ', walletId: 1, note: '', date: D(-5), time: '07:00' },
     { id: 107, type: 'chi', amount: 120000, group: 'Ăn uống', item: 'Cafe', icon: 'e:☕', walletId: 1, note: 'cafe sáng', date: D(-40), time: '07:30' }],
   tc_debts: [{ id: 501, dir: 'out', person: 'Nam', amount: 2000000, date: D(-2), dueDate: D(5), note: '', status: 'pending', sourceWalletId: 2, outTxId: 103, paidDate: null, paidWalletId: null }],
