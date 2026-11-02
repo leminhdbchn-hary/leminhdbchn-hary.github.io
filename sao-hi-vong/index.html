@@ -1,4 +1,4 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Sao Hi Vọng PTSPBL</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><style>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_PTSPBL</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><style>
 /* Layout: dải xanh thanh niên ở đầu trang, bên dưới là các tab công cụ; ô nhập & nút lưu dùng xanh lá VCB */
 :root{
   --doan:#0b5cad; --doan-deep:#073f7a; --doan-soft:#e7f0fb; --doan-line:#c9dcf3;
@@ -204,7 +204,7 @@ table.mem{width:100%;border-collapse:collapse;font-size:13px}
   <div class="wrap">
     <div>
       <div class="eyebrow">Chi đoàn 6 · Phân đoàn Phòng Phát triển sản phẩm bán lẻ</div>
-      <h1>Sao Hi Vọng <span class="s">PTSPBL</span></h1>
+      <h1>NgoisaoDTN_PTSPBL</h1>
       <p>Mỗi hoạt động đoàn tham gia được cộng số sao tương ứng. Trang tự đề xuất những đoàn viên nên được cử đi ở hoạt động tiếp theo.</p>
     </div>
     <div class="kpis" id="kpis">
@@ -538,7 +538,7 @@ async function exportCsv(){
   const rows = S.members.slice().sort((a,b)=>(a.order??999)-(b.order??999)).map((m,i)=>[i+1,m.name,m.gender,m.dob,...acts.map(a=>(a.participants||[]).includes(m.id)?"x":""),st.get(m.id).stars,m.fee?"x":"",m.note||""]);
   const csv = "﻿" + [head,...rows].map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
   if (!downloads) { toast("Trình xem này chưa hỗ trợ tải file."); return; }
-  try { const r = await downloads.save({ filename: "Bang_sao_PTSPBL.csv", data: csv }); if (r && r.status==="saved") toast("Đã tải bảng sao"); }
+  try { const r = await downloads.save({ filename: "NgoisaoDTN_PTSPBL.csv", data: csv }); if (r && r.status==="saved") toast("Đã tải bảng sao"); }
   catch(e){ if (e && e.code !== "cancelled") toast("Chưa tải được file."); }
 }
 
@@ -549,14 +549,14 @@ function buildSnapshot(){
     activities: S.activities.map(a => ({ id:a.id, name:a.name, type:a.type||"", date:a.date||"", stars:Number(a.stars)||0, status:a.status, slots:Number(a.slots)||0, participants:[...(a.participants||[])], order:a.order ?? 0 })) };
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   const base = '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>';
-  return '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Sao Hi Vọng PTSPBL</title>'
+  return '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_PTSPBL</title>'
     + SHELL.font + base + SHELL.style + '</head><body>' + SHELL.body
     + '<main class="wrap" id="app"></main><div id="modal-root"></div><script>window.__SNAPSHOT__=' + json + ';<\/script><script id="app-js">' + SHELL.js + '<\/script></body></html>';
 }
 window.__buildSnapshot = buildSnapshot;
 async function exportHtml(){
   if (!downloads) { toast("Trình xem này chưa hỗ trợ tải file."); return; }
-  try { const r = await downloads.save({ filename: "Sao_Hi_Vong_PTSPBL.html", data: buildSnapshot() }); if (r && r.status==="saved") toast("Đã tải trang xem"); }
+  try { const r = await downloads.save({ filename: "NgoisaoDTN_PTSPBL.html", data: buildSnapshot() }); if (r && r.status==="saved") toast("Đã tải trang xem"); }
   catch(e){ if (e && e.code !== "cancelled") toast("Chưa tải được file."); }
 }
 
