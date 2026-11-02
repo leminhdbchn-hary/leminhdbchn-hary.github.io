@@ -457,7 +457,7 @@ function openModal(title, body, onSave, onDelete){
   root.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
   $("#ov").addEventListener("mousedown", e => { if (e.target.id === "ov") close(); });
   document.addEventListener("keydown", function k(e){ if(e.key==="Escape"){ close(); document.removeEventListener("keydown",k);} });
-  $("#mf").onsubmit = async e => { e.preventDefault(); const err = onSave(new FormData(e.target), e.target); if (typeof err === "string") { $("#merr").textContent = err; return; } close(); };
+  $("#mf").onsubmit = async e => { e.preventDefault(); let err = onSave(new FormData(e.target), e.target); if (err && err.then) { const sb = e.target.querySelector("[type=submit]"); sb.disabled = true; $("#merr").textContent = ""; try { err = await err; } finally { sb.disabled = false; } } if (typeof err === "string") { $("#merr").textContent = err; return; } close(); };
   const del = $("#mdel");
   if (del) del.onclick = () => { if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "Bấm lần nữa để xóa"; return; } onDelete(); close(); };
   const first = root.querySelector("input,select"); first && first.focus();
@@ -555,7 +555,7 @@ async function exportHtml(){
 
 /* ---------- events ---------- */
 document.addEventListener("click", e => {
-  if (e.target.id === "adm") { e.preventDefault(); adminLogin(); return; }
+  const aid = e.target.id; if (aid === "adm" || aid === "pwd" || aid === "out") { e.preventDefault(); (aid === "adm" ? adminLogin : aid === "pwd" ? changePassword : adminLogout)(); return; }
   const tab = e.target.closest(".tab"); if (tab) { location.hash = tab.dataset.view; return; }
   const b = e.target.closest("[data-act]"); if (!b || !db) return;
   const act = b.dataset.act;
@@ -610,14 +610,73 @@ async function loadShared(){
     if (!r.ok) return; const d = await r.json();
     if (Array.isArray(d.members) && Array.isArray(d.activities)) { S.members = d.members; S.activities = d.activities; } } catch(e){}
 }
-async function adminLogin(){
-  if (getToken()) { if (confirm("Đăng xuất quản trị?")) { try { localStorage.removeItem(TOKEN_KEY); } catch(e){} location.reload(); } return; }
-  const t = (prompt("Dán mã quản trị (GitHub token) của bạn:") || "").trim(); if (!t) return;
-  try { localStorage.setItem(TOKEN_KEY, t); } catch(e){ toast("Trình duyệt không cho lưu mã."); return; }
-  const r = await fetch("https://api.github.com/repos/" + REPO, { headers: ghHead() }).then(x=>x.ok?x.json():null).catch(()=>null);
-  if (r && r.permissions && r.permissions.push) { toast("Đã đăng nhập quản trị"); location.reload(); }
-  else { try { localStorage.removeItem(TOKEN_KEY); } catch(e){} toast("Mã không đúng hoặc không có quyền sửa."); }
+const ADMIN_USER = "Minhlv.ho";
+const VAULT_API = "https://api.github.com/repos/" + REPO + "/contents/NgoisaoDTN_PTSPBL/vault.json";
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = u8 => btoa(String.fromCharCode(...u8)), unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+async function deriveKey(pass, salt, iter){
+  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name:"PBKDF2", hash:"SHA-256", salt, iterations: iter }, base, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]);
 }
+async function sealToken(token, user, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 600000;
+  const key = await deriveKey(pass, salt, iter);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name:"AES-GCM", iv, additionalData: enc.encode(user.toLowerCase()) }, key, enc.encode(token)));
+  return { v:1, iter, salt: b64(salt), iv: b64(iv), ct: b64(ct) };
+}
+async function openVault(vault, user, pass){
+  const key = await deriveKey(pass, unb64(vault.salt), vault.iter);
+  const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv: unb64(vault.iv), additionalData: enc.encode(user.toLowerCase()) }, key, unb64(vault.ct));
+  return dec.decode(pt);
+}
+async function fetchVault(){
+  const r = await fetch(VAULT_API + "?ref=main&t=" + Date.now(), { headers: { "Accept":"application/vnd.github.raw+json" } });
+  if (r.status === 404) return null; if (!r.ok) throw new Error("vault " + r.status); return r.json();
+}
+async function saveVault(vault, token){
+  const h = { "Accept":"application/vnd.github+json", "Authorization":"Bearer " + token };
+  const m = await fetch(VAULT_API + "?ref=main&t=" + Date.now(), { headers: h });
+  const sha = m.ok ? (await m.json()).sha : undefined;
+  const body = { message: "Cập nhật khóa quản trị", content: btoa(JSON.stringify(vault, null, 1)), branch: "main", ...(sha ? { sha } : {}) };
+  const r = await fetch(VAULT_API, { method:"PUT", headers: { ...h, "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("Không lưu được khóa (" + r.status + ")");
+}
+async function canPush(token){
+  const r = await fetch("https://api.github.com/repos/" + REPO, { headers: { "Accept":"application/vnd.github+json", "Authorization":"Bearer " + token } }).then(x=>x.ok?x.json():null).catch(()=>null);
+  return !!(r && r.permissions && r.permissions.push);
+}
+const setToken = t => { try { localStorage.setItem(TOKEN_KEY, t); return true; } catch(e){ toast("Trình duyệt không cho lưu đăng nhập."); return false; } };
+const fld = (id, label, type, extra="") => `<div class="field full"><label for="${id}">${label}</label><input type="${type}" id="${id}" name="${id}" ${extra}></div>`;
+async function adminLogin(){
+  let vault;
+  try { vault = await fetchVault(); } catch(e){ toast("Chưa kết nối được GitHub, thử lại sau."); return; }
+  if (vault) {
+    openModal("Đăng nhập quản trị", `<div class="form-grid">${fld("u","Tài khoản","text",'autocomplete="username" required')}${fld("pw","Mật khẩu","password",'autocomplete="current-password" required')}</div>`, async fd => {
+      const u = String(fd.get("u")||"").trim(), pw = String(fd.get("pw")||"");
+      if (u.toLowerCase() !== ADMIN_USER.toLowerCase()) return "Sai tài khoản hoặc mật khẩu.";
+      let token; try { token = await openVault(vault, u, pw); } catch(e){ return "Sai tài khoản hoặc mật khẩu."; }
+      if (setToken(token)) location.reload();
+    });
+  } else {
+    openModal("Thiết lập quản trị lần đầu", `<p style="margin:0 0 10px;color:var(--muted);font-size:13px">Dán mã GitHub (chỉ cần một lần) và đặt mật khẩu. Sau này chỉ cần tài khoản <b>${ADMIN_USER}</b> + mật khẩu.</p><div class="form-grid">
+      ${fld("tk","Mã GitHub (token)","password",'autocomplete="off" required')}${fld("pw","Đặt mật khẩu (ít nhất 12 ký tự)","password",'autocomplete="new-password" minlength="12" required')}${fld("pw2","Nhập lại mật khẩu","password",'autocomplete="new-password" required')}</div>`, async fd => {
+      const tk = String(fd.get("tk")||"").trim(), pw = String(fd.get("pw")||""), pw2 = String(fd.get("pw2")||"");
+      if (pw.length < 12) return "Mật khẩu cần ít nhất 12 ký tự."; if (pw !== pw2) return "Hai mật khẩu không khớp.";
+      if (!(await canPush(tk))) return "Mã GitHub không đúng hoặc không có quyền sửa.";
+      try { await saveVault(await sealToken(tk, ADMIN_USER, pw), tk); } catch(e){ return e.message; }
+      if (setToken(tk)) { toast("Đã thiết lập xong"); location.reload(); }
+    });
+  }
+}
+function changePassword(){
+  openModal("Đổi mật khẩu", `<div class="form-grid">${fld("pw","Mật khẩu mới (ít nhất 12 ký tự)","password",'autocomplete="new-password" minlength="12" required')}${fld("pw2","Nhập lại","password",'autocomplete="new-password" required')}</div>`, async fd => {
+    const pw = String(fd.get("pw")||""), pw2 = String(fd.get("pw2")||"");
+    if (pw.length < 12) return "Mật khẩu cần ít nhất 12 ký tự."; if (pw !== pw2) return "Hai mật khẩu không khớp.";
+    try { await saveVault(await sealToken(getToken(), ADMIN_USER, pw), getToken()); } catch(e){ return e.message; }
+    toast("Đã đổi mật khẩu");
+  });
+}
+function adminLogout(){ if (!confirm("Đăng xuất quản trị?")) return; try { localStorage.removeItem(TOKEN_KEY); } catch(e){} location.reload(); }
 async function boot(){
   const sync = $("#sync");
   if (PUB) {
@@ -627,7 +686,8 @@ async function boot(){
     await loadShared();
     const adm = !!getToken();
     if (adm) { S.canWrite = true; db = adminDb(); }
-    sync.innerHTML = (adm ? "Quản trị viên · " : "Chế độ xem · ") + '<a href="#" id="adm" style="color:inherit">' + (adm ? "Đăng xuất" : "Quản trị") + '</a>';
+    const lk = (id, t) => `<a href="#" id="${id}" style="color:inherit">${t}</a>`;
+    sync.innerHTML = adm ? "Quản trị viên · " + lk("pwd","Đổi mật khẩu") + " · " + lk("out","Đăng xuất") : "Chế độ xem · " + lk("adm","Đăng nhập");
     route(); return;
   }
   route();
