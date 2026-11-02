@@ -273,6 +273,20 @@
     "m03"
    ],
    "order": 9
+  },
+  {
+   "id": "amvyo24njedg0",
+   "name": "Hỗ trợ giải Pickeball TSC",
+   "type": "",
+   "date": "2026-06-01",
+   "stars": 1,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m04",
+    "m03"
+   ],
+   "order": 10
   }
  ]
 }
