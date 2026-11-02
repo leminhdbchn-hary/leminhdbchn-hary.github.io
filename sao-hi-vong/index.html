@@ -313,9 +313,8 @@ function memberLine(s, extra=""){
 }
 
 function viewOverview(st){
-  const target = Number(S.settings.targetStars)||3;
   const ranked = [...st.values()].filter(s => s.m.status!=="leave").sort((a,b)=> b.stars-a.stars || b.count-a.count || a.m.name.localeCompare(b.m.name,"vi"));
-  const max = Math.max(target, ...ranked.map(r=>r.stars), 1);
+  const max = Math.max(...ranked.map(r=>r.stars), 1);
   let rank = 0, prev = null;
   const lb = ranked.map((s,i) => {
     if (s.stars !== prev) { rank = i+1; prev = s.stars; }
@@ -328,36 +327,32 @@ function viewOverview(st){
 
   const pr = priorityList(st);
   const none = pr.filter(s => s.stars === 0);
-  const below = pr.filter(s => s.stars > 0 && s.stars < target);
+  const rest = pr.filter(s => s.stars > 0);
   const done = doneActs().length;
   const sg = (s, cls) => {
     const missTxt = s.count === 0 ? `Chưa tham gia hoạt động nào` : `Lần gần nhất: ${esc(s.acts[s.acts.length-1].name)}`;
     const pills = [];
     if (s.count === 0) pills.push(`<span class="pill warn">0 sao</span>`);
-    else pills.push(`<span class="pill star">${s.stars}/${target} sao</span>`);
-    if (s.count > 0 && s.missed >= 2) pills.push(`<span class="pill grey">lỡ ${s.missed} hoạt động</span>`);
+    else pills.push(`<span class="pill star">${s.stars} sao</span>`);
     if (s.planned.length) pills.push(`<span class="pill blue">Đã cử: ${esc(s.planned[0].name)}</span>`);
     if (!PUB && !s.m.fee) pills.push(`<span class="pill grey">Chưa đóng đoàn phí</span>`);
     return `<div class="sg ${cls}">${memberLine(s, `<div class="acts">${missTxt}</div>`)}<div class="chips" style="justify-content:flex-end">${pills.join("")}</div></div>`;
   };
   const leave = S.members.filter(m => m.status === "leave");
-  const reached = pr.filter(s => s.stars >= target).length;
 
   return `<div class="view">
     <div class="rules">
       <span><b>Nguyên tắc:</b> tham gia 1 hoạt động = nhận số sao của hoạt động đó (thường 1 sao, cuộc thi lớn có thể nhiều sao hơn).</span>
-      <span class="target"><label for="target">Chỉ tiêu mỗi đoàn viên</label>
-        <input id="target" type="number" min="1" max="50" value="${target}" ${S.canWrite?"":"disabled"}> sao</span>
     </div>
     <div class="grid2">
       <section class="panel">
         <div class="panel-h"><div><h2>Cần tham gia hoạt động tiếp theo</h2>
-          <div class="sub">Xếp theo ít sao nhất, rồi đến người đã lâu chưa tham gia. ${reached}/${pr.length} đoàn viên đã đạt chỉ tiêu.</div></div>
+          <div class="sub">Xếp theo ít sao nhất, rồi đến người đã lâu chưa tham gia.</div></div>
           ${S.canWrite?`<button class="btn primary" data-act="new-activity">+ Hoạt động sắp tới</button>`:""}</div>
         <div class="panel-b">
           ${none.length?`<div class="group"><h3><span class="dot" style="background:var(--warn)"></span>Ưu tiên cử ngay · chưa có sao (${none.length})</h3><div class="sugg">${none.map(s=>sg(s,"hi")).join("")}</div></div>`:""}
-          ${below.length?`<div class="group"><h3><span class="dot" style="background:var(--star)"></span>Chưa đạt chỉ tiêu ${target} sao (${below.length})</h3><div class="sugg">${below.map(s=>sg(s,"mid")).join("")}</div></div>`:""}
-          ${!none.length && !below.length ? `<div class="empty">Tất cả đoàn viên đã đạt chỉ tiêu. Có thể nâng chỉ tiêu để tiếp tục phân bổ đều.</div>`:""}
+          ${rest.length?`<div class="group"><h3><span class="dot" style="background:var(--star)"></span>Đã có sao · xếp từ ít đến nhiều (${rest.length})</h3><div class="sugg">${rest.map(s=>sg(s,"mid")).join("")}</div></div>`:""}
+          ${!none.length && !rest.length ? `<div class="empty">Chưa có đoàn viên.</div>`:""}
           ${leave.length?`<div class="leave">Tạm nghỉ, không tính vào đề xuất: ${leave.map(m=>`<b>${esc(m.name)}</b>${m.note?` (${esc(m.note)})`:""}`).join(", ")}</div>`:""}
         </div>
       </section>
@@ -405,7 +400,7 @@ function viewActivities(st){
       ${S.canWrite?`<button class="btn primary" data-act="new-activity">+ Thêm hoạt động</button>`:""}</div>
       <div class="panel-b">${up.length?`<div class="acts-list">${up.map(a=>actCard(a,st)).join("")}</div>`:`<div class="empty">Chưa có hoạt động sắp tới. Bấm “Thêm hoạt động”, chọn trạng thái “Sắp diễn ra” và số người cần để nhận đề xuất.</div>`}</div></section>
     <section class="panel"><div class="panel-h"><div><h2>Đã tổ chức (${done.length})</h2><div class="sub">Mới nhất ở trên</div></div>
-      ${S.canWrite?`<div class="toolbar"><button class="btn" data-act="export">Xuất bảng sao (CSV)</button><button class="btn primary" data-act="export-html">Xuất trang xem (HTML)</button></div>`:""}</div>
+      ${S.canWrite&&!PUB?`<div class="toolbar"><button class="btn" data-act="export">Xuất bảng sao (CSV)</button><button class="btn primary" data-act="export-html">Xuất trang xem (HTML)</button></div>`:""}</div>
       <div class="panel-b">${done.length?`<div class="acts-list">${done.map(a=>actCard(a,st)).join("")}</div>`:`<div class="empty">Chưa có hoạt động nào.</div>`}</div></section>
   </div>`;
 }
@@ -440,12 +435,12 @@ function viewMembers(st){
       <td class="c">${m.fee?`<span class="pill ok">Đã đóng</span>`:`<span class="pill warn">Chưa đóng</span>`}</td>`}
       <td class="c">${m.status==="leave"?`<span class="pill grey">Tạm nghỉ${m.note?" · "+esc(m.note):""}</span>`:`<span class="pill blue">Đang sinh hoạt</span>`}</td>
       <td class="c"><span class="starcount" style="font-size:14px">${s.stars}${STAR}</span></td>
-      <td class="c">${S.canWrite?`<button class="btn" data-act="edit-member" data-id="${m.id}">Sửa</button>`:""}</td></tr>`;
+      <td class="c">${S.canWrite&&!PUB?`<button class="btn" data-act="edit-member" data-id="${m.id}">Sửa</button>`:""}</td></tr>`;
   }).join("");
   return `<div class="view"><section class="panel">
     <div class="panel-h"><div><h2>Danh sách đoàn viên (${S.members.length})</h2><div class="sub">Chi đoàn 6 · Chi bộ 20</div></div>
       <div class="toolbar"><input type="text" id="mem-search" placeholder="Tìm theo tên…" value="${esc(S.search)}" aria-label="Tìm đoàn viên">
-      ${S.canWrite?`<button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button>`:""}</div></div>
+      ${S.canWrite&&!PUB?`<button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button>`:""}</div></div>
     <div class="mx-wrap"><table class="mem"><thead><tr><th>STT</th><th>Họ và tên</th><th>Giới tính</th>${PUB?"":"<th>Ngày sinh</th><th>SĐT</th><th>Đoàn phí</th>"}<th>Trạng thái</th><th>Sao</th><th></th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${PUB?6:9}" class="empty">Không tìm thấy đoàn viên.</td></tr>`}</tbody></table></div>
   </section></div>`;
@@ -477,11 +472,9 @@ function activityForm(a){
   const checks = ordered.map(s => `<label><input type="checkbox" name="p" value="${s.m.id}" ${sel.has(s.m.id)?"checked":""}>${esc(s.m.name)}<span class="hint">${s.m.status==="leave"?"nghỉ":s.stars+"★"}</span></label>`).join("");
   const body = `<div class="form-grid">
     <div class="field full"><label for="f-name">Tên hoạt động</label><input type="text" id="f-name" name="name" required value="${esc(a.name)}" placeholder="VD: Hiến máu nhân đạo tháng 11"></div>
-    <div class="field"><label for="f-type">Loại</label><select id="f-type" name="type">${TYPES.map(t=>`<option ${t===a.type?"selected":""}>${t}</option>`).join("")}</select></div>
     <div class="field"><label for="f-date">Ngày</label><input type="date" id="f-date" name="date" value="${esc(a.date||"")}"></div>
     <div class="field"><label for="f-stars">Số sao khi tham gia</label><input type="number" id="f-stars" name="stars" min="0" max="20" value="${Number(a.stars)||0}"></div>
     <div class="field"><label for="f-status">Trạng thái</label><select id="f-status" name="status"><option value="upcoming" ${a.status==="upcoming"?"selected":""}>Sắp diễn ra</option><option value="done" ${a.status!=="upcoming"?"selected":""}>Đã diễn ra (cộng sao)</option></select></div>
-    <div class="field"><label for="f-slots">Số người cần</label><input type="number" id="f-slots" name="slots" min="0" max="100" value="${Number(a.slots)||0}"></div>
     <div class="field full"><label>Người tham gia / được phân công <span style="color:var(--muted);font-weight:400">(xếp theo ưu tiên: ít sao ở trên)</span></label><div class="check-list">${checks}</div></div>
   </div>`;
   return body;
@@ -491,8 +484,8 @@ function editActivity(id){
   const a = id ? S.activities.find(x=>x.id===id) : null;
   openModal(a?"Sửa hoạt động":"Thêm hoạt động", activityForm(a), (fd) => {
     const name = String(fd.get("name")||"").trim(); if (!name) return "Hãy nhập tên hoạt động.";
-    const data = { name, type: fd.get("type"), date: fd.get("date")||"", stars: Math.max(0, Number(fd.get("stars"))||0),
-      status: fd.get("status"), slots: Math.max(0, Number(fd.get("slots"))||0), participants: fd.getAll("p"),
+    const data = { name, type: a?.type||"", date: fd.get("date")||"", stars: Math.max(0, Number(fd.get("stars"))||0),
+      status: fd.get("status"), slots: Number(a?.slots)||0, participants: fd.getAll("p"),
       order: a ? (a.order ?? 0) : (Math.max(0,...S.activities.map(x=>x.order||0))+1) };
     const ref = a ? db.collection("activities").doc(a.id) : db.collection("activities").doc();
     write(ref.path, () => ref.set(data)).then(()=>toast(a?"Đã lưu hoạt động":"Đã thêm hoạt động"));
@@ -575,22 +568,33 @@ document.addEventListener("click", e => {
   else if (act === "mark-done") { const a = S.activities.find(x=>x.id===b.dataset.id); if (!a) return; a.status="done"; if(!a.date) a.date = new Date().toISOString().slice(0,10); render(); const r = db.collection("activities").doc(a.id); write(r.path, ()=>r.update({ status:"done", date:a.date })).then(()=>toast(`Đã cộng ${a.stars} sao cho ${(a.participants||[]).length} đoàn viên`)); }
   else if (act === "toggle") { const a = S.activities.find(x=>x.id===b.dataset.a); if (!a) return; const id = b.dataset.m; const cur = a.participants||[]; setParticipants(a.id, cur.includes(id) ? cur.filter(x=>x!==id) : [...cur, id]); }
 });
-let tgtTimer;
 document.addEventListener("input", e => {
   if (e.target.id === "mem-search") { S.search = e.target.value; S._focusSearch = true; render(); }
-  if (e.target.id === "target") { clearTimeout(tgtTimer); const v = Math.max(1, Number(e.target.value)||0); if (!v) return;
-    tgtTimer = setTimeout(() => { S.settings.targetStars = v; const r = db.doc("config/settings"); write(r.path, ()=>r.set({ ...S.settings, targetStars: v })); render(); }, 600); }
 });
 function route(){ const h = location.hash.slice(1); S.view = ["tong-quan","hoat-dong","diem-danh","doan-vien"].includes(h) ? h : "tong-quan"; render(); }
 window.addEventListener("hashchange", route);
 
 /* ---------- boot ---------- */
+const LOCAL_KEY = "ngoisaoDTN_activities_v1";
+function localDb(){
+  const save = () => { try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ activities: S.activities })); } catch(e){ toast("Chưa lưu được trên máy này."); } };
+  return {
+    collection: () => ({ doc: (id) => { id = id || ("a" + Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+      return { id, path: "activities/" + id,
+        set: async d => { const o = { id, ...d }, i = S.activities.findIndex(x=>x.id===id); if (i < 0) S.activities.push(o); else S.activities[i] = o; save(); render(); },
+        update: async d => { const a = S.activities.find(x=>x.id===id); if (a) Object.assign(a, d); save(); render(); },
+        delete: async () => { S.activities = S.activities.filter(x=>x.id!==id); save(); render(); } }; } }),
+    doc: path => ({ path, set: async () => {} })
+  };
+}
 async function boot(){
   const sync = $("#sync");
   if (PUB) {
     S.members = SNAP.members; S.activities = SNAP.activities; S.settings = SNAP.settings || { targetStars: 3 };
-    S.loaded = { m:true, a:true, s:true }; S.canWrite = false;
-    const d = new Date(SNAP.at); sync.textContent = "Cập nhật " + d.toLocaleString("vi-VN", { hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit", year:"numeric" });
+    S.loaded = { m:true, a:true, s:true }; S.canWrite = true;
+    try { const sv = JSON.parse(localStorage.getItem(LOCAL_KEY)||"null"); if (sv && Array.isArray(sv.activities)) S.activities = sv.activities; } catch(e){}
+    db = localDb();
+    sync.textContent = "Lưu trên máy này";
     route(); return;
   }
   route();
@@ -603,7 +607,7 @@ async function boot(){
   const done = (meta) => { if (!meta.fromCache) { clearTimeout(timer); sync.textContent = "Đã đồng bộ"; } };
   db.collection("members").onSnapshot(snap => { S.members = snap.docs.map(d => ({ id:d.id, ...d.data() })); S.loaded.m = true; done(snap.metadata); render(); }, onErr);
   db.collection("activities").onSnapshot(snap => { S.activities = snap.docs.map(d => ({ id:d.id, ...d.data(), participants:[...(d.data().participants||[])] })); S.loaded.a = true; done(snap.metadata); render(); }, onErr);
-  db.doc("config/settings").onSnapshot(snap => { if (snap.exists) S.settings = { ...snap.data() }; S.loaded.s = true; if (document.activeElement?.id !== "target") render(); }, onErr);
+  db.doc("config/settings").onSnapshot(snap => { if (snap.exists) S.settings = { ...snap.data() }; S.loaded.s = true; render(); }, onErr);
 }
 boot();
 
