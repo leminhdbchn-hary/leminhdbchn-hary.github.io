@@ -1,0 +1,718 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_CD3</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: dải xanh thanh niên ở đầu trang, bên dưới là các tab công cụ; ô nhập & nút lưu dùng xanh lá VCB */
+:root{
+  --doan:#0b5cad; --doan-deep:#073f7a; --doan-soft:#e7f0fb; --doan-line:#c9dcf3;
+  --vcb:#00704a; --vcb-deep:#005236; --vcb-lime:#7fbf3f; --vcb-soft:#e6f4ec;
+  --star:#f2a900; --star-soft:#fff4d6;
+  --bg:#f4f7fb; --surface:#ffffff; --surface-2:#f8fafd;
+  --fg:#12233a; --muted:#5b6b80; --line:#dfe6ef;
+  --warn:#c2410c; --warn-soft:#fdeee4; --danger:#b42318;
+  --hero-fg:#ffffff;
+  --f-body:"Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --shadow:0 1px 2px rgba(10,40,80,.06), 0 4px 16px rgba(10,40,80,.06);
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --doan:#5aa2ef; --doan-deep:#0a3363; --doan-soft:#11284a; --doan-line:#1f3d66;
+  --vcb:#3fbf86; --vcb-deep:#2a9a69; --vcb-lime:#9bd65e; --vcb-soft:#0f3324;
+  --star:#ffc233; --star-soft:#3a2f10;
+  --bg:#0b1422; --surface:#111d2f; --surface-2:#0e192a;
+  --fg:#e6edf6; --muted:#9aabc0; --line:#22324a;
+  --warn:#fb923c; --warn-soft:#3a2312; --danger:#f87171;
+  --hero-fg:#ffffff; --shadow:0 1px 2px rgba(0,0,0,.3);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doan:#5aa2ef; --doan-deep:#0a3363; --doan-soft:#11284a; --doan-line:#1f3d66;
+  --vcb:#3fbf86; --vcb-deep:#2a9a69; --vcb-lime:#9bd65e; --vcb-soft:#0f3324;
+  --star:#ffc233; --star-soft:#3a2f10;
+  --bg:#0b1422; --surface:#111d2f; --surface-2:#0e192a;
+  --fg:#e6edf6; --muted:#9aabc0; --line:#22324a;
+  --warn:#fb923c; --warn-soft:#3a2312; --danger:#f87171;
+  --hero-fg:#ffffff; --shadow:0 1px 2px rgba(0,0,0,.3);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--vcb);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#0b5cad 0%,#073f7a 70%);color:var(--hero-fg);position:relative;overflow:hidden}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.35;pointer-events:none}
+.hero .wrap{position:relative;padding-block:28px 22px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.8;font-weight:600}
+.hero h1{font-size:clamp(26px,4.4vw,40px);font-weight:800;letter-spacing:-.01em;margin-top:6px}
+.hero h1 .s{color:#ffd24d}
+.hero p{margin:6px 0 0;opacity:.85;max-width:60ch}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:min(100%,520px)}
+.kpi{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;opacity:.85}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.tabs .wrap{display:flex;gap:4px;overflow-x:auto;align-items:center}
+.tab{background:none;border:0;padding:14px 14px 12px;color:var(--muted);font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--doan);border-color:var(--doan)}
+.tabs .spacer{flex:1}
+.sync{font-size:12px;color:var(--muted);white-space:nowrap;padding-left:8px}
+
+main{padding-block:22px 48px}
+.view{display:grid;gap:20px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
+.panel-h{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+.panel-h h2{font-size:16px;font-weight:700}
+.panel-h .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.panel-b{padding:14px 18px 18px}
+
+/* Rules box */
+.rules{display:flex;flex-wrap:wrap;gap:10px 22px;padding:14px 18px;background:var(--doan-soft);border:1px solid var(--doan-line);border-radius:var(--r);color:var(--fg);font-size:13px;align-items:center}
+.rules b{color:var(--doan)}
+.rules .target{display:flex;align-items:center;gap:8px;margin-left:auto}
+
+/* Leaderboard */
+.lb{list-style:none;margin:0;padding:0;display:grid}
+.lb li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.lb li:last-child{border-bottom:0}
+.rank{font-weight:800;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.lb li.top .rank{color:var(--star)}
+.who{min-width:0}
+.who .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .acts{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:6px;border-radius:99px;background:var(--line);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--star),#ffd24d);border-radius:99px}
+.starcount{display:flex;align-items:center;gap:4px;font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;color:var(--fg)}
+.starcount svg{width:18px;height:18px;fill:var(--star)}
+
+/* Suggestions */
+.group{margin-top:4px}
+.group+.group{margin-top:16px}
+.group h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.dot{width:8px;height:8px;border-radius:50%}
+.sugg{display:grid;gap:8px}
+.sg{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line)}
+.sg.hi{border-left:4px solid var(--warn)}
+.sg.mid{border-left:4px solid var(--star)}
+.sg .who{flex:1}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.star{background:var(--star-soft);color:var(--fg)}
+.pill.ok{background:var(--vcb-soft);color:var(--vcb)}
+.pill.blue{background:var(--doan-soft);color:var(--doan)}
+.pill.grey{background:var(--line);color:var(--muted)}
+.avatar{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12.5px;color:#fff;background:var(--doan)}
+.avatar.f{background:#c2569a}
+.leave{font-size:12.5px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+
+/* Activities */
+.acts-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.act{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:10px;align-content:start;box-shadow:var(--shadow)}
+.act.up{border:1.5px dashed var(--doan)}
+.act-top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.act h3{font-size:15px;font-weight:700}
+.act .meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px}
+.stars-badge{display:inline-flex;align-items:center;gap:3px;background:var(--star-soft);color:var(--fg);font-weight:800;padding:4px 9px;border-radius:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stars-badge svg{width:14px;height:14px;fill:var(--star)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--doan-soft);color:var(--doan);font-weight:500}
+.chip.sugg{background:var(--warn-soft);color:var(--warn)}
+.act-actions{display:flex;flex-wrap:wrap;gap:8px}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
+
+/* Buttons & inputs (VCB green) */
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:7px 12px;border-radius:8px;font-weight:600;font-size:13px}
+.btn:hover{border-color:var(--vcb)}
+.btn.primary{background:var(--vcb);border-color:var(--vcb);color:#fff}
+.btn.primary:hover{background:var(--vcb-deep)}
+.btn.ghost{background:none;border-color:transparent;color:var(--vcb)}
+.btn.danger{color:var(--danger)}
+.btn.danger.armed{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.field{display:grid;gap:5px}
+.field label{font-size:12.5px;font-weight:600;color:var(--vcb)}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],select,textarea{
+  font:inherit;color:var(--fg);background:var(--vcb-soft);border:1.5px solid color-mix(in srgb,var(--vcb) 35%,transparent);
+  border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--vcb);box-shadow:0 0 0 3px color-mix(in srgb,var(--vcb) 22%,transparent);background:var(--surface)}
+.target input{width:64px;padding:5px 8px;text-align:center}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.form-grid .full{grid-column:1/-1}
+@media (max-width:520px){.form-grid{grid-template-columns:minmax(0,1fr)}}
+.check-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;max-height:260px;overflow:auto;padding:8px;border:1.5px solid color-mix(in srgb,var(--vcb) 35%,transparent);border-radius:8px;background:var(--vcb-soft)}
+.check-list label{display:flex;gap:8px;align-items:center;font-size:13px;padding:4px 6px;border-radius:6px;cursor:pointer}
+.check-list label:hover{background:var(--surface)}
+.check-list input{accent-color:var(--vcb);width:16px;height:16px}
+.check-list .hint{font-size:11px;color:var(--warn);margin-left:auto}
+
+/* Matrix */
+.mx-wrap{overflow-x:auto}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+.mx th,.mx td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+.mx thead th{font-size:11.5px;font-weight:700;color:var(--muted);vertical-align:bottom;background:var(--surface-2)}
+.mx thead th.actcol{max-width:120px;white-space:normal;line-height:1.3}
+.mx thead th.up{color:var(--doan)}
+.mx th.name,.mx td.name{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1}
+.mx thead th.name{background:var(--surface-2)}
+.mx td.total{font-weight:800;font-variant-numeric:tabular-nums}
+.cell{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line);background:none;display:inline-grid;place-items:center;padding:0;color:var(--muted)}
+.cell svg{width:16px;height:16px}
+.cell.on{background:var(--star-soft);border-color:var(--star)}
+.cell.on svg{fill:var(--star)}
+.cell.plan{border-style:dashed;border-color:var(--doan);background:var(--doan-soft)}
+.cell.plan svg{fill:none;stroke:var(--doan);stroke-width:2}
+.cell:not(:disabled):hover{border-color:var(--vcb)}
+.cell:disabled{cursor:default}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);align-items:center}
+.legend .cell{width:20px;height:20px;border-radius:5px;vertical-align:middle}
+.legend .cell svg{width:11px;height:11px}
+
+/* Members table */
+table.mem{width:100%;border-collapse:collapse;font-size:13px}
+.mem th{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.mem td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.mem td .n{font-weight:600}
+.mem td.c{white-space:nowrap}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar input{max-width:260px}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(5,20,40,.5);z-index:20;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal{background:var(--surface);border-radius:14px;width:min(640px,100%);max-height:100%;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;background:var(--doan);color:#fff;border-radius:14px 14px 0 0}
+.modal-h h2{font-size:16px}
+.modal-h button{background:none;border:0;color:#fff;font-size:22px;line-height:1}
+.modal-b{padding:18px 20px;display:grid;gap:14px}
+.modal-f{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.modal-f .r{display:flex;gap:8px;margin-left:auto}
+.err{color:var(--danger);font-size:12.5px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;z-index:30;box-shadow:var(--shadow)}
+.state{padding:40px 20px;text-align:center;color:var(--muted)}
+.state b{display:block;color:var(--fg);font-size:16px;margin-bottom:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body><svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"></path></symbol>
+</svg><header class="hero">
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Chi đoàn 3</div>
+      <h1>NgoisaoDTN_CD3</h1>
+      <p>Mỗi hoạt động đoàn tham gia được cộng số sao tương ứng. Trang tự đề xuất những đoàn viên nên được cử đi ở hoạt động tiếp theo.</p>
+    </div>
+    <div class="kpis" id="kpis">
+      <div class="kpi"><b class="num">–</b><span>Đoàn viên</span></div>
+      <div class="kpi"><b class="num">–</b><span>Hoạt động đã tổ chức</span></div>
+      <div class="kpi"><b class="num">–</b><span>Tổng sao</span></div>
+      <div class="kpi"><b class="num">–</b><span>Chưa có sao</span></div>
+    </div>
+  </div>
+</header><nav class="tabs" aria-label="Chuyển trang">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" data-view="tong-quan" aria-selected="true">Tổng quan</button>
+    <button class="tab" role="tab" data-view="hoat-dong" aria-selected="false">Hoạt động</button>
+    <button class="tab" role="tab" data-view="diem-danh" aria-selected="false">Bảng sao</button>
+    <button class="tab" role="tab" data-view="doan-vien" aria-selected="false">Đoàn viên</button>
+    <span class="spacer"></span>
+    <span class="sync" id="sync">Đang kết nối…</span>
+  </div>
+</nav><main class="wrap" id="app"></main><div id="modal-root"></div><script>window.__SNAPSHOT__={"at": "2026-01-01T00:00:00.000Z", "settings": {"targetStars": 3}, "members": [], "activities": []};</script><script id="app-js">
+(() => {
+"use strict";
+const SNAP = window.__SNAPSHOT__ || null;   // có dữ liệu nhúng sẵn = bản chỉ xem
+const PUB = !!SNAP;
+const SHELL = (() => {
+  const style = [...document.querySelectorAll("style")].find(s => s.textContent.includes("--doan"));
+  const font = document.querySelector('link[href*="fonts.googleapis.com/css2"]');
+  const parts = ["svg[aria-hidden]", "header.hero", "nav.tabs"].map(s => document.querySelector(s)?.outerHTML || "");
+  return { style: style ? style.outerHTML : "", font: font ? font.outerHTML : "", body: parts.join(""), js: document.getElementById("app-js").textContent };
+})();
+const STAR = '<svg aria-hidden="true"><use href="#star"/></svg>';
+const TYPES = ["Văn nghệ","Lễ tân","Thể thao","Sự kiện","Cuộc thi","Tình nguyện","Học tập","Khác"];
+const S = { members: [], activities: [], settings: { targetStars: 3 }, loaded: { m:false, a:false, s:false }, canWrite: true, view: "tong-quan", search: "" };
+let db = null, downloads = null;
+
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const initials = n => { const p = String(n||"").trim().split(/\s+/); return ((p.length>1?p[p.length-2][0]:"")+(p[p.length-1]||"?")[0]).toUpperCase(); };
+const shortName = n => { const p = String(n||"").trim().split(/\s+/); return p.slice(-2).join(" "); };
+const isFemale = m => /n[ữu]/i.test(m.gender||"");
+const fmtDate = d => { if(!d) return ""; const [y,mo,da] = d.split("-"); return da && mo ? `${da}/${mo}/${y}` : d; };
+
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2400); }
+
+/* ---------- write queue: one write at a time per document ---------- */
+const queues = new Map();
+function write(path, fn){
+  const prev = queues.get(path) || Promise.resolve();
+  const next = prev.catch(()=>{}).then(fn).catch(e => {
+    if (e && e.code === "invalid_argument") { S.canWrite = false; render(); toast("Bạn chỉ có quyền xem trang này."); }
+    else if (e && e.code === "quota_exceeded") toast("Bộ nhớ đã đầy, hãy xóa bớt dữ liệu cũ.");
+    else toast("Chưa lưu được, thử lại sau ít phút.");
+    throw e;
+  });
+  queues.set(path, next); return next;
+}
+
+/* ---------- derived stats ---------- */
+function doneActs(){ return S.activities.filter(a => a.status !== "upcoming").sort(byActOrder); }
+function upActs(){ return S.activities.filter(a => a.status === "upcoming").sort(byActOrder); }
+function byActOrder(a,b){ return ((a.order??0)-(b.order??0)) || (a.date||"").localeCompare(b.date||""); }
+function activeMembers(){ return S.members.filter(m => m.status !== "leave"); }
+
+function stats(){
+  const done = doneActs();
+  const map = new Map();
+  for (const m of S.members) map.set(m.id, { m, stars:0, count:0, acts:[], lastIdx:-1, planned:[] });
+  done.forEach((a, i) => (a.participants||[]).forEach(id => { const s = map.get(id); if(!s) return; s.stars += Number(a.stars)||0; s.count++; s.acts.push(a); s.lastIdx = i; }));
+  for (const a of upActs()) (a.participants||[]).forEach(id => { const s = map.get(id); if (s) s.planned.push(a); });
+  for (const s of map.values()) s.missed = done.length - 1 - s.lastIdx; // hoạt động liên tiếp đã lỡ
+  return map;
+}
+function priorityList(st){
+  return activeMembers().map(m => st.get(m.id)).sort((x,y) => x.stars-y.stars || y.missed-x.missed || x.count-y.count || x.m.name.localeCompare(y.m.name,"vi"));
+}
+
+/* ---------- render ---------- */
+function render(){
+  const ready = S.loaded.m && S.loaded.a;
+  const app = $("#app");
+  if (!db && !PUB) { app.innerHTML = `<div class="state"><b>Chưa kết nối được kho dữ liệu</b>Hãy mở trang khi đã đăng nhập claude.ai để xem và cập nhật danh sách đoàn viên.</div>`; return; }
+  if (!ready) return;
+  const st = stats();
+  renderKpis(st);
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.view === S.view)));
+  const scrollY = window.scrollY;
+  if (S.view === "tong-quan") app.innerHTML = viewOverview(st);
+  else if (S.view === "hoat-dong") app.innerHTML = viewActivities(st);
+  else if (S.view === "diem-danh") app.innerHTML = viewMatrix(st);
+  else app.innerHTML = viewMembers(st);
+  const si = $("#mem-search"); if (si && document.activeElement !== si && S._focusSearch) { si.focus(); si.setSelectionRange(si.value.length, si.value.length); S._focusSearch=false; }
+  window.scrollTo(0, scrollY);
+}
+
+function renderKpis(st){
+  const act = activeMembers();
+  const total = [...st.values()].reduce((s,x)=>s+x.stars,0);
+  const zero = act.filter(m => st.get(m.id).stars === 0).length;
+  const vals = [S.members.length, doneActs().length, total, zero];
+  document.querySelectorAll("#kpis .kpi b").forEach((b,i) => b.textContent = vals[i]);
+}
+
+function memberLine(s, extra=""){
+  const m = s.m;
+  return `<div class="avatar ${isFemale(m)?"f":""}" aria-hidden="true">${esc(initials(m.name))}</div>
+    <div class="who"><div class="n">${esc(m.name)}</div>${extra}</div>`;
+}
+
+function viewOverview(st){
+  const ranked = [...st.values()].filter(s => s.m.status!=="leave").sort((a,b)=> b.stars-a.stars || b.count-a.count || a.m.name.localeCompare(b.m.name,"vi"));
+  const max = Math.max(...ranked.map(r=>r.stars), 1);
+  let rank = 0, prev = null;
+  const lb = ranked.map((s,i) => {
+    if (s.stars !== prev) { rank = i+1; prev = s.stars; }
+    const acts = s.acts.length ? s.acts.map(a=>a.name).join(" · ") : "Chưa tham gia hoạt động nào";
+    return `<li class="${rank<=3 && s.stars>0?"top":""}"><span class="rank">${rank}</span>
+      <div class="who"><div class="n">${esc(s.m.name)}</div><div class="acts">${esc(acts)}</div>
+      <div class="bar"><i style="width:${Math.min(100, s.stars/max*100)}%"></i></div></div>
+      <span class="starcount">${s.stars}${STAR}</span></li>`;
+  }).join("");
+
+  const pr = priorityList(st);
+  const none = pr.filter(s => s.stars === 0);
+  const rest = pr.filter(s => s.stars > 0);
+  const done = doneActs().length;
+  const sg = (s, cls) => {
+    const missTxt = s.count === 0 ? `Chưa tham gia hoạt động nào` : `Lần gần nhất: ${esc(s.acts[s.acts.length-1].name)}`;
+    const pills = [];
+    if (s.count === 0) pills.push(`<span class="pill warn">0 sao</span>`);
+    else pills.push(`<span class="pill star">${s.stars} sao</span>`);
+    if (s.planned.length) pills.push(`<span class="pill blue">Đã cử: ${esc(s.planned[0].name)}</span>`);
+    if (!PUB && !s.m.fee) pills.push(`<span class="pill grey">Chưa đóng đoàn phí</span>`);
+    return `<div class="sg ${cls}">${memberLine(s, `<div class="acts">${missTxt}</div>`)}<div class="chips" style="justify-content:flex-end">${pills.join("")}</div></div>`;
+  };
+  const leave = S.members.filter(m => m.status === "leave");
+
+  return `<div class="view">
+    <div class="rules">
+      <span><b>Nguyên tắc:</b> tham gia 1 hoạt động = nhận số sao của hoạt động đó (thường 1 sao, cuộc thi lớn có thể nhiều sao hơn).</span>
+    </div>
+    <div class="grid2">
+      <section class="panel">
+        <div class="panel-h"><div><h2>Cần tham gia hoạt động tiếp theo</h2>
+          <div class="sub">Xếp theo ít sao nhất, rồi đến người đã lâu chưa tham gia.</div></div>
+          ${S.canWrite?`<button class="btn primary" data-act="new-activity">+ Hoạt động sắp tới</button>`:""}</div>
+        <div class="panel-b">
+          ${none.length?`<div class="group"><h3><span class="dot" style="background:var(--warn)"></span>Ưu tiên cử ngay · chưa có sao (${none.length})</h3><div class="sugg">${none.map(s=>sg(s,"hi")).join("")}</div></div>`:""}
+          ${rest.length?`<div class="group"><h3><span class="dot" style="background:var(--star)"></span>Đã có sao · xếp từ ít đến nhiều (${rest.length})</h3><div class="sugg">${rest.map(s=>sg(s,"mid")).join("")}</div></div>`:""}
+          ${!none.length && !rest.length ? `<div class="empty">Chưa có đoàn viên.</div>`:""}
+          ${leave.length?`<div class="leave">Tạm nghỉ, không tính vào đề xuất: ${leave.map(m=>`<b>${esc(m.name)}</b>${m.note?` (${esc(m.note)})`:""}`).join(", ")}</div>`:""}
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-h"><div><h2>Bảng xếp hạng sao</h2><div class="sub">${done} hoạt động đã tổ chức</div></div></div>
+        <div class="panel-b"><ol class="lb">${lb || `<li><span></span><div class="empty">Chưa có đoàn viên.</div><span></span></li>`}</ol></div>
+      </section>
+    </div>
+  </div>`;
+}
+
+function actCard(a, st){
+  const parts = (a.participants||[]).map(id => st.get(id)).filter(Boolean);
+  const up = a.status === "upcoming";
+  const slots = Number(a.slots)||0;
+  let sugg = "";
+  if (up && S.canWrite) {
+    const need = Math.max(0, slots - parts.length);
+    if (need > 0) {
+      const picks = priorityList(st).filter(s => !(a.participants||[]).includes(s.m.id) && !s.planned.length).slice(0, need);
+      const picks2 = picks.length < need ? priorityList(st).filter(s => !(a.participants||[]).includes(s.m.id) && !picks.includes(s)).slice(0, need-picks.length) : [];
+      const all = picks.concat(picks2);
+      if (all.length) sugg = `<div><div class="meta" style="margin-bottom:6px">Đề xuất cử thêm ${all.length} người (ít sao nhất):</div>
+        <div class="chips">${all.map(s=>`<span class="chip sugg">${esc(shortName(s.m.name))} · ${s.stars}★</span>`).join("")}</div>
+        <div class="act-actions" style="margin-top:8px"><button class="btn primary" data-act="assign" data-id="${a.id}" data-ids="${all.map(s=>s.m.id).join(",")}">Phân công những người này</button></div></div>`;
+    }
+  }
+  return `<article class="act ${up?"up":""}">
+    <div class="act-top"><div><h3>${esc(a.name)}</h3>
+      <div class="meta">${a.type?`<span>${esc(a.type)}</span>`:""}${a.date?`<span>${fmtDate(a.date)}</span>`:""}
+      <span>${up?`<b style="color:var(--doan)">Sắp diễn ra</b>${slots?` · cần ${slots} người`:""}`:"Đã diễn ra"}</span></div></div>
+      <span class="stars-badge">+${Number(a.stars)||0}${STAR}</span></div>
+    <div><div class="meta" style="margin-bottom:6px">${up?"Đã phân công":"Đã tham gia"}: ${parts.length} người</div>
+      <div class="chips">${parts.length?parts.map(s=>`<span class="chip">${esc(shortName(s.m.name))}</span>`).join(""):`<span class="empty">Chưa có ai</span>`}</div></div>
+    ${sugg}
+    ${S.canWrite?`<div class="act-actions"><button class="btn" data-act="edit-activity" data-id="${a.id}">Sửa / điểm danh</button>
+      ${up?`<button class="btn ghost" data-act="mark-done" data-id="${a.id}">Đánh dấu đã diễn ra → cộng sao</button>`:""}</div>`:""}
+  </article>`;
+}
+
+function viewActivities(st){
+  const up = upActs(), done = doneActs().reverse();
+  return `<div class="view">
+    <section class="panel"><div class="panel-h"><div><h2>Hoạt động sắp tới</h2><div class="sub">Nhập số người cần, trang sẽ gợi ý đoàn viên ít sao nhất. Sao chỉ được cộng khi hoạt động được đánh dấu đã diễn ra.</div></div>
+      ${S.canWrite?`<button class="btn primary" data-act="new-activity">+ Thêm hoạt động</button>`:""}</div>
+      <div class="panel-b">${up.length?`<div class="acts-list">${up.map(a=>actCard(a,st)).join("")}</div>`:`<div class="empty">Chưa có hoạt động sắp tới. Bấm “Thêm hoạt động”, chọn trạng thái “Sắp diễn ra” và số người cần để nhận đề xuất.</div>`}</div></section>
+    <section class="panel"><div class="panel-h"><div><h2>Đã tổ chức (${done.length})</h2><div class="sub">Mới nhất ở trên</div></div>
+      ${S.canWrite&&!PUB?`<div class="toolbar"><button class="btn" data-act="export">Xuất bảng sao (CSV)</button><button class="btn primary" data-act="export-html">Xuất trang xem (HTML)</button></div>`:""}</div>
+      <div class="panel-b">${done.length?`<div class="acts-list">${done.map(a=>actCard(a,st)).join("")}</div>`:`<div class="empty">Chưa có hoạt động nào.</div>`}</div></section>
+  </div>`;
+}
+
+function viewMatrix(st){
+  const acts = doneActs().concat(upActs());
+  const rows = S.members.slice().sort((a,b)=>(a.order??999)-(b.order??999)).map((m,i) => {
+    const s = st.get(m.id);
+    const cells = acts.map(a => {
+      const on = (a.participants||[]).includes(m.id); const up = a.status === "upcoming";
+      return `<td><button class="cell ${on?(up?"plan":"on"):""}" data-act="toggle" data-a="${a.id}" data-m="${m.id}" ${S.canWrite?"":"disabled"} aria-pressed="${on}" aria-label="${esc(m.name)} – ${esc(a.name)}">${on?STAR:""}</button></td>`;
+    }).join("");
+    return `<tr><td class="num">${i+1}</td><td class="name"><b>${esc(m.name)}</b>${m.status==="leave"?` <span class="pill grey">Tạm nghỉ</span>`:""}</td>${cells}<td class="total">${s.stars}</td></tr>`;
+  }).join("");
+  return `<div class="view"><section class="panel">
+    <div class="panel-h"><div><h2>Bảng sao theo hoạt động</h2><div class="sub">Giống file Excel: mỗi cột là một hoạt động. Bấm vào ô để điểm danh hoặc bỏ điểm danh.</div></div>
+      <div class="legend"><span><span class="cell on">${STAR}</span> Đã tham gia</span><span><span class="cell plan">${STAR}</span> Đã phân công (sắp tới)</span></div></div>
+    <div class="mx-wrap"><table class="mx"><thead><tr><th>STT</th><th class="name">Họ và tên</th>
+      ${acts.map((a,i)=>`<th class="actcol ${a.status==="upcoming"?"up":""}">HĐ ${i+1}<br>${esc(a.name)}<br><span style="color:var(--star)">+${Number(a.stars)||0}★</span></th>`).join("")}
+      <th>Tổng sao</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </section></div>`;
+}
+
+function viewMembers(st){
+  const q = S.search.trim().toLowerCase();
+  const list = S.members.slice().sort((a,b)=>(a.order??999)-(b.order??999)).filter(m => !q || (m.name||"").toLowerCase().includes(q));
+  const rows = list.map((m,i) => {
+    const s = st.get(m.id);
+    return `<tr><td class="num">${i+1}</td>
+      <td><div style="display:flex;gap:10px;align-items:center"><div class="avatar ${isFemale(m)?"f":""}" aria-hidden="true">${esc(initials(m.name))}</div><div><div class="n">${esc(m.name)}</div>${PUB?"":`<div style="font-size:12px;color:var(--muted)">${esc(m.email||"")}</div>`}</div></div></td>
+      <td class="c">${esc(m.gender||"")}</td>${PUB?"":`<td class="c num">${esc(m.dob||"")}</td><td class="c num">${esc(m.phone||"")}</td>
+      <td class="c">${m.fee?`<span class="pill ok">Đã đóng</span>`:`<span class="pill warn">Chưa đóng</span>`}</td>`}
+      <td class="c">${m.status==="leave"?`<span class="pill grey">Tạm nghỉ${m.note?" · "+esc(m.note):""}</span>`:`<span class="pill blue">Đang sinh hoạt</span>`}</td>
+      <td class="c"><span class="starcount" style="font-size:14px">${s.stars}${STAR}</span></td>
+      <td class="c">${S.canWrite?`<button class="btn" data-act="edit-member" data-id="${m.id}">Sửa</button>`:""}</td></tr>`;
+  }).join("");
+  return `<div class="view"><section class="panel">
+    <div class="panel-h"><div><h2>Danh sách đoàn viên (${S.members.length})</h2><div class="sub">Chi đoàn 3</div></div>
+      <div class="toolbar"><input type="text" id="mem-search" placeholder="Tìm theo tên…" value="${esc(S.search)}" aria-label="Tìm đoàn viên">
+      ${S.canWrite?`<button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button>`:""}</div></div>
+    <div class="mx-wrap"><table class="mem"><thead><tr><th>STT</th><th>Họ và tên</th><th>Giới tính</th>${PUB?"":"<th>Ngày sinh</th><th>SĐT</th><th>Đoàn phí</th>"}<th>Trạng thái</th><th>Sao</th><th></th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="${PUB?6:9}" class="empty">Không tìm thấy đoàn viên.</td></tr>`}</tbody></table></div>
+  </section></div>`;
+}
+
+/* ---------- modals ---------- */
+function openModal(title, body, onSave, onDelete){
+  const root = $("#modal-root");
+  root.innerHTML = `<div class="overlay" id="ov"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+    <div class="modal-h"><h2 id="mt">${esc(title)}</h2><button type="button" data-close aria-label="Đóng">×</button></div>
+    <form id="mf"><div class="modal-b">${body}<div class="err" id="merr"></div></div>
+    <div class="modal-f">${onDelete?`<button type="button" class="btn danger" id="mdel">Xóa</button>`:""}<div class="r"><button type="button" class="btn" data-close>Hủy</button><button type="submit" class="btn primary">Lưu</button></div></div></form></div></div>`;
+  const close = () => root.innerHTML = "";
+  root.querySelectorAll("[data-close]").forEach(b => b.onclick = close);
+  $("#ov").addEventListener("mousedown", e => { if (e.target.id === "ov") close(); });
+  document.addEventListener("keydown", function k(e){ if(e.key==="Escape"){ close(); document.removeEventListener("keydown",k);} });
+  $("#mf").onsubmit = async e => { e.preventDefault(); let err = onSave(new FormData(e.target), e.target); if (err && err.then) { const sb = e.target.querySelector("[type=submit]"); sb.disabled = true; $("#merr").textContent = ""; try { err = await err; } finally { sb.disabled = false; } } if (typeof err === "string") { $("#merr").textContent = err; return; } close(); };
+  const del = $("#mdel");
+  if (del) del.onclick = () => { if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "Bấm lần nữa để xóa"; return; } onDelete(); close(); };
+  const first = root.querySelector("input,select"); first && first.focus();
+}
+
+function activityForm(a){
+  const st = stats();
+  a = a || { name:"", type:"Sự kiện", date:"", stars:1, status:"upcoming", slots:3, participants:[] };
+  const sel = new Set(a.participants||[]);
+  const pr = priorityList(st);
+  const ordered = pr.concat(S.members.filter(m=>m.status==="leave").map(m=>st.get(m.id)));
+  const checks = ordered.map(s => `<label><input type="checkbox" name="p" value="${s.m.id}" ${sel.has(s.m.id)?"checked":""}>${esc(s.m.name)}<span class="hint">${s.m.status==="leave"?"nghỉ":s.stars+"★"}</span></label>`).join("");
+  const body = `<div class="form-grid">
+    <div class="field full"><label for="f-name">Tên hoạt động</label><input type="text" id="f-name" name="name" required value="${esc(a.name)}" placeholder="VD: Hiến máu nhân đạo tháng 11"></div>
+    <div class="field"><label for="f-date">Ngày</label><input type="date" id="f-date" name="date" value="${esc(a.date||"")}"></div>
+    <div class="field"><label for="f-stars">Số sao khi tham gia</label><input type="number" id="f-stars" name="stars" min="0" max="20" value="${Number(a.stars)||0}"></div>
+    <div class="field"><label for="f-status">Trạng thái</label><select id="f-status" name="status"><option value="upcoming" ${a.status==="upcoming"?"selected":""}>Sắp diễn ra</option><option value="done" ${a.status!=="upcoming"?"selected":""}>Đã diễn ra (cộng sao)</option></select></div>
+    <div class="field full"><label>Người tham gia / được phân công <span style="color:var(--muted);font-weight:400">(xếp theo ưu tiên: ít sao ở trên)</span></label><div class="check-list">${checks}</div></div>
+  </div>`;
+  return body;
+}
+
+function editActivity(id){
+  const a = id ? S.activities.find(x=>x.id===id) : null;
+  openModal(a?"Sửa hoạt động":"Thêm hoạt động", activityForm(a), (fd) => {
+    const name = String(fd.get("name")||"").trim(); if (!name) return "Hãy nhập tên hoạt động.";
+    const data = { name, type: a?.type||"", date: fd.get("date")||"", stars: Math.max(0, Number(fd.get("stars"))||0),
+      status: fd.get("status"), slots: Number(a?.slots)||0, participants: fd.getAll("p"),
+      order: a ? (a.order ?? 0) : (Math.max(0,...S.activities.map(x=>x.order||0))+1) };
+    const ref = a ? db.collection("activities").doc(a.id) : db.collection("activities").doc();
+    write(ref.path, () => ref.set(data)).then(()=>toast(a?"Đã lưu hoạt động":"Đã thêm hoạt động"));
+  }, a ? () => { const ref = db.collection("activities").doc(a.id); write(ref.path, ()=>ref.delete()).then(()=>toast("Đã xóa hoạt động")); } : null);
+}
+
+function editMember(id){
+  const m = id ? S.members.find(x=>x.id===id) : { name:"", gender:"Nữ", dob:"", email:"", phone:"", fee:true, status:"active", note:"" };
+  const body = `<div class="form-grid">
+    <div class="field full"><label for="m-name">Họ và tên</label><input type="text" id="m-name" name="name" required value="${esc(m.name)}"></div>
+    <div class="field"><label for="m-gender">Giới tính</label><select id="m-gender" name="gender">${["Nam","Nữ"].map(g=>`<option ${(m.gender||"").trim()===g?"selected":""}>${g}</option>`).join("")}</select></div>
+    ${PUB?"":`<div class="field"><label for="m-dob">Ngày sinh</label><input type="text" id="m-dob" name="dob" value="${esc(m.dob)}" placeholder="dd/mm/yyyy"></div>`}
+    ${PUB?"":`<div class="field"><label for="m-email">Email</label><input type="email" id="m-email" name="email" value="${esc(m.email)}"></div>`}
+    ${PUB?"":`<div class="field"><label for="m-phone">Số điện thoại</label><input type="tel" id="m-phone" name="phone" value="${esc(m.phone)}"></div>`}
+    ${PUB?"":`<div class="field"><label for="m-fee">Đoàn phí</label><select id="m-fee" name="fee"><option value="1" ${m.fee?"selected":""}>Đã đóng</option><option value="0" ${!m.fee?"selected":""}>Chưa đóng</option></select></div>`}
+    <div class="field"><label for="m-status">Trạng thái</label><select id="m-status" name="status"><option value="active" ${m.status!=="leave"?"selected":""}>Đang sinh hoạt</option><option value="leave" ${m.status==="leave"?"selected":""}>Tạm nghỉ (không đề xuất)</option></select></div>
+    ${PUB?"":`<div class="field full"><label for="m-note">Ghi chú</label><input type="text" id="m-note" name="note" value="${esc(m.note)}" placeholder="VD: Nghỉ thai sản"></div>`}
+  </div>`;
+  openModal(id?"Sửa đoàn viên":"Thêm đoàn viên", body, fd => {
+    const name = String(fd.get("name")||"").trim(); if (!name) return "Hãy nhập họ tên.";
+    const data = PUB ? { name, gender: fd.get("gender"), status: fd.get("status"), fee: true, order: id ? (m.order ?? 0) : (Math.max(0,...S.members.map(x=>x.order||0))+1) } : { name, gender: fd.get("gender"), dob: String(fd.get("dob")||"").trim(), email: String(fd.get("email")||"").trim(), phone: String(fd.get("phone")||"").trim(),
+      fee: fd.get("fee")==="1", status: fd.get("status"), note: String(fd.get("note")||"").trim(),
+      order: id ? (m.order ?? 0) : (Math.max(0,...S.members.map(x=>x.order||0))+1) };
+    const ref = id ? db.collection("members").doc(id) : db.collection("members").doc();
+    write(ref.path, ()=>ref.set(data)).then(()=>toast(id?"Đã lưu thông tin":"Đã thêm đoàn viên"));
+  }, id ? () => {
+    const ref = db.collection("members").doc(id);
+    write(ref.path, ()=>ref.delete()).then(()=>toast("Đã xóa đoàn viên"));
+    S.activities.filter(a => (a.participants||[]).includes(id)).forEach(a => { const r = db.collection("activities").doc(a.id); write(r.path, ()=>r.update({ participants: a.participants.filter(x=>x!==id) })); });
+  } : null);
+}
+
+function setParticipants(aid, list){
+  const a = S.activities.find(x=>x.id===aid); if (!a) return;
+  a.participants = list; render(); // optimistic
+  const r = db.collection("activities").doc(aid);
+  return write(r.path, ()=>r.update({ participants: list }));
+}
+
+async function exportCsv(){
+  const st = stats(); const acts = doneActs();
+  const head = ["STT","Họ và tên","Giới tính","Ngày sinh", ...acts.map((a,i)=>`HĐ ${i+1}: ${a.name} (+${a.stars} sao)`), "Tổng sao","Đoàn phí","Ghi chú"];
+  const rows = S.members.slice().sort((a,b)=>(a.order??999)-(b.order??999)).map((m,i)=>[i+1,m.name,m.gender,m.dob,...acts.map(a=>(a.participants||[]).includes(m.id)?"x":""),st.get(m.id).stars,m.fee?"x":"",m.note||""]);
+  const csv = "﻿" + [head,...rows].map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  if (!downloads) { toast("Trình xem này chưa hỗ trợ tải file."); return; }
+  try { const r = await downloads.save({ filename: "NgoisaoDTN_CD3.csv", data: csv }); if (r && r.status==="saved") toast("Đã tải bảng sao"); }
+  catch(e){ if (e && e.code !== "cancelled") toast("Chưa tải được file."); }
+}
+
+/* ---------- bản HTML chỉ xem (không kèm SĐT, email, ngày sinh, đoàn phí, ghi chú) ---------- */
+function buildSnapshot(){
+  const data = { at: new Date().toISOString(), settings: { targetStars: Number(S.settings.targetStars)||3 },
+    members: S.members.map(m => ({ id:m.id, name:m.name, gender:m.gender||"", status:m.status||"active", order:m.order ?? 0, fee:true })),
+    activities: S.activities.map(a => ({ id:a.id, name:a.name, type:a.type||"", date:a.date||"", stars:Number(a.stars)||0, status:a.status, slots:Number(a.slots)||0, participants:[...(a.participants||[])], order:a.order ?? 0 })) };
+  const json = JSON.stringify(data).replace(/</g, "\\u003c");
+  const base = '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>';
+  return '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_CD3</title>'
+    + SHELL.font + base + SHELL.style + '</head><body>' + SHELL.body
+    + '<main class="wrap" id="app"></main><div id="modal-root"></div><script>window.__SNAPSHOT__=' + json + ';<\/script><script id="app-js">' + SHELL.js + '<\/script></body></html>';
+}
+window.__buildSnapshot = buildSnapshot;
+async function exportHtml(){
+  if (!downloads) { toast("Trình xem này chưa hỗ trợ tải file."); return; }
+  try { const r = await downloads.save({ filename: "NgoisaoDTN_CD3.html", data: buildSnapshot() }); if (r && r.status==="saved") toast("Đã tải trang xem"); }
+  catch(e){ if (e && e.code !== "cancelled") toast("Chưa tải được file."); }
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const aid = e.target.id; if (aid === "adm" || aid === "pwd" || aid === "out") { e.preventDefault(); (aid === "adm" ? adminLogin : aid === "pwd" ? changePassword : adminLogout)(); return; }
+  const tab = e.target.closest(".tab"); if (tab) { location.hash = tab.dataset.view; return; }
+  const b = e.target.closest("[data-act]"); if (!b || !db) return;
+  const act = b.dataset.act;
+  if (act === "new-activity") editActivity(null);
+  else if (act === "edit-activity") editActivity(b.dataset.id);
+  else if (act === "new-member") editMember(null);
+  else if (act === "edit-member") editMember(b.dataset.id);
+  else if (act === "export") exportCsv();
+  else if (act === "export-html") exportHtml();
+  else if (act === "assign") { const a = S.activities.find(x=>x.id===b.dataset.id); if (a) setParticipants(a.id, [...new Set([...(a.participants||[]), ...b.dataset.ids.split(",")])])?.then(()=>toast("Đã phân công")); }
+  else if (act === "mark-done") { const a = S.activities.find(x=>x.id===b.dataset.id); if (!a) return; a.status="done"; if(!a.date) a.date = new Date().toISOString().slice(0,10); render(); const r = db.collection("activities").doc(a.id); write(r.path, ()=>r.update({ status:"done", date:a.date })).then(()=>toast(`Đã cộng ${a.stars} sao cho ${(a.participants||[]).length} đoàn viên`)); }
+  else if (act === "toggle") { const a = S.activities.find(x=>x.id===b.dataset.a); if (!a) return; const id = b.dataset.m; const cur = a.participants||[]; setParticipants(a.id, cur.includes(id) ? cur.filter(x=>x!==id) : [...cur, id]); }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "mem-search") { S.search = e.target.value; S._focusSearch = true; render(); }
+});
+function route(){ const h = location.hash.slice(1); S.view = ["tong-quan","hoat-dong","diem-danh","doan-vien"].includes(h) ? h : "tong-quan"; render(); }
+window.addEventListener("hashchange", route);
+
+/* ---------- boot ---------- */
+const TOKEN_KEY = "ngoisaoDTN_admin_token";
+const REPO = "leminhdbchn-hary/leminhdbchn-hary.github.io", DATA_PATH = "NgoisaoDTN_CD3/data.json";
+const API = "https://api.github.com/repos/" + REPO + "/contents/" + DATA_PATH;
+const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch(e){ return ""; } };
+const ghHead = (extra) => ({ "Accept":"application/vnd.github+json", "Authorization":"Bearer " + getToken(), ...(extra||{}) });
+let saveChain = Promise.resolve();
+function persist(){
+  saveChain = saveChain.catch(()=>{}).then(async () => {
+    const meta = await fetch(API + "?ref=main&t=" + Date.now(), { headers: ghHead() });
+    if (!meta.ok) throw new Error("meta " + meta.status);
+    const sha = (await meta.json()).sha;
+    const text = JSON.stringify({ members: S.members, activities: S.activities }, null, 1);
+    const body = { message: "Cập nhật dữ liệu Ngôi sao ĐTN", content: btoa(unescape(encodeURIComponent(text))), sha, branch: "main" };
+    const r = await fetch(API, { method:"PUT", headers: ghHead({ "Content-Type":"application/json" }), body: JSON.stringify(body) });
+    if (!r.ok) throw new Error("put " + r.status);
+  }).catch(e => { toast("Chưa lưu được lên GitHub (" + (e.message||"lỗi") + "). Kiểm tra lại token quản trị."); throw e; });
+  return saveChain;
+}
+function adminDb(){
+  const mut = fn => { fn(); render(); return persist(); };
+  return {
+    collection: (name) => ({ doc: (id) => { id = id || ("a" + Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+      return { id, path: name + "/" + id,
+        set: async d => mut(() => { const o = { id, ...d }, i = S[name].findIndex(x=>x.id===id); if (i < 0) S[name].push(o); else S[name][i] = o; }),
+        update: async d => mut(() => { const a = S[name].find(x=>x.id===id); if (a) Object.assign(a, d); }),
+        delete: async () => mut(() => { S[name] = S[name].filter(x=>x.id!==id); }) }; } }),
+    doc: path => ({ path, set: async () => {} })
+  };
+}
+async function loadShared(){
+  try { const r = await fetch(API + "?ref=main&t=" + Date.now(), { headers: { "Accept":"application/vnd.github.raw+json" } });
+    if (!r.ok) return; const d = await r.json();
+    if (Array.isArray(d.members) && Array.isArray(d.activities)) { S.members = d.members; S.activities = d.activities; } } catch(e){}
+}
+const ADMIN_USER = "Admin.CD3";
+const VAULT_API = "https://api.github.com/repos/" + REPO + "/contents/NgoisaoDTN_CD3/vault.json";
+const enc = new TextEncoder(), dec = new TextDecoder();
+const b64 = u8 => btoa(String.fromCharCode(...u8)), unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+async function deriveKey(pass, salt, iter){
+  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name:"PBKDF2", hash:"SHA-256", salt, iterations: iter }, base, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]);
+}
+async function sealToken(token, user, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)), iter = 600000;
+  const key = await deriveKey(pass, salt, iter);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name:"AES-GCM", iv, additionalData: enc.encode(user.toLowerCase()) }, key, enc.encode(token)));
+  return { v:1, iter, salt: b64(salt), iv: b64(iv), ct: b64(ct) };
+}
+async function openVault(vault, user, pass){
+  const key = await deriveKey(pass, unb64(vault.salt), vault.iter);
+  const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv: unb64(vault.iv), additionalData: enc.encode(user.toLowerCase()) }, key, unb64(vault.ct));
+  return dec.decode(pt);
+}
+async function fetchVault(){
+  const r = await fetch(VAULT_API + "?ref=main&t=" + Date.now(), { headers: { "Accept":"application/vnd.github.raw+json" } });
+  if (r.status === 404) return null; if (!r.ok) throw new Error("vault " + r.status); return r.json();
+}
+async function saveVault(vault, token){
+  const h = { "Accept":"application/vnd.github+json", "Authorization":"Bearer " + token };
+  const m = await fetch(VAULT_API + "?ref=main&t=" + Date.now(), { headers: h });
+  const sha = m.ok ? (await m.json()).sha : undefined;
+  const body = { message: "Cập nhật khóa quản trị", content: btoa(JSON.stringify(vault, null, 1)), branch: "main", ...(sha ? { sha } : {}) };
+  const r = await fetch(VAULT_API, { method:"PUT", headers: { ...h, "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("Không lưu được khóa (" + r.status + ")");
+}
+async function canPush(token){
+  const r = await fetch("https://api.github.com/repos/" + REPO, { headers: { "Accept":"application/vnd.github+json", "Authorization":"Bearer " + token } }).then(x=>x.ok?x.json():null).catch(()=>null);
+  return !!(r && r.permissions && r.permissions.push);
+}
+const setToken = t => { try { localStorage.setItem(TOKEN_KEY, t); return true; } catch(e){ toast("Trình duyệt không cho lưu đăng nhập."); return false; } };
+const fld = (id, label, type, extra="") => `<div class="field full"><label for="${id}">${label}</label><input type="${type}" id="${id}" name="${id}" ${extra}></div>`;
+async function adminLogin(){
+  let vault;
+  try { vault = await fetchVault(); } catch(e){ toast("Chưa kết nối được GitHub, thử lại sau."); return; }
+  if (vault) {
+    openModal("Đăng nhập quản trị", `<div class="form-grid">${fld("u","Tài khoản","text",'autocomplete="username" required')}${fld("pw","Mật khẩu","password",'autocomplete="current-password" required')}</div>`, async fd => {
+      const u = String(fd.get("u")||"").trim(), pw = String(fd.get("pw")||"");
+      if (u.toLowerCase() !== ADMIN_USER.toLowerCase()) return "Sai tài khoản hoặc mật khẩu.";
+      let token; try { token = await openVault(vault, u, pw); } catch(e){ return "Sai tài khoản hoặc mật khẩu."; }
+      if (setToken(token)) location.reload();
+    });
+  } else {
+    openModal("Thiết lập quản trị lần đầu", `<p style="margin:0 0 10px;color:var(--muted);font-size:13px">Dán mã GitHub (chỉ cần một lần) và đặt mật khẩu. Sau này chỉ cần tài khoản <b>${ADMIN_USER}</b> + mật khẩu.</p><div class="form-grid">
+      ${fld("tk","Mã GitHub (token)","password",'autocomplete="off" required')}${fld("pw","Đặt mật khẩu (ít nhất 12 ký tự)","password",'autocomplete="new-password" minlength="12" required')}${fld("pw2","Nhập lại mật khẩu","password",'autocomplete="new-password" required')}</div>`, async fd => {
+      const tk = String(fd.get("tk")||"").trim(), pw = String(fd.get("pw")||""), pw2 = String(fd.get("pw2")||"");
+      if (pw.length < 12) return "Mật khẩu cần ít nhất 12 ký tự."; if (pw !== pw2) return "Hai mật khẩu không khớp.";
+      if (!(await canPush(tk))) return "Mã GitHub không đúng hoặc không có quyền sửa.";
+      try { await saveVault(await sealToken(tk, ADMIN_USER, pw), tk); } catch(e){ return e.message; }
+      if (setToken(tk)) { toast("Đã thiết lập xong"); location.reload(); }
+    });
+  }
+}
+function changePassword(){
+  openModal("Đổi mật khẩu", `<div class="form-grid">${fld("pw","Mật khẩu mới (ít nhất 12 ký tự)","password",'autocomplete="new-password" minlength="12" required')}${fld("pw2","Nhập lại","password",'autocomplete="new-password" required')}</div>`, async fd => {
+    const pw = String(fd.get("pw")||""), pw2 = String(fd.get("pw2")||"");
+    if (pw.length < 12) return "Mật khẩu cần ít nhất 12 ký tự."; if (pw !== pw2) return "Hai mật khẩu không khớp.";
+    try { await saveVault(await sealToken(getToken(), ADMIN_USER, pw), getToken()); } catch(e){ return e.message; }
+    toast("Đã đổi mật khẩu");
+  });
+}
+function adminLogout(){ if (!confirm("Đăng xuất quản trị?")) return; try { localStorage.removeItem(TOKEN_KEY); } catch(e){} location.reload(); }
+async function boot(){
+  const sync = $("#sync");
+  if (PUB) {
+    S.members = SNAP.members; S.activities = SNAP.activities; S.settings = SNAP.settings || { targetStars: 3 };
+    S.loaded = { m:true, a:true, s:true }; S.canWrite = false;
+    sync.textContent = "Đang tải…"; route();
+    await loadShared();
+    const adm = !!getToken();
+    if (adm) { S.canWrite = true; db = adminDb(); }
+    const lk = (id, t) => `<a href="#" id="${id}" style="color:inherit">${t}</a>`;
+    sync.innerHTML = adm ? "Quản trị viên · " + lk("pwd","Đổi mật khẩu") + " · " + lk("out","Đăng xuất") : "Chế độ xem · " + lk("adm","Đăng nhập");
+    route(); return;
+  }
+  route();
+  db = await (window.claude?.use ? claude.use("db") : Promise.resolve(null)).catch(()=>null);
+  if (!db) { sync.textContent = "Ngoại tuyến"; render(); return; }
+  downloads = await claude.use("downloads").catch(()=>null);
+  claude.use("user").then(async u => { if (!u) return; const c = await u.can("data.write"); if (c === false) { S.canWrite = false; render(); } }).catch(()=>{});
+  const timer = setTimeout(() => { sync.textContent = "Chưa kết nối được dữ liệu"; }, 10000);
+  const onErr = () => { clearTimeout(timer); sync.textContent = "Mất kết nối dữ liệu"; };
+  const done = (meta) => { if (!meta.fromCache) { clearTimeout(timer); sync.textContent = "Đã đồng bộ"; } };
+  db.collection("members").onSnapshot(snap => { S.members = snap.docs.map(d => ({ id:d.id, ...d.data() })); S.loaded.m = true; done(snap.metadata); render(); }, onErr);
+  db.collection("activities").onSnapshot(snap => { S.activities = snap.docs.map(d => ({ id:d.id, ...d.data(), participants:[...(d.data().participants||[])] })); S.loaded.a = true; done(snap.metadata); render(); }, onErr);
+  db.doc("config/settings").onSnapshot(snap => { if (snap.exists) S.settings = { ...snap.data() }; S.loaded.s = true; render(); }, onErr);
+}
+boot();
+
+/* ---------- hero: drifting stars ---------- */
+(function sky(){
+  const c = $("#sky"); const ctx = c.getContext("2d"); let w,h,stars=[];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size(){ const r = c.getBoundingClientRect(); w = c.width = r.width*devicePixelRatio; h = c.height = r.height*devicePixelRatio;
+    stars = Array.from({length: Math.round(r.width/22)}, () => ({ x:Math.random()*w, y:Math.random()*h, s:(Math.random()*2+1)*devicePixelRatio, p:Math.random()*6.28 })); }
+  function star(x,y,r){ ctx.beginPath(); for(let i=0;i<10;i++){ const a = -Math.PI/2 + i*Math.PI/5; const rr = i%2? r*.45 : r; ctx.lineTo(x+Math.cos(a)*rr, y+Math.sin(a)*rr);} ctx.closePath(); ctx.fill(); }
+  function draw(t){ ctx.clearRect(0,0,w,h); for (const s of stars){ const a = .35 + .45*Math.sin(t/900 + s.p); ctx.fillStyle = `rgba(255,214,90,${a})`; star(s.x, s.y, s.s*2.2); } if(!reduce) requestAnimationFrame(draw); }
+  size(); addEventListener("resize", size); requestAnimationFrame(draw);
+})();
+})();
+</script></body></html>
