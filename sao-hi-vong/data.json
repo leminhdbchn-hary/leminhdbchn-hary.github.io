@@ -1,0 +1,237 @@
+{
+ "members": [
+  {
+   "id": "m01",
+   "name": "Chu Lê Mỹ Nga",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 1,
+   "fee": true
+  },
+  {
+   "id": "m02",
+   "name": "Nông Hoàng Thành",
+   "gender": "Nam",
+   "status": "active",
+   "order": 2,
+   "fee": true
+  },
+  {
+   "id": "m03",
+   "name": "Lê Văn Minh",
+   "gender": "Nam",
+   "status": "active",
+   "order": 3,
+   "fee": true
+  },
+  {
+   "id": "m04",
+   "name": "Hoàng Quốc Hưng",
+   "gender": "Nam",
+   "status": "active",
+   "order": 4,
+   "fee": true
+  },
+  {
+   "id": "m05",
+   "name": "Trần Hoàng Phi",
+   "gender": "Nam",
+   "status": "active",
+   "order": 5,
+   "fee": true
+  },
+  {
+   "id": "m06",
+   "name": "Nguyễn Duy Tuấn Anh",
+   "gender": "Nam",
+   "status": "active",
+   "order": 6,
+   "fee": true
+  },
+  {
+   "id": "m07",
+   "name": "Đoàn Mai Anh",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 7,
+   "fee": true
+  },
+  {
+   "id": "m08",
+   "name": "Nguyễn Minh Ngọc",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 8,
+   "fee": true
+  },
+  {
+   "id": "m09",
+   "name": "Mai Thanh Thùy Linh",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 9,
+   "fee": true
+  },
+  {
+   "id": "m10",
+   "name": "Lê Thu Hiền",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 10,
+   "fee": true
+  },
+  {
+   "id": "m11",
+   "name": "Nguyễn Thị Ngân Giang",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 11,
+   "fee": true
+  },
+  {
+   "id": "m12",
+   "name": "Nguyễn Tú Anh",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 12,
+   "fee": true
+  },
+  {
+   "id": "m13",
+   "name": "Phạm Thị Lan Hương",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 13,
+   "fee": true
+  },
+  {
+   "id": "m14",
+   "name": "Vũ Thị Hà Phương",
+   "gender": "Nữ",
+   "status": "leave",
+   "order": 14,
+   "fee": true
+  },
+  {
+   "id": "m15",
+   "name": "Nguyễn Văn Quyết",
+   "gender": "Nam",
+   "status": "active",
+   "order": 15,
+   "fee": true
+  },
+  {
+   "id": "m16",
+   "name": "Nguyễn Thùy Dương",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 16,
+   "fee": true
+  },
+  {
+   "id": "m17",
+   "name": "Nguyễn Vũ Phương Linh",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 17,
+   "fee": true
+  },
+  {
+   "id": "m18",
+   "name": "Đặng Thị Thanh Huyền",
+   "gender": "Nữ",
+   "status": "active",
+   "order": 18,
+   "fee": true
+  }
+ ],
+ "activities": [
+  {
+   "id": "a1",
+   "name": "Văn nghệ KBL",
+   "type": "Văn nghệ",
+   "date": "",
+   "stars": 1,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m03",
+    "m04",
+    "m06",
+    "m09",
+    "m10"
+   ],
+   "order": 1
+  },
+  {
+   "id": "a2",
+   "name": "Lễ tân đầu năm",
+   "type": "Lễ tân",
+   "date": "",
+   "stars": 1,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m07"
+   ],
+   "order": 2
+  },
+  {
+   "id": "a3",
+   "name": "Lễ tân",
+   "type": "Lễ tân",
+   "date": "",
+   "stars": 1,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m02",
+    "m08"
+   ],
+   "order": 3
+  },
+  {
+   "id": "a4",
+   "name": "Hỗ trợ giải chạy 1/6",
+   "type": "Thể thao",
+   "date": "2025-06-01",
+   "stars": 1,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m01"
+   ],
+   "order": 4
+  },
+  {
+   "id": "a5",
+   "name": "Hỗ trợ Kỷ niệm 20 năm KBL",
+   "type": "Sự kiện",
+   "date": "",
+   "stars": 1,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m01",
+    "m05",
+    "m08",
+    "m12",
+    "m15"
+   ],
+   "order": 5
+  },
+  {
+   "id": "a6",
+   "name": "Thi KOL",
+   "type": "Cuộc thi",
+   "date": "",
+   "stars": 5,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m18"
+   ],
+   "order": 6
+  }
+ ]
+}

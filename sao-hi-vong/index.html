@@ -555,6 +555,7 @@ async function exportHtml(){
 
 /* ---------- events ---------- */
 document.addEventListener("click", e => {
+  if (e.target.id === "adm") { e.preventDefault(); adminLogin(); return; }
   const tab = e.target.closest(".tab"); if (tab) { location.hash = tab.dataset.view; return; }
   const b = e.target.closest("[data-act]"); if (!b || !db) return;
   const act = b.dataset.act;
@@ -575,26 +576,58 @@ function route(){ const h = location.hash.slice(1); S.view = ["tong-quan","hoat-
 window.addEventListener("hashchange", route);
 
 /* ---------- boot ---------- */
-const LOCAL_KEY = "ngoisaoDTN_activities_v1";
-function localDb(){
-  const save = () => { try { localStorage.setItem(LOCAL_KEY, JSON.stringify({ activities: S.activities })); } catch(e){ toast("Chưa lưu được trên máy này."); } };
+const TOKEN_KEY = "ngoisaoDTN_admin_token";
+const REPO = "leminhdbchn-hary/leminhdbchn-hary.github.io", DATA_PATH = "sao-hi-vong/data.json";
+const API = "https://api.github.com/repos/" + REPO + "/contents/" + DATA_PATH;
+const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch(e){ return ""; } };
+const ghHead = (extra) => ({ "Accept":"application/vnd.github+json", "Authorization":"Bearer " + getToken(), ...(extra||{}) });
+let saveChain = Promise.resolve();
+function persist(){
+  saveChain = saveChain.catch(()=>{}).then(async () => {
+    const meta = await fetch(API + "?ref=main&t=" + Date.now(), { headers: ghHead() });
+    if (!meta.ok) throw new Error("meta " + meta.status);
+    const sha = (await meta.json()).sha;
+    const text = JSON.stringify({ members: S.members, activities: S.activities }, null, 1);
+    const body = { message: "Cập nhật dữ liệu Ngôi sao ĐTN", content: btoa(unescape(encodeURIComponent(text))), sha, branch: "main" };
+    const r = await fetch(API, { method:"PUT", headers: ghHead({ "Content-Type":"application/json" }), body: JSON.stringify(body) });
+    if (!r.ok) throw new Error("put " + r.status);
+  }).catch(e => { toast("Chưa lưu được lên GitHub (" + (e.message||"lỗi") + "). Kiểm tra lại token quản trị."); throw e; });
+  return saveChain;
+}
+function adminDb(){
+  const mut = fn => { fn(); render(); return persist(); };
   return {
     collection: () => ({ doc: (id) => { id = id || ("a" + Date.now().toString(36) + Math.random().toString(36).slice(2,6));
       return { id, path: "activities/" + id,
-        set: async d => { const o = { id, ...d }, i = S.activities.findIndex(x=>x.id===id); if (i < 0) S.activities.push(o); else S.activities[i] = o; save(); render(); },
-        update: async d => { const a = S.activities.find(x=>x.id===id); if (a) Object.assign(a, d); save(); render(); },
-        delete: async () => { S.activities = S.activities.filter(x=>x.id!==id); save(); render(); } }; } }),
+        set: async d => mut(() => { const o = { id, ...d }, i = S.activities.findIndex(x=>x.id===id); if (i < 0) S.activities.push(o); else S.activities[i] = o; }),
+        update: async d => mut(() => { const a = S.activities.find(x=>x.id===id); if (a) Object.assign(a, d); }),
+        delete: async () => mut(() => { S.activities = S.activities.filter(x=>x.id!==id); }) }; } }),
     doc: path => ({ path, set: async () => {} })
   };
+}
+async function loadShared(){
+  try { const r = await fetch(API + "?ref=main&t=" + Date.now(), { headers: { "Accept":"application/vnd.github.raw+json" } });
+    if (!r.ok) return; const d = await r.json();
+    if (Array.isArray(d.members) && Array.isArray(d.activities)) { S.members = d.members; S.activities = d.activities; } } catch(e){}
+}
+async function adminLogin(){
+  if (getToken()) { if (confirm("Đăng xuất quản trị?")) { try { localStorage.removeItem(TOKEN_KEY); } catch(e){} location.reload(); } return; }
+  const t = (prompt("Dán mã quản trị (GitHub token) của bạn:") || "").trim(); if (!t) return;
+  try { localStorage.setItem(TOKEN_KEY, t); } catch(e){ toast("Trình duyệt không cho lưu mã."); return; }
+  const r = await fetch("https://api.github.com/repos/" + REPO, { headers: ghHead() }).then(x=>x.ok?x.json():null).catch(()=>null);
+  if (r && r.permissions && r.permissions.push) { toast("Đã đăng nhập quản trị"); location.reload(); }
+  else { try { localStorage.removeItem(TOKEN_KEY); } catch(e){} toast("Mã không đúng hoặc không có quyền sửa."); }
 }
 async function boot(){
   const sync = $("#sync");
   if (PUB) {
     S.members = SNAP.members; S.activities = SNAP.activities; S.settings = SNAP.settings || { targetStars: 3 };
-    S.loaded = { m:true, a:true, s:true }; S.canWrite = true;
-    try { const sv = JSON.parse(localStorage.getItem(LOCAL_KEY)||"null"); if (sv && Array.isArray(sv.activities)) S.activities = sv.activities; } catch(e){}
-    db = localDb();
-    sync.textContent = "Lưu trên máy này";
+    S.loaded = { m:true, a:true, s:true }; S.canWrite = false;
+    sync.textContent = "Đang tải…"; route();
+    await loadShared();
+    const adm = !!getToken();
+    if (adm) { S.canWrite = true; db = adminDb(); }
+    sync.innerHTML = (adm ? "Quản trị viên · " : "Chế độ xem · ") + '<a href="#" id="adm" style="color:inherit">' + (adm ? "Đăng xuất" : "Quản trị") + '</a>';
     route(); return;
   }
   route();
