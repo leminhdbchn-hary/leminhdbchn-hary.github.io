@@ -435,12 +435,12 @@ function viewMembers(st){
       <td class="c">${m.fee?`<span class="pill ok">Đã đóng</span>`:`<span class="pill warn">Chưa đóng</span>`}</td>`}
       <td class="c">${m.status==="leave"?`<span class="pill grey">Tạm nghỉ${m.note?" · "+esc(m.note):""}</span>`:`<span class="pill blue">Đang sinh hoạt</span>`}</td>
       <td class="c"><span class="starcount" style="font-size:14px">${s.stars}${STAR}</span></td>
-      <td class="c">${S.canWrite&&!PUB?`<button class="btn" data-act="edit-member" data-id="${m.id}">Sửa</button>`:""}</td></tr>`;
+      <td class="c">${S.canWrite?`<button class="btn" data-act="edit-member" data-id="${m.id}">Sửa</button>`:""}</td></tr>`;
   }).join("");
   return `<div class="view"><section class="panel">
     <div class="panel-h"><div><h2>Danh sách đoàn viên (${S.members.length})</h2><div class="sub">Chi đoàn 6 · Chi bộ 20</div></div>
       <div class="toolbar"><input type="text" id="mem-search" placeholder="Tìm theo tên…" value="${esc(S.search)}" aria-label="Tìm đoàn viên">
-      ${S.canWrite&&!PUB?`<button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button>`:""}</div></div>
+      ${S.canWrite?`<button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button>`:""}</div></div>
     <div class="mx-wrap"><table class="mem"><thead><tr><th>STT</th><th>Họ và tên</th><th>Giới tính</th>${PUB?"":"<th>Ngày sinh</th><th>SĐT</th><th>Đoàn phí</th>"}<th>Trạng thái</th><th>Sao</th><th></th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${PUB?6:9}" class="empty">Không tìm thấy đoàn viên.</td></tr>`}</tbody></table></div>
   </section></div>`;
@@ -497,16 +497,16 @@ function editMember(id){
   const body = `<div class="form-grid">
     <div class="field full"><label for="m-name">Họ và tên</label><input type="text" id="m-name" name="name" required value="${esc(m.name)}"></div>
     <div class="field"><label for="m-gender">Giới tính</label><select id="m-gender" name="gender">${["Nam","Nữ"].map(g=>`<option ${(m.gender||"").trim()===g?"selected":""}>${g}</option>`).join("")}</select></div>
-    <div class="field"><label for="m-dob">Ngày sinh</label><input type="text" id="m-dob" name="dob" value="${esc(m.dob)}" placeholder="dd/mm/yyyy"></div>
-    <div class="field"><label for="m-email">Email</label><input type="email" id="m-email" name="email" value="${esc(m.email)}"></div>
-    <div class="field"><label for="m-phone">Số điện thoại</label><input type="tel" id="m-phone" name="phone" value="${esc(m.phone)}"></div>
-    <div class="field"><label for="m-fee">Đoàn phí</label><select id="m-fee" name="fee"><option value="1" ${m.fee?"selected":""}>Đã đóng</option><option value="0" ${!m.fee?"selected":""}>Chưa đóng</option></select></div>
+    ${PUB?"":`<div class="field"><label for="m-dob">Ngày sinh</label><input type="text" id="m-dob" name="dob" value="${esc(m.dob)}" placeholder="dd/mm/yyyy"></div>`}
+    ${PUB?"":`<div class="field"><label for="m-email">Email</label><input type="email" id="m-email" name="email" value="${esc(m.email)}"></div>`}
+    ${PUB?"":`<div class="field"><label for="m-phone">Số điện thoại</label><input type="tel" id="m-phone" name="phone" value="${esc(m.phone)}"></div>`}
+    ${PUB?"":`<div class="field"><label for="m-fee">Đoàn phí</label><select id="m-fee" name="fee"><option value="1" ${m.fee?"selected":""}>Đã đóng</option><option value="0" ${!m.fee?"selected":""}>Chưa đóng</option></select></div>`}
     <div class="field"><label for="m-status">Trạng thái</label><select id="m-status" name="status"><option value="active" ${m.status!=="leave"?"selected":""}>Đang sinh hoạt</option><option value="leave" ${m.status==="leave"?"selected":""}>Tạm nghỉ (không đề xuất)</option></select></div>
-    <div class="field full"><label for="m-note">Ghi chú</label><input type="text" id="m-note" name="note" value="${esc(m.note)}" placeholder="VD: Nghỉ thai sản"></div>
+    ${PUB?"":`<div class="field full"><label for="m-note">Ghi chú</label><input type="text" id="m-note" name="note" value="${esc(m.note)}" placeholder="VD: Nghỉ thai sản"></div>`}
   </div>`;
   openModal(id?"Sửa đoàn viên":"Thêm đoàn viên", body, fd => {
     const name = String(fd.get("name")||"").trim(); if (!name) return "Hãy nhập họ tên.";
-    const data = { name, gender: fd.get("gender"), dob: String(fd.get("dob")||"").trim(), email: String(fd.get("email")||"").trim(), phone: String(fd.get("phone")||"").trim(),
+    const data = PUB ? { name, gender: fd.get("gender"), status: fd.get("status"), fee: true, order: id ? (m.order ?? 0) : (Math.max(0,...S.members.map(x=>x.order||0))+1) } : { name, gender: fd.get("gender"), dob: String(fd.get("dob")||"").trim(), email: String(fd.get("email")||"").trim(), phone: String(fd.get("phone")||"").trim(),
       fee: fd.get("fee")==="1", status: fd.get("status"), note: String(fd.get("note")||"").trim(),
       order: id ? (m.order ?? 0) : (Math.max(0,...S.members.map(x=>x.order||0))+1) };
     const ref = id ? db.collection("members").doc(id) : db.collection("members").doc();
@@ -597,11 +597,11 @@ function persist(){
 function adminDb(){
   const mut = fn => { fn(); render(); return persist(); };
   return {
-    collection: () => ({ doc: (id) => { id = id || ("a" + Date.now().toString(36) + Math.random().toString(36).slice(2,6));
-      return { id, path: "activities/" + id,
-        set: async d => mut(() => { const o = { id, ...d }, i = S.activities.findIndex(x=>x.id===id); if (i < 0) S.activities.push(o); else S.activities[i] = o; }),
-        update: async d => mut(() => { const a = S.activities.find(x=>x.id===id); if (a) Object.assign(a, d); }),
-        delete: async () => mut(() => { S.activities = S.activities.filter(x=>x.id!==id); }) }; } }),
+    collection: (name) => ({ doc: (id) => { id = id || ("a" + Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+      return { id, path: name + "/" + id,
+        set: async d => mut(() => { const o = { id, ...d }, i = S[name].findIndex(x=>x.id===id); if (i < 0) S[name].push(o); else S[name][i] = o; }),
+        update: async d => mut(() => { const a = S[name].find(x=>x.id===id); if (a) Object.assign(a, d); }),
+        delete: async () => mut(() => { S[name] = S[name].filter(x=>x.id!==id); }) }; } }),
     doc: path => ({ path, set: async () => {} })
   };
 }
