@@ -440,7 +440,7 @@ function viewMembers(st){
   return `<div class="view"><section class="panel">
     <div class="panel-h"><div><h2>Danh sách đoàn viên (${S.members.length})</h2><div class="sub">Chi đoàn 6</div></div>
       <div class="toolbar"><input type="text" id="mem-search" placeholder="Tìm theo tên…" value="${esc(S.search)}" aria-label="Tìm đoàn viên">
-      ${S.canWrite?`<button class="btn" data-act="import-xlsx">Nhập từ Excel</button><button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button><input type="file" id="xlsx-file" accept=".xlsx,.xls,.csv" hidden>`:""}</div></div>
+      ${S.canWrite?`<button class="btn" data-act="import-xlsx">Nhập từ Excel</button><a class="btn" href="../NgoisaoDTN/mau-doan-vien.xlsx" download style="text-decoration:none">Tải mẫu Excel</a><button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button><input type="file" id="xlsx-file" accept=".xlsx,.xls,.csv" hidden>`:""}</div></div>
     <div class="mx-wrap"><table class="mem"><thead><tr><th>STT</th><th>Họ và tên</th><th>Giới tính</th>${PUB?"<th>Năm sinh</th>":""}${PUB?"":"<th>Ngày sinh</th><th>SĐT</th><th>Đoàn phí</th>"}<th>Trạng thái</th><th>Sao</th><th></th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${PUB?7:9}" class="empty">Không tìm thấy đoàn viên.</td></tr>`}</tbody></table></div>
   </section></div>`;
