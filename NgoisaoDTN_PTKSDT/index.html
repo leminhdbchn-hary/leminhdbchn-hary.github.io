@@ -1,4 +1,4 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_CD4</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><style>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_PTKSDT</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;display=swap"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style><style>
 /* Layout: dải xanh thanh niên ở đầu trang, bên dưới là các tab công cụ; ô nhập & nút lưu dùng xanh lá VCB */
 :root{
   --doan:#0b5cad; --doan-deep:#073f7a; --doan-soft:#e7f0fb; --doan-line:#c9dcf3;
@@ -203,8 +203,8 @@ table.mem{width:100%;border-collapse:collapse;font-size:13px}
   <canvas id="sky" aria-hidden="true"></canvas>
   <div class="wrap">
     <div>
-      <div class="eyebrow">Chi đoàn 4</div>
-      <h1>NgoisaoDTN_CD4</h1>
+      <div class="eyebrow">Chi đoàn 6 · Phân đoàn Phòng PTKSĐT</div>
+      <h1>NgoisaoDTN_PTKSDT</h1>
       <p>Mỗi hoạt động đoàn tham gia được cộng số sao tương ứng. Trang tự đề xuất những đoàn viên nên được cử đi ở hoạt động tiếp theo.</p>
     </div>
     <div class="kpis" id="kpis">
@@ -438,7 +438,7 @@ function viewMembers(st){
       <td class="c">${S.canWrite?`<button class="btn" data-act="edit-member" data-id="${m.id}">Sửa</button>`:""}</td></tr>`;
   }).join("");
   return `<div class="view"><section class="panel">
-    <div class="panel-h"><div><h2>Danh sách đoàn viên (${S.members.length})</h2><div class="sub">Chi đoàn 4</div></div>
+    <div class="panel-h"><div><h2>Danh sách đoàn viên (${S.members.length})</h2><div class="sub">Chi đoàn 6</div></div>
       <div class="toolbar"><input type="text" id="mem-search" placeholder="Tìm theo tên…" value="${esc(S.search)}" aria-label="Tìm đoàn viên">
       ${S.canWrite?`<button class="btn primary" data-act="new-member">+ Thêm đoàn viên</button>`:""}</div></div>
     <div class="mx-wrap"><table class="mem"><thead><tr><th>STT</th><th>Họ và tên</th><th>Giới tính</th>${PUB?"":"<th>Ngày sinh</th><th>SĐT</th><th>Đoàn phí</th>"}<th>Trạng thái</th><th>Sao</th><th></th></tr></thead>
@@ -531,7 +531,7 @@ async function exportCsv(){
   const rows = S.members.slice().sort((a,b)=>(a.order??999)-(b.order??999)).map((m,i)=>[i+1,m.name,m.gender,m.dob,...acts.map(a=>(a.participants||[]).includes(m.id)?"x":""),st.get(m.id).stars,m.fee?"x":"",m.note||""]);
   const csv = "﻿" + [head,...rows].map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
   if (!downloads) { toast("Trình xem này chưa hỗ trợ tải file."); return; }
-  try { const r = await downloads.save({ filename: "NgoisaoDTN_CD4.csv", data: csv }); if (r && r.status==="saved") toast("Đã tải bảng sao"); }
+  try { const r = await downloads.save({ filename: "NgoisaoDTN_PTKSDT.csv", data: csv }); if (r && r.status==="saved") toast("Đã tải bảng sao"); }
   catch(e){ if (e && e.code !== "cancelled") toast("Chưa tải được file."); }
 }
 
@@ -542,14 +542,14 @@ function buildSnapshot(){
     activities: S.activities.map(a => ({ id:a.id, name:a.name, type:a.type||"", date:a.date||"", stars:Number(a.stars)||0, status:a.status, slots:Number(a.slots)||0, participants:[...(a.participants||[])], order:a.order ?? 0 })) };
   const json = JSON.stringify(data).replace(/</g, "\\u003c");
   const base = '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>';
-  return '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_CD4</title>'
+  return '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>NgoisaoDTN_PTKSDT</title>'
     + SHELL.font + base + SHELL.style + '</head><body>' + SHELL.body
     + '<main class="wrap" id="app"></main><div id="modal-root"></div><script>window.__SNAPSHOT__=' + json + ';<\/script><script id="app-js">' + SHELL.js + '<\/script></body></html>';
 }
 window.__buildSnapshot = buildSnapshot;
 async function exportHtml(){
   if (!downloads) { toast("Trình xem này chưa hỗ trợ tải file."); return; }
-  try { const r = await downloads.save({ filename: "NgoisaoDTN_CD4.html", data: buildSnapshot() }); if (r && r.status==="saved") toast("Đã tải trang xem"); }
+  try { const r = await downloads.save({ filename: "NgoisaoDTN_PTKSDT.html", data: buildSnapshot() }); if (r && r.status==="saved") toast("Đã tải trang xem"); }
   catch(e){ if (e && e.code !== "cancelled") toast("Chưa tải được file."); }
 }
 
@@ -577,7 +577,7 @@ window.addEventListener("hashchange", route);
 
 /* ---------- boot ---------- */
 const TOKEN_KEY = "ngoisaoDTN_admin_token";
-const REPO = "leminhdbchn-hary/leminhdbchn-hary.github.io", DATA_PATH = "NgoisaoDTN_CD4/data.json";
+const REPO = "leminhdbchn-hary/leminhdbchn-hary.github.io", DATA_PATH = "NgoisaoDTN_PTKSDT/data.json";
 const API = "https://api.github.com/repos/" + REPO + "/contents/" + DATA_PATH;
 const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ""; } catch(e){ return ""; } };
 const ghHead = (extra) => ({ "Accept":"application/vnd.github+json", "Authorization":"Bearer " + getToken(), ...(extra||{}) });
