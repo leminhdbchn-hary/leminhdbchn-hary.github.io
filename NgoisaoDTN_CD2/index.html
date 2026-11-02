@@ -610,8 +610,8 @@ async function loadShared(){
     if (!r.ok) return; const d = await r.json();
     if (Array.isArray(d.members) && Array.isArray(d.activities)) { S.members = d.members; S.activities = d.activities; } } catch(e){}
 }
-const ADMIN_USER = "Admin.CD2";
-const VAULT_API = "https://api.github.com/repos/" + REPO + "/contents/NgoisaoDTN_CD2/vault.json";
+const ADMIN_USER = "Minhlv.ho";
+const VAULT_API = "https://api.github.com/repos/" + REPO + "/contents/NgoisaoDTN_PTSPBL/vault.json";
 const enc = new TextEncoder(), dec = new TextDecoder();
 const b64 = u8 => btoa(String.fromCharCode(...u8)), unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
 async function deriveKey(pass, salt, iter){
