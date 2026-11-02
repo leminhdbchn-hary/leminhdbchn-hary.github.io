@@ -234,7 +234,7 @@
    "order": 6
   },
   {
-   "id": "amvymkx3cefqd",
+   "id": "amvynao0krzfd",
    "name": "Hỗ trợ Pickeball giải TSC",
    "type": "",
    "date": "2026-06-01",
@@ -242,24 +242,10 @@
    "status": "done",
    "slots": 0,
    "participants": [
-    "m04",
-    "m03"
+    "m10",
+    "m09"
    ],
    "order": 7
-  },
-  {
-   "id": "amvyn9c6i4omc",
-   "name": "Pickeball với chi nhánh Thành công",
-   "type": "",
-   "date": "2026-11-08",
-   "stars": 2,
-   "status": "upcoming",
-   "slots": 0,
-   "participants": [
-    "m12",
-    "m03"
-   ],
-   "order": 8
   }
  ]
 }
