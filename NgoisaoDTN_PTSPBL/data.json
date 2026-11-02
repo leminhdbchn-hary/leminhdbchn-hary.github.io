@@ -246,6 +246,19 @@
     "m09"
    ],
    "order": 7
+  },
+  {
+   "id": "amvynbbw6rbye",
+   "name": "Nhập liệu dữ liệu đảng",
+   "type": "",
+   "date": "2026-11-02",
+   "stars": 2,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m17"
+   ],
+   "order": 8
   }
  ]
 }
