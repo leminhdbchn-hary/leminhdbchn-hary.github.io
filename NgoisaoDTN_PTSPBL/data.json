@@ -273,6 +273,25 @@
     "m03"
    ],
    "order": 10
+  },
+  {
+   "id": "amw1v81b09r90",
+   "name": "Giải chạy CN Hưng Yên",
+   "type": "",
+   "date": "2026-11-08",
+   "stars": 2,
+   "status": "done",
+   "slots": 0,
+   "participants": [
+    "m10",
+    "m06",
+    "m02",
+    "m12",
+    "m01",
+    "m04",
+    "m03"
+   ],
+   "order": 11
   }
  ]
 }
