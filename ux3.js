@@ -141,7 +141,7 @@ function ensureSelUI(){
     bar.innerHTML='<span id="selCount">Đã chọn 0</span><button type="button" onclick="selAll()">Tất cả</button><button type="button" onclick="selNoCF()">Không tính thu chi</button><button type="button" onclick="selRecat()">Đổi hạng mục</button><button type="button" class="danger" onclick="selDelete()">Xoá</button><button type="button" onclick="setSelMode(false)">Huỷ</button>';
     document.body.appendChild(bar);}
 }
-window.setSelMode=function(on){selMode=!!on;sel.clear();const b=$('histSelBtn');if(b)b.textContent=selMode?'Xong':'Chọn';document.body.classList.toggle('hist-selecting',selMode);paintSel();};
+window.setSelMode=function(on){selMode=!!on;sel.clear();document.querySelectorAll('.tx-item.swiped').forEach(r=>r.classList.remove('swiped'));const b=$('histSelBtn');if(b)b.textContent=selMode?'Xong':'Chọn';document.body.classList.toggle('hist-selecting',selMode);paintSel();};
 function paintSel(){document.querySelectorAll('#historyList .tx-item').forEach(r=>{const id=rowId(r);r.classList.toggle('sel',selMode&&sel.has(id));r.classList.toggle('selectable',selMode);});
   const c=$('selCount');if(c)c.textContent='Đã chọn '+sel.size;const bar=$('selBar');if(bar)bar.classList.toggle('show',selMode);}
 document.addEventListener('click',e=>{if(!selMode)return;const r=e.target.closest&&e.target.closest('#historyList .tx-item');if(!r)return;e.stopPropagation();e.preventDefault();
