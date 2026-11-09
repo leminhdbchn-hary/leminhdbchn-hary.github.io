@@ -145,9 +145,12 @@ if(window.screenHooks)window.screenHooks.add=function(){if(_addHook)_addHook();l
 const _rh=window.renderHome;
 window.renderHome=function(){_rh.apply(this,arguments);try{renderBudgetBar();maybeSwipeHint();}catch(e){console.error(e);}};
 const _onType=window.onTypeExtras;
-window.onTypeExtras=function(t){if(_onType)_onType(t);const c=$('amtChips');if(c)c.style.display='';saveDraftSoon();};
+window.onTypeExtras=function(t){if(_onType)_onType(t);syncAmtChips();saveDraftSoon();};
 ['input','change'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target&&e.target.closest&&e.target.closest('#screen-add'))saveDraftSoon();}));
 document.addEventListener('click',e=>{if(e.target&&e.target.closest&&e.target.closest('#screen-add .cat-picker,#catSheet'))saveDraftSoon();});
+/* đang nhập ngoại tệ thì ẩn nút số tiền nhanh (số VND do số ngoại tệ × tỷ giá quyết định) */
+function syncAmtChips(){const c=$('amtChips');if(!c)return;let cur='VND';try{cur=fxCur()||'VND';}catch(e){}c.style.display=cur==='VND'?'':'none';}
+['fxChange','fxSet'].forEach(fn=>{const o=window[fn];if(typeof o==='function')window[fn]=function(){const r=o.apply(this,arguments);try{syncAmtChips();}catch(e){}return r;};});
 layoutAdd();
 try{renderBudgetBar();}catch(e){}
 })();
