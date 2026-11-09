@@ -10,22 +10,22 @@
 <meta name="theme-color" content="#0e0d0c">
 <link rel="manifest" href="manifest.json">
 <meta name="format-detection" content="telephone=no">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=81">
-<link rel="icon" type="image/png" href="favicon.png?v=81">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=82">
+<link rel="icon" type="image/png" href="favicon.png?v=82">
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<link rel="modulepreload" href="cloud.js?v=81">
+<link rel="modulepreload" href="cloud.js?v=82">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
-<link rel="stylesheet" href="app.css?v=81">
-<script src="skin.js?v=81"></script>
+<link rel="stylesheet" href="app.css?v=82">
+<script src="skin.js?v=82"></script>
 <script>try{if(localStorage.getItem('tc_mode')==='tutien'&&localStorage.getItem('tc_owner')==='1')document.documentElement.classList.add('tt');var _f=localStorage.getItem('tc_fs');if(_f)document.documentElement.style.setProperty('--fs',_f+'px');if(localStorage.getItem('tc_ls_partial')==='1')document.documentElement.classList.add('idb-wait');}catch(e){}</script>
 </head>
 <body>
 <div id="lockScreen" class="lock-screen">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=81" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=82" alt="">
   <div class="lock-title" id="lockTitle">Nhập mật khẩu</div>
   <div class="lock-sub" id="lockSub">Nhập mật khẩu để mở sổ thu chi</div>
   <input id="lockUser" class="lock-user" type="text" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" style="display:none" onkeydown="if(event.key==='Enter'){if(pinMode==='setUser')pinUserNext();else this.blur();}">
@@ -37,7 +37,7 @@
 <script>try{if(localStorage.getItem('tc_pin_hash')||localStorage.getItem('tc_bio_id'))document.documentElement.classList.add('is-locked');}catch(e){}</script>
 
 <div id="cloudGateScreen" class="cloud-gate">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=81" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=82" alt="">
   <div class="lock-title">Sổ Thu Chi</div>
   <div class="lock-sub" id="gateSub">Đang kiểm tra đăng nhập...</div>
   <div id="gateBtnWrap" style="display:none;width:100%;max-width:300px;">
@@ -83,16 +83,15 @@
     <div class="home-grid"><div class="home-col-a">
     <div class="section-title" style="margin-top:0;" id="monthTitle">Tháng này</div>
     <div class="month-row">
-      <div class="month-box"><div class="l">Thu</div><div class="v" style="color:var(--green)" id="mThu">0</div></div>
-      <div class="month-box"><div class="l">Chi</div><div class="v" style="color:var(--red)" id="mChi">0</div></div>
+      <div class="month-box mb-tap" onclick="openMonthDetail('thu')"><div class="l">Thu ›</div><div class="v" style="color:var(--green)" id="mThu">0</div></div>
+      <div class="month-box mb-tap" onclick="openMonthDetail('chi')"><div class="l">Chi ›</div><div class="v" style="color:var(--red)" id="mChi">0</div></div>
       <div class="month-box"><div class="l">Còn lại</div><div class="v" id="mNet">0</div></div>
     </div>
     <div class="fam-support" id="homeFam" style="display:none"></div>
     <div class="minibar-wrap" id="minibarWrap"></div>
+    <div class="debt-card" id="debtCard" style="display:none"></div>
     <div class="section-title">Chi tiêu lớn nhất</div>
     <div id="topSpendList"></div>
-    <div class="section-title">Insight</div>
-    <div id="insightList"></div>
     </div><div class="home-col-b">
     <div class="section-title rl-head"><span>Giao dịch</span></div>
     <div class="rl-tabs"><button id="rlWeek" class="active" onclick="setHomeRange('week')">7 ngày qua</button><button id="rlAll" onclick="setHomeRange('all')">Tất cả</button><label id="rlDay" class="rl-daybtn"><span id="rlDayTxt">📅 Chọn ngày</span><input type="date" id="homeDay" onclick="try{if(this.showPicker)this.showPicker();}catch(e){}" onchange="setHomeDay(this.value)" aria-label="Xem giao dịch theo ngày"></label></div>
@@ -604,12 +603,12 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=81"></script>
-<script src="store.js?v=81"></script>
-<script src="app.js?v=81"></script>
-<script src="features.js?v=81"></script>
-<script src="sms.js?v=81"></script>
-<script src="ux.js?v=81"></script>
-<script src="more.js?v=81"></script>
+<script type="module" src="cloud.js?v=82"></script>
+<script src="store.js?v=82"></script>
+<script src="app.js?v=82"></script>
+<script src="features.js?v=82"></script>
+<script src="sms.js?v=82"></script>
+<script src="ux.js?v=82"></script>
+<script src="more.js?v=82"></script>
 </body>
 </html>

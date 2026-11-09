@@ -136,7 +136,7 @@ async function page(browser, seed, vp) {
     deleteTx(adv.id); r.delOrig = advPending().length === 0;
     /* Không thu nữa */
     showScreen('add'); setType('chi'); pickCat('Khác', 'Tạm ứng ăn chung'); document.getElementById('amountInput').value = '100.000'; saveTx(); openAdvances(); advWaive(0); r.waive = advPending().length === 0;
-    closeAppModal(); renderHome(); r.mini = document.getElementById('advMini').style.display === 'none';
+    closeAppModal(); renderHome(); r.mini = !document.getElementById('debtCard').innerText.includes('Tạm ứng');
     /* thu nhập thu lại không tính thu chi, không làm đổi báo cáo */
     r.cf = txs.filter(t => t.item === 'Thu lại tạm ứng').every(t => !isCashFlow(t));
     return r;

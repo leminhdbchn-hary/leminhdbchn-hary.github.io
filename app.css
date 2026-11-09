@@ -1121,3 +1121,21 @@ html.skin-mono #more-sms{filter:grayscale(1);}
 .hq-mv small{font-weight:400;color:var(--sub);}
 .hq-toggle{background:none;border:none;color:#e2c28b;font:inherit;font-size:12.5px;font-weight:600;padding:6px 0 0;cursor:pointer;}
 .rep-all{display:block;width:100%;margin:4px 0 0;padding:7px 10px;border-radius:999px;border:1px solid rgba(194,154,92,.4);background:none;color:#e2c28b;font:inherit;font-size:12px;cursor:pointer;}
+
+/* v82: thẻ Cho vay & vay nợ ở Tổng quan (thay các dòng nhỏ cũ), ô Thu/Chi bấm được */
+#debtMini,#loanMini{display:none!important;}
+.debt-card{background:var(--card);border-radius:16px;padding:12px 12px 6px;margin:12px 0 4px;}
+.dc-head{display:flex;align-items:center;justify-content:space-between;font-size:13.5px;font-weight:700;margin:0 2px 6px;}
+.dc-net{font-size:12px;font-weight:500;color:var(--sub);}
+.dc-net b{font-weight:700;margin-left:4px;}
+.dc-net b.pos,.dc-v.pos{color:var(--green);}.dc-net b.neg,.dc-v.neg{color:var(--red);}
+.dc-row{display:flex;align-items:center;gap:10px;width:100%;padding:10px 2px;border:0;border-top:1px solid rgba(127,127,127,.14);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;}
+.dc-row:first-of-type{border-top:0;}
+.dc-ic{flex:none;width:34px;height:34px;border-radius:10px;background:rgba(127,127,127,.12);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.dc-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.dc-lb{font-size:13.5px;font-weight:600;}
+.dc-txt small{font-size:11.5px;color:var(--sub);line-height:1.35;}
+.dc-row.od .dc-txt small{color:var(--red);}
+.dc-v{flex:none;font-weight:700;font-size:14px;}
+.dc-go{flex:none;color:var(--sub);}
+.month-box.mb-tap{cursor:pointer;}

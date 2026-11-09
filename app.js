@@ -1225,7 +1225,7 @@ function renderHome(){
   const rows=Object.entries(byGroup).sort((a,b)=>b[1].sum-a[1].sum).slice(0,4);
   document.getElementById('topSpendList').innerHTML=rows.length?rows.map(([name,d])=>'<div class="tx-item"><div class="tx-icon" style="background:'+d.bg+'">'+icon(d.icon,d.accent,19)+'</div><div class="tx-info"><div class="cat">'+name+'</div></div><div class="tx-amt out">'+fmt(d.sum)+'</div></div>').join(''):'<div class="empty">Chưa có chi tiêu tháng này.</div>';
 
-  document.getElementById('insightList').innerHTML=computeInsights(monthTx,thu,chi,byGroup,now).map(i=>'<div class="insight-card"><span class="ic">'+i.emoji+'</span><span>'+i.text+'</span></div>').join('') || '<div class="empty">Chưa đủ dữ liệu để đưa ra nhận định.</div>';
+  if(document.getElementById('insightList'))document.getElementById('insightList').innerHTML=computeInsights(monthTx,thu,chi,byGroup,now).map(i=>'<div class="insight-card"><span class="ic">'+i.emoji+'</span><span>'+i.text+'</span></div>').join('') || '<div class="empty">Chưa đủ dữ liệu để đưa ra nhận định.</div>';
 
   renderHomeTxList();
   if(window.homeExtras){try{homeExtras();}catch(e){console.error(e);}}
@@ -3087,7 +3087,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='81';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='82';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

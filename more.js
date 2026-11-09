@@ -113,14 +113,33 @@ function advBack(t){return txs.filter(x=>x.advOf===t.id).reduce((s,x)=>s+(x.amou
 function advPending(){return txs.filter(t=>t.type==='chi'&&t.item===ADV_ITEM&&!t.advWaived).map(t=>({t,back:advBack(t)})).filter(o=>o.back<o.t.amount)
   .sort((a,b)=>(a.t.date||'').localeCompare(b.t.date||''));}
 window.advPending=advPending;
-function renderAdvMini(){
-  let el=document.getElementById('advMini');
-  if(!el){const ref=document.getElementById('debtMini');if(!ref)return;el=document.createElement('div');el.id='advMini';el.className='rw-mini adv-mini';el.onclick=()=>openAdvances();ref.parentNode.insertBefore(el,ref.nextSibling);}
-  const p=advPending();
-  if(!p.length){el.style.display='none';return;}
-  el.style.display='flex';
-  el.innerHTML='<span>🍻 Tạm ứng chờ thu: <b>'+fmtShort(p.reduce((s,o)=>s+o.t.amount-o.back,0))+' VND</b></span><span class="rw-mini-sep">•</span><span>'+p.length+' khoản</span><span style="margin-left:auto;color:var(--sub)">›</span>';
+/* Thẻ "Cho vay & vay nợ" ở Tổng quan: cho vay, tạm ứng chờ thu, vay ngân hàng, nợ người khác + hạn gần nhất */
+function renderDebtCard(){
+  const el=document.getElementById('debtCard');if(!el)return;
+  const today=todayStr(),rows=[],sum=a=>a.reduce((s,d)=>s+(d.amount||0),0);
+  const soon=list=>{const s=list.filter(d=>d.dueDate).sort((a,b)=>a.dueDate.localeCompare(b.dueDate))[0];if(!s)return null;const k=daysBetween(today,s.dueDate);
+    return {t:escH(s.person)+(k<0?' quá hạn '+(-k)+' ngày':k===0?' hẹn hôm nay':k===1?' hẹn ngày mai':' hẹn '+dmy(s.dueDate)),od:k<=0};};
+  const out=debts.filter(d=>d.status==='pending'&&!debtIsIn(d)),inn=debts.filter(d=>d.status==='pending'&&debtIsIn(d));
+  if(out.length){const s=soon(out);rows.push({ic:'🤝',lb:'Đang cho vay',v:sum(out),sub:out.length+' người'+(s?' · '+s.t:''),od:s&&s.od,go:"openDebts('out')",sign:1});}
+  const adv=advPending();
+  if(adv.length)rows.push({ic:'🍻',lb:'Tạm ứng chờ thu',v:adv.reduce((s,o)=>s+o.t.amount-o.back,0),sub:adv.length+' khoản ăn chung chưa được trả',go:'openAdvances()',sign:1});
+  const al=loans.filter(l=>{try{ensureLoanV2(l);}catch(e){}return l.status!=='closed';});
+  if(al.length){const ms=loanNextSummary(),nx=ms.rows[0];
+    rows.push({ic:'🏦',lb:'Dư nợ vay ngân hàng',v:al.reduce((s,l)=>s+(l.balance||0),0),sub:(al.length>1?al.length+' khoản · ':'')+(nx?(ms.overdue?'Quá hạn, cần trả ':'Kỳ tới '+dmy(nx.date).slice(0,5)+': ')+fmtShort(ms.p+ms.i):'Không có kỳ sắp đến hạn'),od:ms.overdue||(nx&&daysBetween(today,nx.date)<=1),go:"showScreen('loans')",sign:-1});}
+  if(inn.length){const s=soon(inn);rows.push({ic:'💳',lb:'Đang nợ người khác',v:sum(inn),sub:inn.length+' người'+(s?' · '+s.t:''),od:s&&s.od,go:"openDebts('in')",sign:-1});}
+  if(!rows.length){el.style.display='none';el.innerHTML='';return;}
+  const net=rows.reduce((s,r)=>s+r.sign*r.v,0);
+  el.style.display='block';
+  el.innerHTML='<div class="dc-head"><span>Cho vay &amp; vay nợ</span>'+(rows.some(r=>r.sign>0)&&rows.some(r=>r.sign<0)?'<span class="dc-net" title="Tiền người khác nợ bạn trừ tiền bạn đang nợ">Ròng <b class="'+(net>=0?'pos':'neg')+'">'+(net>=0?'+':'−')+fmtShort(Math.abs(net))+'</b></span>':'')+'</div>'+
+    rows.map(r=>'<button type="button" class="dc-row'+(r.od?' od':'')+'" onclick="'+r.go+'"><span class="dc-ic">'+r.ic+'</span><span class="dc-txt"><span class="dc-lb">'+r.lb+'</span><small>'+(r.od?'⚠ ':'')+r.sub+'</small></span><span class="dc-v '+(r.sign>0?'pos':'neg')+'">'+fmtShort(r.v)+'</span><span class="dc-go">›</span></button>').join('');
 }
+window.renderDebtCard=renderDebtCard;
+/* Bấm ô Thu / Chi của tháng ở Tổng quan → Báo cáo tháng này, mở sẵn bảng chi tiết */
+window.openMonthDetail=function(type){
+  showScreen('report');const b=[...document.querySelectorAll('#screen-report .period-tabs button')].find(x=>/Tháng/.test(x.textContent))||document.createElement('button');
+  repWalletId='';setPeriod('month',b);if(repDetailType!==type)toggleRepDetail(type);
+  const d=document.getElementById('repDetail');if(d)setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'start'}),200);
+};
 let advList=[];
 window.openAdvances=function(){
   advList=advPending();
@@ -313,7 +332,7 @@ function renderHomeSearch(){
    GẮN VÀO APP
    ===================================================================== */
 const _renderHome=window.renderHome;
-window.renderHome=function(){_renderHome.apply(this,arguments);try{renderAdvMini();}catch(e){console.error(e);}};
+window.renderHome=function(){_renderHome.apply(this,arguments);try{renderDebtCard();}catch(e){console.error(e);}};
 const _renderHistory=window.renderHistory;
 window.renderHistory=function(){_renderHistory.apply(this,arguments);try{renderHistQSum();if(!arguments[0])fillHistList();}catch(e){console.error(e);}};
 const _renderLoans=window.renderLoans;
@@ -330,7 +349,7 @@ if(window.screenHooks)window.screenHooks.add=function(){if(_addHook)_addHook();s
   if(note&&!noteSugEl()){const s=document.createElement('div');s.id='noteSug';s.className='note-sug';note.parentNode.appendChild(s);
     note.addEventListener('input',()=>{clearTimeout(sugTimer);sugTimer=setTimeout(runNoteSug,250);});}
   const ma=document.getElementById('more-adv');if(ma)ma.innerHTML='<span>'+icon('wallet','#c29a5c',20)+'</span><span>Tạm ứng chờ thu<small class="more-sub">Tiền ăn chung bạn trả trước, chờ bạn bè trả lại</small></span>';
-  try{renderTplBar();renderAdvMini();renderHomeSearch();fillHistList();}catch(e){}
+  try{renderTplBar();renderDebtCard();renderHomeSearch();fillHistList();}catch(e){}
   setTimeout(()=>{try{checkLoanNotify();}catch(e){}},2500);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')try{checkLoanNotify();}catch(e){}});
   setInterval(()=>{try{checkLoanNotify();}catch(e){}},30*60*1000);
