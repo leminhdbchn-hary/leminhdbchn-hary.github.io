@@ -43,6 +43,11 @@ function ok(c, n, x) { if (c) pass++; else { fail++; fails.push(n + (x !== undef
   /* giao diện Tối giản / sáng không lỗi */
   for (const sk of ['mono', 'sky']) { await p.evaluate(s => chooseSkin(s), sk); await p.waitForTimeout(200); ok(await p.evaluate(() => { showScreen('home'); return !!document.querySelector('svg.fe'); }), 'giao diện ' + sk + ' vẫn hiện icon'); }
   ok(errs.length === 0, 'không lỗi JS', errs);
+  /* v91: thanh điều hướng đặc/mảnh + ô màu Cài đặt */
+  ok(await p.evaluate(() => { showScreen('report'); const vis = s => getComputedStyle(document.querySelector('.tab[data-s="report"] ' + s)).display !== 'none';
+    const a = vis('.ni-on') && !vis('.ni-off'); const h = getComputedStyle(document.querySelector('.tab[data-s="home"] .ni-off')).display !== 'none';
+    showScreen('more'); const b = document.querySelectorAll('#screen-more .mi-badge').length; const white = getComputedStyle(document.querySelector('#more-acc .mi-badge svg')).color;
+    return a && h && b >= 15 && /255, 255, 255/.test(white); }), 'thanh điều hướng: mục chọn icon đặc, mục khác nét mảnh; Cài đặt có ô màu, icon trắng');
   /* mặc định (chưa chọn gì) = emoji của máy */
   const p3 = await (await browser.newContext()).newPage(); await p3.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem('tc_cloud_gate_skip', '1');
     localStorage.setItem('tc_wallets', JSON.stringify([{ id: 1, name: 'A', type: 'cash', balance: 0 }])); localStorage.setItem('tc_txs', JSON.stringify([{ id: 1, type: 'chi', amount: 1, group: 'Ăn uống', item: 'Ăn trưa', icon: 'e:🍜', walletId: 1, date: new Date().toISOString().slice(0, 10) }])); } });

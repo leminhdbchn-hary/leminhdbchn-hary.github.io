@@ -121,7 +121,16 @@ function groupMore(){
     const h=document.createElement('div');h.className='more-sec';h.textContent=title;inner.insertBefore(h,anchor);
     els.forEach(e=>inner.insertBefore(e,anchor));
   });
-  syncMoreSecs();
+  syncMoreSecs();badgeMore();
+}
+/* icon trong Cài đặt: ô vuông bo tròn có màu riêng, icon trắng (kiểu Cài đặt iPhone) */
+const MORE_TINT={'more-sms':'#30d158','more-recur':'#5e5ce6','more-hist':'#0a84ff','more-cats':'#8e8e93','more-split':'#ff375f','more-acc':'#40c8e0','more-budget':'#ff9f0a',
+  'more-goals':'#ffcc00','more-loans':'#5e5ce6','more-debts':'#30d158','more-borrow':'#ff453a','more-family':'#ff375f','more-adv':'#ff9f0a','grp-backup':'#0a84ff',
+  'more-lock':'#8e8e93','more-bio':'#34c759','more-admin':'#636366','more-update':'#0a84ff','grp-skin':'#bf5af2','grp-fs':'#40c8e0','more-iconstyle':'#ff375f',
+  'more-reward':'#ffcc00','more-chars':'#bf5af2','more-trash':'#ff453a'};
+function badgeMore(){
+  Object.keys(MORE_TINT).forEach(id=>{const el=$(id);if(!el)return;const row=el.classList.contains('more-group')?el.querySelector('.grp-head'):el;if(!row)return;
+    const sp=row.querySelector(':scope > span');if(!sp||!sp.querySelector('svg'))return;sp.classList.add('mi-badge');sp.style.setProperty('--mi',MORE_TINT[id]);});
 }
 function syncMoreSecs(){
   document.querySelectorAll('#screen-more .more-sec').forEach(h=>{let n=h.nextElementSibling,vis=false;
