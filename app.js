@@ -1028,6 +1028,7 @@ function renderHistory(keepFilters){
   const sumEl=document.getElementById('historySum');
   if(sumEl)sumEl.innerHTML=txs.length?'<span>'+res.length+' giao dịch</span><span class="hs-thu">Thu '+fmtShort(sumThu)+'</span><span class="hs-chi">Chi '+fmtShort(sumChi)+'</span>'+(filtered?'<button onclick="clearHistF()">Xoá lọc</button>':''):'';
   list.innerHTML=res.length?txByDayHTML(res):'<div class="empty">'+(txs.length?'Không tìm thấy giao dịch phù hợp.':'Chưa có giao dịch nào.')+'</div>';
+  window.histRes=res;
 }
 function clearHistF(){histF.q='';histF.type='';histF.group='';histF.month='';const i=document.getElementById('hfQ');if(i)i.value='';document.getElementById('hfType').value='';renderHistory();}
 
@@ -1307,7 +1308,7 @@ function renderRepDetail(inRange){
   box.innerHTML='<div class="rep-detail-t">'+(type==='thu'?'Thu gì':'Chi gì')+' · tổng '+fmt(total)+'<button class="icon-btn" onclick="toggleRepDetail(\''+type+'\')" aria-label="Đóng">✕</button></div>'+
     rows.map(([k,o])=>{const open=repOpenItems.has(k);
       const its=open?list.filter(t=>(t.item||t.group||'Khác')===k).sort((a,b)=>b.amount-a.amount||(b.date||'').localeCompare(a.date||'')):[];
-      const sub=open?'<div class="rep-sub">'+its.map(repTxRow).join('')+'<button class="rep-nocf-all" data-k="'+encodeURIComponent(k)+'" onclick="repExcludeItem(this)">Không tính cả mục «'+k+'» vào thu chi ('+its.length+' giao dịch trong kỳ)</button></div>':'';
+      const sub=open?'<div class="rep-sub">'+its.map(repTxRow).join('')+'<button class="rep-all" data-k="'+encodeURIComponent(k)+'" onclick="openHistSearch(decodeURIComponent(this.dataset.k))">🔍 Xem tất cả «'+k+'» từ trước đến nay ›</button><button class="rep-nocf-all" data-k="'+encodeURIComponent(k)+'" onclick="repExcludeItem(this)">Không tính cả mục «'+k+'» vào thu chi ('+its.length+' giao dịch trong kỳ)</button></div>':'';
       return '<div class="tx-item rep-cat" data-k="'+encodeURIComponent(k)+'" onclick="toggleRepItem(this)" style="cursor:pointer"><div class="tx-icon" style="background:'+o.bg+'">'+icon(o.icon,o.accent,19)+'</div><div class="tx-info"><div class="cat">'+k+' <span class="rep-caret">'+(open?'▾':'▸')+'</span></div><div class="note">'+(o.g&&o.g!==k?o.g+' • ':'')+o.n+' giao dịch • '+Math.round(o.v/total*100)+'%</div></div><div class="tx-amt '+(type==='thu'?'in':'out')+'">'+fmt(o.v)+'</div></div>'+sub;}).join('')+
     '<div class="loan-hint" style="margin:4px 0 0;">Bấm vào từng hạng mục để xem chi tiết các giao dịch.</div>'+
     '<div class="rep-detail-t" style="margin-top:12px;">'+(top.length<5?top.length:5)+' khoản '+word+' lớn nhất</div>'+
@@ -3086,7 +3087,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='80';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='81';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
