@@ -1235,3 +1235,14 @@ body.hist-selecting .tx-item>.icon-btn,body.hist-selecting .tx-item>.rw-badge{di
 svg.si{flex:none;}
 .icon-credits{font-size:11px;color:var(--sub);text-align:center;margin:14px 8px 6px;line-height:1.5;}
 .icon-credits a{color:inherit;}
+
+/* v89: kiểu biểu tượng 3D + bảng chọn kiểu */
+.emo-ic img.fe{display:block;width:1.15em;height:1.15em;object-fit:contain;}
+.dc-ic img.fe{width:24px;height:24px;}
+.emo-pick button img.fe{width:24px;height:24px;display:block;margin:auto;}
+.is-opts{display:flex;flex-direction:column;gap:10px;}
+.is-opt{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px;border-radius:14px;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.06);color:var(--text);font:inherit;cursor:pointer;text-align:left;}
+.is-opt.on{border-color:#c29a5c;background:rgba(194,154,92,.12);}
+.is-name{font-weight:700;font-size:14px;}
+.is-prev{display:flex;gap:12px;align-items:center;font-size:26px;line-height:1;}
+.is-prev svg,.is-prev img{width:30px;height:30px;display:block;}

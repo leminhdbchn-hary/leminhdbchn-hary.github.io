@@ -1,6 +1,6 @@
 /* Sổ Thu Chi – service worker: chạy khi mất mạng, tải nhanh hơn */
-const CACHE='stc-v88';
-const CORE=['./','index.html','app.css?v=88','icons.js?v=88','app.js?v=88','cloud.js?v=88','skin.js?v=88','store.js?v=88','features.js?v=88','sms.js?v=88','ux.js?v=88','more.js?v=88','ux2.js?v=88','ux3.js?v=88','manifest.json','icon-192.png?v=88','icon-512.png?v=88','apple-touch-icon.png?v=88','favicon.png?v=88','pets/stage1.jpg','characters/char1.jpg'];
+const CACHE='stc-v90';
+const CORE=['./','index.html','app.css?v=90','icons.js?v=90','app.js?v=90','cloud.js?v=90','skin.js?v=90','store.js?v=90','features.js?v=90','sms.js?v=90','ux.js?v=90','more.js?v=90','ux2.js?v=90','ux3.js?v=90','manifest.json','icon-192.png?v=90','icon-512.png?v=90','apple-touch-icon.png?v=90','favicon.png?v=90','pets/stage1.jpg','characters/char1.jpg'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))));

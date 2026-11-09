@@ -130,18 +130,34 @@ cloudsync:'<path d="M7 18a4.5 4.5 0 1 1 .9-8.9A6 6 0 0 1 19.5 11 3.5 3.5 0 0 1 1
 };
 /* Biểu tượng (icons.js): hạng mục = Fluent Emoji (Microsoft, MIT), giao diện = Solar Bold Duotone (480 Design, CC BY 4.0).
    Cài đặt › Kiểu biểu tượng = "Emoji của máy" thì dùng lại emoji/nét vẽ cũ. */
-function iconNative(){try{return localStorage.getItem('tc_icon_style')==='native';}catch(e){return false;}}
-const FE_MAP={};(function(){const F=window.FLUENT_EMOJI||{};Object.keys(F).forEach(k=>{FE_MAP[k]=F[k];FE_MAP[k.replace(/\ufe0f/g,'')]=F[k];});})();
-function fluentSvg(e){if(iconNative())return '';const b=FE_MAP[e]||FE_MAP[String(e).replace(/\ufe0f/g,'')];return b?'<svg class="fe" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true">'+b+'</svg>':'';}
+/* Kiểu biểu tượng hạng mục: 'native' (emoji của máy, mặc định) · 'flat' (Fluent phẳng) · '3d' (Fluent 3D, ảnh icons3d/).
+   Icon giao diện (Solar) dùng ở mọi kiểu. */
+function iconStyle(){let s='native';try{s=localStorage.getItem('tc_icon_style')||'native';}catch(e){}return s==='flat'||s==='3d'?s:'native';}
+function iconNative(){return iconStyle()==='native';}
+const FE_MAP={},FE3_MAP={};(function(){const F=window.FLUENT_EMOJI||{},T=window.FLUENT_3D||{};Object.keys(F).forEach(k=>{FE_MAP[k]=F[k];FE_MAP[k.replace(/\ufe0f/g,'')]=F[k];});Object.keys(T).forEach(k=>{FE3_MAP[k]=T[k];FE3_MAP[k.replace(/\ufe0f/g,'')]=T[k];});})();
+function fluentSvg(e){const st=iconStyle();if(st==='native')return '';const k=String(e).replace(/\ufe0f/g,'');
+  if(st==='3d'){const n=FE3_MAP[e]||FE3_MAP[k];if(n)return '<img class="fe fe3d" src="icons3d/'+n+'.webp" alt="" decoding="async" draggable="false">';}
+  const b=FE_MAP[e]||FE_MAP[k];return b?'<svg class="fe" viewBox="0 0 32 32" width="1em" height="1em" aria-hidden="true">'+b+'</svg>':'';}
 function icon(name,color,size){
   if(String(name).startsWith('e:')){const e=name.slice(2);return '<span class="emo-ic" data-f="1" style="font-size:'+Math.round((size||20)*1.05)+'px">'+(fluentSvg(e)||e)+'</span>';}
-  const S=window.SOLAR_ICONS;if(S&&S[name]&&!iconNative())return '<svg class="si" viewBox="0 0 24 24" width="'+(size||20)+'" height="'+(size||20)+'" style="color:'+color+'" aria-hidden="true">'+S[name]+'</svg>';
+  const S=window.SOLAR_ICONS;if(S&&S[name])return '<svg class="si" viewBox="0 0 24 24" width="'+(size||20)+'" height="'+(size||20)+'" style="color:'+color+'" aria-hidden="true">'+S[name]+'</svg>';
   return '<svg viewBox="0 0 24 24" width="'+(size||20)+'" height="'+(size||20)+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(ICONS[name]||ICONS.khac)+'</svg>';}
 /* emoji viết thẳng trong HTML (ô hạng mục, thẻ nợ, bảng chọn emoji…) → đổi sang Fluent Emoji */
 function upgradeEmoji(root){if(iconNative())return;(root||document).querySelectorAll('.emo-ic:not([data-f]),.dc-ic:not([data-f]),.emo-pick button:not([data-f])').forEach(el=>{el.dataset.f='1';if(el.children.length)return;const t=el.textContent.trim(),s=t&&fluentSvg(t);if(s)el.innerHTML=s;});}
 (function(){let q=false;const mo=new MutationObserver(()=>{if(q)return;q=true;Promise.resolve().then(()=>{q=false;upgradeEmoji();});});
   const start=()=>{upgradeEmoji();mo.observe(document.body,{childList:true,subtree:true});};if(document.body)start();else document.addEventListener('DOMContentLoaded',start);})();
-function toggleIconStyle(){try{localStorage.setItem('tc_icon_style',iconNative()?'new':'native');}catch(e){}location.reload();}
+const ICON_STYLE_NAMES={flat:'Phẳng (Fluent)','3d':'3D bóng bẩy (Fluent)',native:'Emoji của máy'};
+function toggleIconStyle(){
+  const cur=iconStyle(),demo=['🍜','⛽','💡','🎁','💰','🏠'];
+  const prev=st=>demo.map(e=>{const k=e;if(st==='native')return '<span>'+e+'</span>';if(st==='3d'){const n=FE3_MAP[k];return n?'<img src="icons3d/'+n+'.webp" alt="">':'<span>'+e+'</span>';}const b=FE_MAP[k];return b?'<svg viewBox="0 0 32 32">'+b+'</svg>':'<span>'+e+'</span>';}).join('');
+  document.getElementById('appModalBody').innerHTML='<h3>Kiểu biểu tượng hạng mục</h3><div class="is-opts">'+['native','flat','3d'].map(st=>
+    '<button type="button" class="is-opt'+(st===cur?' on':'')+'" onclick="setIconStyle(\''+st+'\')"><span class="is-name">'+ICON_STYLE_NAMES[st]+(st===cur?' ✓':'')+'</span><span class="is-prev">'+prev(st)+'</span></button>').join('')+
+    '</div><div class="edit-modal-actions"><button class="edit-modal-cancel" onclick="closeAppModal()">Đóng</button></div>';
+  document.getElementById('appModal').classList.add('show');
+}
+function setIconStyle(st){try{localStorage.setItem('tc_icon_style',st);}catch(e){}location.reload();}
+/* kiểu 3D: tải sẵn toàn bộ ảnh (nhỏ) để mất mạng vẫn hiện đủ – service worker tự lưu ảnh khi tải */
+if(iconStyle()==='3d')setTimeout(()=>{try{const k='tc_3d_cached';if(localStorage.getItem(k)===APP_VERSION)return;Promise.all([...new Set(Object.values(window.FLUENT_3D||{}))].map(n=>fetch('icons3d/'+n+'.webp').catch(()=>{}))).then(()=>{try{localStorage.setItem(k,APP_VERSION);}catch(e){}});}catch(e){}},4000);
 function fmt(n){return Number(n||0).toLocaleString('vi-VN')+' VND';}
 function fmtBig(n){return Number(n||0).toLocaleString('vi-VN')+'<sup class="cur">VND</sup>';}
 let hideBal=false;try{hideBal=localStorage.getItem('tc_hide_bal')==='1';}catch(e){}
@@ -3119,7 +3135,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='88';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='90';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
@@ -3170,7 +3186,7 @@ document.getElementById('more-reward').innerHTML='<span>'+icon('paw','#c29a5c',2
 document.getElementById('more-chars').innerHTML='<span>'+icon('trophy','#c29a5c',20)+'</span><span>Bộ sưu tập nhân vật</span>';
 renderMoreGroups();
 {const e=document.getElementById('more-sms');if(e)e.innerHTML='<span>'+icon('mail','#c29a5c',20)+'</span><span>Dán SMS ngân hàng</span>';}
-{const e=document.getElementById('more-iconstyle');if(e)e.innerHTML='<span>'+icon('palette','#c29a5c',20)+'</span><span>Kiểu biểu tượng<small class="more-sub">'+(iconNative()?'Emoji của máy — bấm để dùng bộ biểu tượng mới':'Bộ biểu tượng mới (Fluent + Solar) — bấm để dùng emoji của máy')+'</small></span>';}
+{const e=document.getElementById('more-iconstyle');if(e)e.innerHTML='<span>'+icon('palette','#c29a5c',20)+'</span><span>Kiểu biểu tượng<small class="more-sub">'+ICON_STYLE_NAMES[iconStyle()]+' — bấm để đổi'+'</small></span>';}
 document.getElementById('more-trash').innerHTML='<span>'+icon('trash','var(--red)',20)+'</span><span>Xoá toàn bộ dữ liệu</span>';
 document.querySelectorAll('.more-item').forEach(el=>el.style.gap='12px');
 try{sanitizeData();}catch(e){}
