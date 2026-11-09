@@ -19,7 +19,7 @@ window.renderTplBar=function(){
   const chips=txTemplates.map(t=>'<button type="button" class="tpl-chip '+(t.type==='thu'?'thu':'chi')+'" onclick="useTpl('+t.id+')" title="'+escH(t.item+(t.amount?' · '+fmt(t.amount):''))+'">'+escH(itemEmoji(t.type,t.group,t.item)||'⚡')+' '+escH(t.name)+'</button>').join('');
   bar.innerHTML='<div class="tpl-head"><span>Mẫu ghi nhanh</span>'+(txTemplates.length?'<button type="button" onclick="openTplMgr()">Sửa mẫu</button>':'')+'</div>'+
     '<div class="tpl-scroll">'+chips+'<button type="button" class="tpl-chip add" onclick="saveCurAsTpl()">＋ Lưu thành mẫu</button></div>'+
-    (txTemplates.length?'':'<div class="tpl-hint">Chọn hạng mục, số tiền, ví… rồi bấm "Lưu thành mẫu". Lần sau bấm mẫu là ghi xong ngay.</div>');
+    (txTemplates.length?'':'<div class="tpl-hint">Lưu sẵn khoản hay dùng, lần sau bấm 1 lần là ghi xong.</div>');
 };
 window.saveCurAsTpl=function(){
   if(currentType!=='chi'&&currentType!=='thu'){alert('Mẫu chỉ dùng cho khoản Thu hoặc Chi');return;}

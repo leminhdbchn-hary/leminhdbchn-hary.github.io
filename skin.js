@@ -13,7 +13,10 @@
     mono:{name:'Tối giản',dark:1,cream:[236,232,225],creamD:[208,203,195],
          bg:'#121212',card:'#1e1c1a',card2:'#262422',text:'#f2efe9',sub:'#9b968e',green:'#ece8e1',red:'#d4cfc7',meta:'#121212'}
   };
-  function getSkin(){var s='gold';try{s=localStorage.getItem('tc_skin')||'gold';}catch(e){}return SKINS[s]?s:'gold';}
+  /* 'auto' = tự theo cài đặt sáng/tối của điện thoại: tối → Vàng đen, sáng → Xanh trắng */
+  var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;
+  function getSkinPref(){var s='gold';try{s=localStorage.getItem('tc_skin')||'gold';}catch(e){}return s==='auto'||SKINS[s]?s:'gold';}
+  function getSkin(){var s=getSkinPref();if(s==='auto')return mq&&mq.matches?'sky':'gold';return s;}
 
   /* ---------- xử lý màu ---------- */
   function parse(c){
@@ -159,7 +162,8 @@
     var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',SKINS[skin]?SKINS[skin].meta:'#0e0d0c');
     var sb=document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');if(sb)sb.setAttribute('content',light?'default':'black-translucent');
   }
-  window.getSkin=getSkin;
-  window.setSkin=function(s){if(s!=='gold'&&!SKINS[s])s='gold';try{localStorage.setItem('tc_skin',s);}catch(e){}apply(s);};
+  window.getSkin=getSkin;window.getSkinPref=getSkinPref;
+  window.setSkin=function(s){if(s!=='gold'&&s!=='auto'&&!SKINS[s])s='gold';try{localStorage.setItem('tc_skin',s);}catch(e){}apply(getSkin());};
+  if(mq){var onMq=function(){if(getSkinPref()==='auto'){apply(getSkin());try{if(window.renderSkinOpts)renderSkinOpts();}catch(e){}}};if(mq.addEventListener)mq.addEventListener('change',onMq);else if(mq.addListener)mq.addListener(onMq);}
   apply(getSkin());
 })();
