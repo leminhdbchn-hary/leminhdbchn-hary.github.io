@@ -46,8 +46,10 @@ function ok(c, n, x) { if (c) pass++; else { fail++; fails.push(n + (x !== undef
   /* v91: thanh điều hướng đặc/mảnh + ô màu Cài đặt */
   ok(await p.evaluate(() => { showScreen('report'); const vis = s => getComputedStyle(document.querySelector('.tab[data-s="report"] ' + s)).display !== 'none';
     const a = vis('.ni-on') && !vis('.ni-off'); const h = getComputedStyle(document.querySelector('.tab[data-s="home"] .ni-off')).display !== 'none';
-    showScreen('more'); const b = document.querySelectorAll('#screen-more .mi-badge').length; const white = getComputedStyle(document.querySelector('#more-acc .mi-badge svg')).color;
-    return a && h && b >= 15 && /255, 255, 255/.test(white); }), 'thanh điều hướng: mục chọn icon đặc, mục khác nét mảnh; Cài đặt có ô màu, icon trắng');
+    showScreen('more'); const b = document.querySelectorAll('#screen-more .mi-badge').length; const gold = getComputedStyle(document.querySelector('#more-acc svg.si')).color;
+    return a && h && b === 0 && /194, 154, 92/.test(gold); }), 'thanh điều hướng: mục chọn icon đặc, mục khác nét mảnh; Cài đặt icon một màu vàng đồng bộ');
+  ok(await p.evaluate(() => { showScreen('add'); const t = document.querySelector('#catPicker .cat-emoji') || document.querySelector('.cat-emoji'); showScreen('home'); const x = document.querySelector('#recentList .tx-icon');
+    const st = el => { const c = getComputedStyle(el); return /rgba\(0, 0, 0, 0\)|transparent/.test(c.backgroundColor) && c.backgroundImage === 'none' && parseFloat(c.borderTopWidth) >= 1; }; return !!t && !!x && st(t) && st(x); }), 'icon danh mục: nền trùng giao diện, chỉ có viền (chọn hạng mục + giao dịch)');
   /* mặc định (chưa chọn gì) = emoji của máy */
   const p3 = await (await browser.newContext()).newPage(); await p3.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem('tc_cloud_gate_skip', '1');
     localStorage.setItem('tc_wallets', JSON.stringify([{ id: 1, name: 'A', type: 'cash', balance: 0 }])); localStorage.setItem('tc_txs', JSON.stringify([{ id: 1, type: 'chi', amount: 1, group: 'Ăn uống', item: 'Ăn trưa', icon: 'e:🍜', walletId: 1, date: new Date().toISOString().slice(0, 10) }])); } });

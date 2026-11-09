@@ -1247,16 +1247,20 @@ svg.si{flex:none;}
 .is-prev{display:flex;gap:12px;align-items:center;font-size:26px;line-height:1;}
 .is-prev svg,.is-prev img{width:30px;height:30px;display:block;}
 
-/* v91: icon hiện đại – thanh điều hướng, ô màu trong Cài đặt, ô hạng mục có chiều sâu */
+/* v91: icon hiện đại – thanh điều hướng, ô hạng mục có chiều sâu (Cài đặt giữ icon một màu, v92) */
 .tab .ni-on{display:none;}
 .tab.active .ni-on{display:block;}.tab.active .ni-off{display:none;}
 .tab-icon .ni-on,.tab-icon .ni-off{line-height:0;}
 .tab .tab-icon{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:3px 16px;transition:background .2s,transform .2s;}
 .tab.active .tab-icon{background:rgba(194,154,92,.2);}
 .tab:active .tab-icon{transform:scale(.92);}
-.mi-badge{flex:none;width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:var(--mi,#8e8e93);
-  background-image:linear-gradient(160deg,rgba(255,255,255,.28),rgba(255,255,255,0) 60%);box-shadow:0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.25);}
-.mi-badge svg{width:19px!important;height:19px!important;color:#fff!important;}
 .cat-emoji,.tx-icon,.dc-ic,.acc-ic{position:relative;border-radius:32%!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 2px 8px rgba(0,0,0,.16);isolation:isolate;}
 .cat-emoji::before,.tx-icon::before,.dc-ic::before,.acc-ic::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(155deg,rgba(255,255,255,.14),rgba(255,255,255,0) 55%);pointer-events:none;z-index:-1;}
 .emo-ic{filter:drop-shadow(0 2px 2px rgba(0,0,0,.22));}
+
+/* v92: icon danh mục – nền trùng nền giao diện, chỉ có viền bo tròn (đồng bộ mọi nơi: chọn hạng mục, giao dịch, chi tiêu lớn nhất) */
+.cat-emoji,.tx-icon{background:transparent!important;border:1.5px solid rgba(226,194,139,.32);box-shadow:none!important;box-sizing:border-box;}
+.cat-emoji::before,.tx-icon::before{display:none;}
+.cat-emoji .emo-ic,.tx-icon .emo-ic{filter:none;}
+.cp-editbtn .cat-emoji{background:transparent!important;border-style:dashed;}
+.cat-btn.selected .cat-emoji,.cs-item.selected .cat-emoji,.cs-ghead.selected .cat-emoji{border-color:#e2c28b;border-width:2px;}
