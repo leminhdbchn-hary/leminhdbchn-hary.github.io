@@ -1103,7 +1103,7 @@ function renderModeSwitch(){
 function renderSkinOpts(){const cur=window.getSkinPref?getSkinPref():(window.getSkin?getSkin():'gold');document.querySelectorAll('.skin-opt[data-skin]').forEach(b=>b.classList.toggle('active',b.dataset.skin===cur));renderFsOpts();}
 function getFontSize(){let v=13;try{v=parseFloat(localStorage.getItem('tc_fs'))||13;}catch(e){}return v;}
 function renderFsOpts(){const cur=getFontSize();document.querySelectorAll('.fs-opt').forEach(b=>b.classList.toggle('active',parseFloat(b.dataset.fs)===cur));}
-const FS_NAMES={12:'Nhỏ',13:'Vừa',14.5:'Lớn',16:'Rất lớn'},SKIN_NAMES={gold:'Vàng đen',sky:'Xanh trắng',red:'Đỏ trắng',mono:'Tối giản',auto:'Tự động theo máy'};
+const FS_NAMES={12:'Nhỏ',13:'Vừa',14.5:'Lớn',16:'Rất lớn'},SKIN_NAMES={gold:'Vàng đen',sky:'Xanh trắng',red:'Đỏ trắng',mono:'Tối giản',apple:'Apple',auto:'Tự động theo máy'};
 function toggleMoreGroup(id){const g=document.getElementById(id);if(g)g.classList.toggle('open');}
 function renderMoreGroups(){
   const h=(id,ic,txt,val)=>{const e=document.getElementById(id);if(e)e.innerHTML='<span>'+icon(ic,'#c29a5c',20)+'</span><span>'+txt+'</span><span class="grp-val">'+(val||'')+'</span><span class="grp-chev">›</span>';};
@@ -1112,7 +1112,7 @@ function renderMoreGroups(){
   h('more-fs','textsize','Cỡ chữ & số',FS_NAMES[getFontSize()]||(getFontSize()+'px'));
 }
 function chooseFontSize(v){try{localStorage.setItem('tc_fs',String(v));}catch(e){}document.documentElement.style.setProperty('--fs',v+'px');renderFsOpts();renderMoreGroups();showMiniToast('Đã đổi cỡ chữ & số: '+(FS_NAMES[v]||v+'px'));}
-function chooseSkin(s){if(window.setSkin)setSkin(s);renderSkinOpts();showMiniToast(s==='auto'?'Giao diện tự đổi sáng/tối theo cài đặt điện thoại':'Đã đổi sang giao diện '+({sky:'Xanh trắng',red:'Đỏ trắng',mono:'Tối giản'}[s]||'Vàng đen'));try{renderMoreGroups();}catch(e){}}
+function chooseSkin(s){if(window.setSkin)setSkin(s);renderSkinOpts();showMiniToast(s==='auto'?'Giao diện tự đổi sáng/tối theo cài đặt điện thoại':'Đã đổi sang giao diện '+({sky:'Xanh trắng',red:'Đỏ trắng',mono:'Tối giản',apple:'Apple'}[s]||'Vàng đen'));try{renderMoreGroups();}catch(e){}}
 function toggleTuTien(){
   if(!isOwner()){showMiniToast('Chế độ Tu tiên chỉ dành cho chủ app',true);return;}
   const on=!isTuTien();
@@ -3138,7 +3138,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='93';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='94';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

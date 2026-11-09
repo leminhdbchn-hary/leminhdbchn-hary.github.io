@@ -1357,3 +1357,9 @@ button:active,.tx-item:active,.more-item:active,.acc-row:active,.dc-row:active,.
 .about-sec b{font-size:13.5px;}
 .about-sec p{margin:4px 0 0;font-size:12.5px;color:var(--sub);line-height:1.5;}
 .about-small{font-size:11.5px!important;}
+
+.sw-apple{background:linear-gradient(135deg,#f2f2f7 50%,#007aff 50%);border:1px solid #c7c7cc}
+
+/* v94: chữ đủ rõ ở mọi giao diện (kiểm bằng tests/contrast.js) */
+html:not([class*="skin-"]) .debt-pay-row button{color:#062a14;}
+html:not([class*="skin-"]) .loan-badge.overdue,html.skin-mono .loan-badge.overdue{color:#a61b13!important;}

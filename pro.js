@@ -37,7 +37,7 @@ function renderDlg(){
   const close=ok=>{const cur=queue.shift();const v=ok&&cur.kind==='prompt'?$('appDlgIn').value:null;renderDlg();if(ok&&cur.onOk)cur.onOk(v);};
   $('appDlgOk').onclick=()=>close(true);if($('appDlgNo'))$('appDlgNo').onclick=()=>close(false);
   r.onclick=e=>{if(e.target===r&&d.kind!=='alert')close(false);};
-  setTimeout(()=>{const i=$('appDlgIn');if(i){i.focus();i.select();}else $('appDlgOk').focus();},30);
+  setTimeout(()=>{const i=$('appDlgIn'),ok=$('appDlgOk');if(i){i.focus();i.select();}else if(ok)ok.focus();},30);
 }
 function replay(g){
   replaying++;openedInReplay=false;
@@ -93,13 +93,18 @@ function richEmpty(){
    4. BIỂU ĐỒ TÔNG VÀNG (cơ cấu chi tiêu)
    ===================================================================== */
 const GOLD=['#e2c28b','#c9a46a','#b08850','#97713e','#7d5d33','#f0dcb4','#d8b67c','#a98549','#8a6a3a','#6e532c'];
+const PALS={apple:['#007aff','#5ac8fa','#34c759','#ff9500','#af52de','#ff2d55','#ffcc00','#5856d6','#a2845e','#8e8e93'],
+  sky:['#1487d8','#2ea6ef','#0e6fb8','#6cc3f5','#0a4f8c','#9ad5f8','#075a96','#4eb5f1','#0b7bc4','#b8e1fa'],
+  red:['#e2142d','#f03a4a','#b80a20','#f67b86','#8e0818','#fbb1b8','#cf1027','#f25563','#a30a1e','#fcd0d4'],
+  mono:['#f2efe9','#d0cbc3','#aaa59d','#8a857e','#6b6760','#4d4a45','#e2ddd5','#bdb8b0','#979289','#7a756e']};
+function donutPal(){let s='gold';try{s=window.getSkin?getSkin():'gold';}catch(e){}return PALS[s]||GOLD;}
 function goldDonut(){
-  const dn=document.querySelector('#repDonut .donut');if(!dn||dn.dataset.gold)return;
+  const dn=document.querySelector('#repDonut .donut');if(!dn)return;if(dn.dataset.gold===(window.getSkin?getSkin():'gold'))return;
   const leg=[...document.querySelectorAll('#repDonut .donut-legend > div')];
   const m=(dn.getAttribute('style')||'').match(/conic-gradient\((.*)\)/);if(!m)return;
-  let i=0;const seg=m[1].replace(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))(\s+[\d.]+deg\s+[\d.]+deg)/g,(_,c,rest)=>GOLD[(i++)%GOLD.length]+rest);
-  dn.style.background='conic-gradient('+seg+')';dn.dataset.gold='1';
-  leg.forEach((l,k)=>{const d=l.querySelector('i');if(d)d.style.background=GOLD[k%GOLD.length];});
+  const PAL=donutPal();let i=0;const seg=m[1].replace(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))(\s+[\d.]+deg\s+[\d.]+deg)/g,(_,c,rest)=>PAL[(i++)%PAL.length]+rest);
+  dn.style.background='conic-gradient('+seg+')';dn.dataset.gold=(window.getSkin?getSkin():'gold');
+  leg.forEach((l,k)=>{const d=l.querySelector('i');if(d)d.style.background=PAL[k%PAL.length];});
 }
 
 /* =====================================================================

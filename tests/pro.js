@@ -63,7 +63,8 @@ async function page(browser, seed, opts) {
   const a = await p.evaluate(() => { localStorage.setItem('tc_pin_hash', 'x'); renderHome(); showScreen('more'); const vis = getComputedStyle(document.getElementById('more-autolock')).display !== 'none';
     openAutoLock(); const n = document.querySelectorAll('#appModalBody .is-opt').length; setAutoLock(5); const ms = autoLockMs(); openAbout(); return { vis, n, ms }; });
   await p.waitForTimeout(200); const ab = await p.evaluate(() => document.getElementById('appModalBody').innerText); await p.evaluate(() => { closeAppModal(); localStorage.removeItem('tc_pin_hash'); });
-  ok(a.vis && a.n === 4 && a.ms === 300000 && /Phiên bản 93/.test(ab) && /Dữ liệu của bạn ở đâu/.test(ab) && /Tự khoá: sau 5 phút/.test(ab), '13–14 tự khoá chọn được 4 mức; trang Giới thiệu & Bảo mật', { a, ab: ab.slice(0, 200) });
+  const ver = await p.evaluate(() => APP_VERSION);
+  ok(a.vis && a.n === 4 && a.ms === 300000 && ab.includes('Phiên bản ' + ver) && /Dữ liệu của bạn ở đâu/.test(ab) && /Tự khoá: sau 5 phút/.test(ab), '13–14 tự khoá chọn được 4 mức; trang Giới thiệu & Bảo mật', { a, ab: ab.slice(0, 200) });
   ok(await p.evaluate(() => { showScreen('more'); return [...document.querySelectorAll('#screen-more .more-sec')].map(h => h.textContent).includes('Dữ liệu & bảo mật') && !!document.getElementById('more-about').offsetParent; }), '14b mục Giới thiệu nằm trong nhóm Dữ liệu & bảo mật');
   ok(p.errs.length === 0, 'không lỗi JS', p.errs); await p.ctx.close();
 

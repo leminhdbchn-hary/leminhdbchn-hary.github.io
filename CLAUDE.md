@@ -20,4 +20,5 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 - `ux3.js` – báo cáo bấm được + ▲▼ kỳ trước, ví dạng danh sách + xem nhanh, cài đặt chia nhóm, chọn nhiều giao dịch, dòng "Hôm nay"
 - `icons.js` + `icons3d/` – bộ biểu tượng (Fluent Emoji phẳng & 3D – MIT, Solar – CC BY 4.0), xem ICONS-LICENSE.md; Cài đặt › Kiểu biểu tượng hạng mục: Emoji của máy (mặc định) / Phẳng / 3D; icon giao diện luôn là Solar
 - `pro.js` – hộp thông báo/xác nhận của app, màn chào người mới, kéo xuống làm mới, màn trống có hướng dẫn, số tiền "chạy", tự khoá, Giới thiệu & Bảo mật, màn khởi động
+- Giao diện màu thêm `apple` (phong cách iOS) trong `skin.js`; `tests/contrast.js [skin...]` quét độ rõ chữ ở mọi màn hình
 - `cloud.js` – đăng nhập Google / Firestore; `store.js` – IndexedDB; `sw.js` – chạy offline
