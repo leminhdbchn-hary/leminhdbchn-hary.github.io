@@ -110,7 +110,7 @@ window.walletQuickAll=function(id){closeAppModal();Object.assign(histF,{q:'',typ
    5. CÀI ĐẶT CHIA NHÓM
    ===================================================================== */
 const MORE_SECS=[['Ghi chép',['more-sms','more-hist','more-recur','more-cats','more-split']],['Tiền & ví',['more-acc','more-budget','more-goals']],
-  ['Vay & nợ',['more-loans','more-debts','more-borrow','more-adv','more-family']],['Dữ liệu & bảo mật',['grp-backup','more-lock','more-bio','more-admin','more-update']],
+  ['Vay & nợ',['more-loans','more-debts','more-borrow','more-adv','more-family']],['Dữ liệu & bảo mật',['grp-backup','more-lock','more-autolock','more-bio','more-admin','more-update','more-about']],
   ['Giao diện',['grp-skin','grp-fs','more-iconstyle','more-mode','more-reward','more-chars']]];
 function groupMore(){
   const inner=document.querySelector('#screen-more .inner'),anchor=$('more-trash');if(!inner||!anchor)return;

@@ -3069,6 +3069,9 @@ function openPinSettings(){
   if(c==='1')pinShow('verifyChange');else if(c==='2')pinShow('verifyChangeUser');else if(c==='3')pinShow('verifyOff');
 }
 function lockOn(){return pinIsSet()||bioIsSet();}
+/* Tự khoá (Cài đặt › Tự khoá): số phút sau khi rời app / không dùng; mặc định 1 phút như trước */
+function autoLockMin(){let v=1;try{const s=localStorage.getItem('tc_autolock');if(s!==null&&s!=='')v=+s;}catch(e){}return [0,1,5,15].includes(v)?v:1;}
+function autoLockMs(){return autoLockMin()*60000;}
 function updateLockMenu(){const e=document.getElementById('more-lock');if(e)e.innerHTML='<span>'+icon('lock','#c29a5c',20)+'</span><span>Tên đăng nhập & mật khẩu</span><span style="margin-left:auto;font-size:12.5px;color:'+(pinIsSet()?'var(--green)':'var(--sub)')+'">'+(pinIsSet()?(userIsSet()?'Đang bật':'Chưa có tên'):'Chưa bật')+'</span>';}
 function updateCloudMenu(){
   const e=document.getElementById('more-cloud');if(!e)return;
@@ -3127,7 +3130,7 @@ async function bioUnlock(silent){
 }
 bioCheck();
 // Khoá lại khi rời app quá 1 phút
-document.addEventListener('visibilitychange',()=>{if(!lockOn())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>60000){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
+document.addEventListener('visibilitychange',()=>{if(!lockOn())return;if(document.hidden)pinHiddenAt=Date.now();else if(pinHiddenAt&&Date.now()-pinHiddenAt>=autoLockMs()){document.documentElement.classList.add('is-locked');pinShow('unlock');}});
 if(lockOn())pinShow('unlock');
 updateLockMenu();
 updateCloudMenu();
@@ -3135,7 +3138,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='92';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='93';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
