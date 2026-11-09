@@ -26,7 +26,7 @@ const ok = (c, n, x) => { if (c) pass++; else { fail++; fails.push(n + (x !== un
   ok(r1.card === -700000, 'chi thẻ: dư nợ tăng', r1.card);
   ok(r1.chi === 700000, 'chi thẻ: tổng chi tăng', r1.chi);
   ok(r1.nw.cardDebt === 700000 && r1.nw.ready === 6000000 && r1.nw.net === 5300000, 'tài sản ròng', r1.nw);
-  const cardHtml = await p.evaluate(() => { showScreen('accounts'); return document.querySelector('.wcard-credit').innerText; });
+  const cardHtml = await p.evaluate(() => { showScreen('accounts'); const list = [...document.querySelectorAll('.acc-row')].map(r => r.innerText).join('|'); setAccView('card'); const t = document.querySelector('.wcard-credit').innerText; setAccView('list'); return /Thẻ tín dụng/.test(document.getElementById('accList').innerText) && /−700\.000/.test(list) ? t : 'list-fail:' + list; });
   ok(/Dư nợ thẻ/.test(cardHtml) && /Trả nợ thẻ/.test(cardHtml), 'hiển thị thẻ', cardHtml);
   // Trả nợ thẻ một phần từ Ngân hàng
   await p.evaluate(id => { openCreditPay(id); document.getElementById('ccPaySrc').value = '2'; document.getElementById('ccPayAmt').value = '500.000'; saveCreditPay(id); }, card.id);

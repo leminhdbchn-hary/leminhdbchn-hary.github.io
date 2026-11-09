@@ -281,7 +281,7 @@ window.checkBackupReminder=function(){
    8. TÌM KIẾM GIAO DỊCH: thanh tìm ở Tổng quan, gợi ý tên hạng mục, tổng hợp kết quả từ trước đến nay
    ===================================================================== */
 window.openHistSearch=function(q){
-  if(typeof q==='string'){histF.q=q;histF.type='';histF.month='';histF.group='';}
+  if(typeof q==='string'){histF.q=q;histF.type='';histF.month='';histF.group='';histF.wallet='';histF.from='';histF.to='';}
   showScreen('history');
   const i=document.getElementById('hfQ');if(i){i.value=histF.q;['hfType','hfMonth','hfGroup'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=histF[{hfType:'type',hfMonth:'month',hfGroup:'group'}[id]];});}
   renderHistory(true);

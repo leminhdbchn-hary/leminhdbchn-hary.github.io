@@ -1019,7 +1019,7 @@ function rewardBtnHTML(t){
   if(t.reward_status==='REWARDED')return '<button class="rw-badge rw-done" title="Đã x2: '+t.reward_points+' linh lực" onclick="event.stopPropagation()">✓</button>';
   return '<button class="rw-badge rw-pending" title="Đánh dấu chi tiêu hợp lý (x2 linh lực)" onclick="awardSavingReward('+t.id+')">✨</button>';
 }
-const histF={q:'',type:'',group:'',month:''};
+const histF={q:'',type:'',group:'',month:'',wallet:'',from:'',to:''};
 function stripVN(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();}
 function setHistF(k,v){histF[k]=v;renderHistory(true);}
 function renderHistory(keepFilters){
@@ -1028,24 +1028,28 @@ function renderHistory(keepFilters){
   if(fb&&!keepFilters){
     const months=[...new Set(txs.map(t=>(t.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
     const groups=[...new Set([...GROUPS.chi,...GROUPS.thu].map(g=>g.name))];
-    document.getElementById('hfMonth').innerHTML='<option value="">Mọi tháng</option>'+months.map(m=>'<option value="'+m+'"'+(histF.month===m?' selected':'')+'>Tháng '+(+m.slice(5,7))+'/'+m.slice(0,4)+'</option>').join('');
+    document.getElementById('hfMonth').innerHTML='<option value="">Mọi tháng</option><option value="range"'+(histF.month==='range'?' selected':'')+'>Khoảng ngày…</option>'+months.map(m=>'<option value="'+m+'"'+(histF.month===m?' selected':'')+'>Tháng '+(+m.slice(5,7))+'/'+m.slice(0,4)+'</option>').join('');
+    const hw=document.getElementById('hfWallet');if(hw)hw.innerHTML='<option value="">Mọi ví</option>'+wallets.map(w=>'<option value="'+w.id+'"'+(String(histF.wallet)===String(w.id)?' selected':'')+'>'+String(w.name).replace(/</g,'‹')+'</option>').join('');
     document.getElementById('hfGroup').innerHTML='<option value="">Mọi nhóm</option>'+groups.map(g=>'<option'+(histF.group===g?' selected':'')+'>'+g+'</option>').join('');
   }
   const q=stripVN(histF.q.trim());
   const res=txs.filter(t=>{
     if(histF.type&&t.type!==histF.type)return false;
-    if(histF.month&&(t.date||'').slice(0,7)!==histF.month)return false;
+    if(histF.month==='range'){if(histF.from&&(t.date||'')<histF.from)return false;if(histF.to&&(t.date||'')>histF.to)return false;}
+    else if(histF.month&&(t.date||'').slice(0,7)!==histF.month)return false;
+    if(histF.wallet){const w=wallets.find(x=>String(x.id)===String(histF.wallet));if(String(t.walletId)!==String(histF.wallet)&&!(w&&(t.fromName===w.name||t.toName===w.name)))return false;}
     if(histF.group&&t.group!==histF.group)return false;
     if(q){const hay=stripVN([t.item,t.group,t.note,t.person,t.fromName,t.toName,t.amount,fmtShort(t.amount)].join(' '));if(!q.split(/\s+/).every(w=>hay.includes(w)))return false;}
     return true;});
-  const filtered=histF.q||histF.type||histF.month||histF.group;
+  const filtered=histF.q||histF.type||histF.month||histF.group||histF.wallet;
+  const hr=document.getElementById('hfRange');if(hr)hr.style.display=histF.month==='range'?'flex':'none';
   const sumChi=res.filter(t=>t.type==='chi'&&isCashFlow(t)).reduce((s,t)=>s+(t.amount||0),0),sumThu=res.filter(t=>t.type==='thu'&&isCashFlow(t)).reduce((s,t)=>s+(t.amount||0),0);
   const sumEl=document.getElementById('historySum');
   if(sumEl)sumEl.innerHTML=txs.length?'<span>'+res.length+' giao dịch</span><span class="hs-thu">Thu '+fmtShort(sumThu)+'</span><span class="hs-chi">Chi '+fmtShort(sumChi)+'</span>'+(filtered?'<button onclick="clearHistF()">Xoá lọc</button>':''):'';
   list.innerHTML=res.length?txByDayHTML(res):'<div class="empty">'+(txs.length?'Không tìm thấy giao dịch phù hợp.':'Chưa có giao dịch nào.')+'</div>';
   window.histRes=res;
 }
-function clearHistF(){histF.q='';histF.type='';histF.group='';histF.month='';const i=document.getElementById('hfQ');if(i)i.value='';document.getElementById('hfType').value='';renderHistory();}
+function clearHistF(){histF.q='';histF.type='';histF.group='';histF.month='';histF.wallet='';histF.from='';histF.to='';const i=document.getElementById('hfQ');if(i)i.value='';document.getElementById('hfType').value='';['hfFrom','hfTo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderHistory();}
 
 
 /* ---------- CHẾ ĐỘ: Bình thường (mặc định) / Tu tiên (linh thú, nhân vật, video) ---------- */
@@ -3102,7 +3106,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='85';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='86';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}

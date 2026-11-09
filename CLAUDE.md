@@ -17,4 +17,5 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 - `skin.js` – giao diện màu (gold, sky, red, mono = Tối giản); `app.css` – style
 - `more.js` – mẫu ghi nhanh, gợi ý hạng mục, tạm ứng chờ thu, lọc báo cáo theo ví, tỷ lệ tiết kiệm, nhắc vay, nhắc sao lưu, tìm kiếm giao dịch
 - `ux2.js` – màn Thêm gọn (số tiền lên đầu, gợi ý số tiền, Lưu & ghi tiếp, giữ nháp), vuốt để xoá, thanh ngân sách tháng
+- `ux3.js` – báo cáo bấm được + ▲▼ kỳ trước, ví dạng danh sách + xem nhanh, cài đặt chia nhóm, chọn nhiều giao dịch, dòng "Hôm nay"
 - `cloud.js` – đăng nhập Google / Firestore; `store.js` – IndexedDB; `sw.js` – chạy offline
