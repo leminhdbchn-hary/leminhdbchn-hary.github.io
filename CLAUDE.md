@@ -18,4 +18,5 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 - `more.js` – mẫu ghi nhanh, gợi ý hạng mục, tạm ứng chờ thu, lọc báo cáo theo ví, tỷ lệ tiết kiệm, nhắc vay, nhắc sao lưu, tìm kiếm giao dịch
 - `ux2.js` – màn Thêm gọn (số tiền lên đầu, gợi ý số tiền, Lưu & ghi tiếp, giữ nháp), vuốt để xoá, thanh ngân sách tháng
 - `ux3.js` – báo cáo bấm được + ▲▼ kỳ trước, ví dạng danh sách + xem nhanh, cài đặt chia nhóm, chọn nhiều giao dịch, dòng "Hôm nay"
+- `icons.js` – bộ biểu tượng (Fluent Emoji – MIT, Solar – CC BY 4.0), xem ICONS-LICENSE.md; Cài đặt › Kiểu biểu tượng để dùng lại emoji của máy
 - `cloud.js` – đăng nhập Google / Firestore; `store.js` – IndexedDB; `sw.js` – chạy offline

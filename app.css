@@ -1226,3 +1226,12 @@ body.hist-selecting .tx-item>.icon-btn,body.hist-selecting .tx-item>.rw-badge{di
 .today-line .tl-go{opacity:.6;}
 #historyFilters .hf-row:not(.hf-range){display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 @media (min-width:700px){#historyFilters .hf-row:not(.hf-range){grid-template-columns:repeat(4,1fr);}}
+
+/* v88: bộ biểu tượng mới */
+.emo-ic svg.fe{display:block;width:1em;height:1em;}
+.emo-ic{display:inline-flex;align-items:center;justify-content:center;line-height:1;}
+.dc-ic svg.fe{width:20px;height:20px;}
+.emo-pick button svg.fe{width:22px;height:22px;display:block;margin:auto;}
+svg.si{flex:none;}
+.icon-credits{font-size:11px;color:var(--sub);text-align:center;margin:14px 8px 6px;line-height:1.5;}
+.icon-credits a{color:inherit;}
