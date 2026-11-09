@@ -310,7 +310,7 @@ function renderCatMgr(){
 }
 function toggleCatHidden(type,g,it){const c=ensureCC(type);const k=g+'|'+it;const i=c.hidden.indexOf(k);if(i>=0)c.hidden.splice(i,1);else c.hidden.push(k);catSave();}
 function emojiPickerHtml(id,cur){return '<div class="emo-pick">'+EMOJI_PICK.map(e=>'<button type="button" class="'+(e===cur?'on':'')+'" onclick="document.getElementById(\''+id+'\').value=\''+e+'\';this.parentNode.querySelectorAll(\'button\').forEach(b=>b.classList.remove(\'on\'));this.classList.add(\'on\')">'+e+'</button>').join('')+'</div>';}
-function validCatName(n){return n&&!/[|]/.test(n)&&n.length<=40;}
+function validCatName(n){return n&&!/[|<>]/.test(n)&&n.length<=40;}
 function openCatGroupAdd(){
   const type=catMgrType;
   openModal('<h3>Thêm nhóm '+(type==='chi'?'chi':'thu')+' mới</h3><div class="we-form">'+
