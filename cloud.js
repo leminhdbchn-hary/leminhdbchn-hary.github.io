@@ -7,7 +7,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, writeBatch, collection, getDocs
+  getFirestore, doc, getDoc, setDoc, writeBatch, collection, getDocs, deleteDoc, query, where, limit
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -206,6 +206,34 @@ async function adminListUsers() {
   return out;
 }
 
+/* Hộp thư tự động (bank.js): Phím tắt / MacroDroid chỉ GHI tin vào inbox/{mã}/items; app (đã đăng nhập) đọc rồi xoá.
+   Mã bí mật ngẫu nhiên do chủ sổ đăng ký ở inboxOwners/{mã} (xem firestore.rules). */
+async function inboxGetSecret() {
+  if (!currentUser) throw new Error('NOT_LOGGED_IN');
+  const snap = await getDocs(query(collection(db, 'inboxOwners'), where('uid', '==', currentUser.uid), limit(1)));
+  let s = null; snap.forEach((d) => { if (!s) s = d.id; });
+  return s;
+}
+async function inboxClaim(secret) {
+  if (!currentUser) throw new Error('NOT_LOGGED_IN');
+  await setDoc(doc(db, 'inboxOwners', secret), { uid: currentUser.uid, at: Date.now() });
+}
+async function inboxRelease(secret) {
+  if (!currentUser) throw new Error('NOT_LOGGED_IN');
+  await deleteDoc(doc(db, 'inboxOwners', secret));
+}
+async function inboxPull(secret, max) {
+  if (!currentUser) throw new Error('NOT_LOGGED_IN');
+  const snap = await getDocs(query(collection(db, 'inbox', secret, 'items'), limit(max || 30)));
+  const out = [];
+  snap.forEach((d) => { const x = d.data() || {}; out.push({ id: d.id, t: String(x.t || ''), s: String(x.s || '') }); });
+  return out;
+}
+async function inboxDelete(secret, ids) {
+  if (!currentUser) throw new Error('NOT_LOGGED_IN');
+  for (const id of ids) { try { await deleteDoc(doc(db, 'inbox', secret, 'items', id)); } catch (e) { /* lần sau xoá lại; tin trùng sẽ bị bỏ qua */ } }
+}
+
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   ls.set('tc_owner', isOwnerUser(user) ? '1' : null);
@@ -226,6 +254,8 @@ const Cloud = window.Cloud = {
   signInGoogle, logout, pushState, pullState, queuePush, flushPush, readMeta, markApplied,
   applying: false,
   touchPresence, adminListUsers,
+  inboxGetSecret, inboxClaim, inboxRelease, inboxPull, inboxDelete,
+  config: { projectId: firebaseConfig.projectId, apiKey: firebaseConfig.apiKey },
   isOwner: () => isOwnerUser(currentUser),
   isLoggedIn: () => !!currentUser,
   currentUserInfo: () => (currentUser ? { email: currentUser.email || '', name: currentUser.displayName || '', photo: currentUser.photoURL || '' } : null),

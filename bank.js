@@ -75,32 +75,42 @@ function dupState(p){
 function refresh(){try{renderHome();}catch(e){}try{if(currentScreen()==='history')renderHistory();}catch(e){}try{renderBar();}catch(e){}}
 
 /* ---------- nhận tin ---------- */
-window.bankIngest=function(text){
-  if(!getSpendableWallets().length){alert('Hãy tạo ví trước (Ví tiền → Thêm ví) rồi dán lại tin ngân hàng nhé.');return null;}
-  const all=SmsParse.parseBankSms(String(text||''));
-  const rows=all.filter(r=>r.ok&&!r.otp);
-  const rep={auto:[],pend:0,skip:all.length-rows.length,dup:0};
-  rows.forEach(r=>{
-    const name=merchantOf(r),p={id:newId(),raw:maskRaw(r.raw),type:r.type,amount:r.amount,date:r.date,time:r.time||'',bank:r.bank||'',name,key:keyOf(name),smsKey:skey(r.raw),uncertain:!!r.uncertain};
-    p.walletId=walletFor(p.bank);
-    const d=dupState(p);if(d==='hard'){rep.dup++;return;}
-    const known=p.key&&bankDB.merch[p.key];
-    if(known&&bankDB.auto&&!d&&!p.uncertain&&known.t===p.type&&catValid(p.type,known.g,known.i)){
-      const tx=record(p,known.g,known.i,{auto:true,nocf:known.nocf});
-      if(tx){known.n=(known.n||0)+1;known.last=Date.now();rep.auto.push({txId:tx.id,p,label:known.i});return;}
-    }
-    if(d==='maybe')p.maybeDup=true;
-    bankDB.pend.unshift(p);rep.pend++;
+function ingestCore(entries,opts){
+  opts=opts||{};
+  if(!getSpendableWallets().length){if(!opts.silent)alert('Hãy tạo ví trước (Ví tiền → Thêm ví) rồi dán lại tin ngân hàng nhé.');return null;}
+  const rep={auto:[],pend:0,skip:0,dup:0};
+  entries.forEach(en=>{
+    const all=SmsParse.parseBankSms(String(en.text||''));
+    const rows=all.filter(r=>r.ok&&!r.otp);rep.skip+=all.length-rows.length;
+    rows.forEach(r=>{
+      if(en.bank&&!r.bank)r.bank=en.bank;
+      const name=merchantOf(r),p={id:newId(),raw:maskRaw(r.raw),type:r.type,amount:r.amount,date:r.date,time:r.time||'',bank:r.bank||'',name,key:keyOf(name),smsKey:skey(r.raw),uncertain:!!r.uncertain};
+      p.walletId=walletFor(p.bank);
+      const d=dupState(p);if(d==='hard'){rep.dup++;return;}
+      const known=p.key&&bankDB.merch[p.key];
+      if(known&&bankDB.auto&&!d&&!p.uncertain&&known.t===p.type&&catValid(p.type,known.g,known.i)){
+        const tx=record(p,known.g,known.i,{auto:true,nocf:known.nocf});
+        if(tx){known.n=(known.n||0)+1;known.last=Date.now();rep.auto.push({txId:tx.id,p,label:known.i});return;}
+      }
+      if(d==='maybe')p.maybeDup=true;
+      bankDB.pend.unshift(p);rep.pend++;
+    });
   });
   if(bankDB.pend.length>100)bankDB.pend.length=100;
   saveAll();refresh();
   const parts=[];if(rep.auto.length)parts.push('tự ghi '+rep.auto.length+' khoản quen');if(rep.pend)parts.push(rep.pend+' khoản chờ xác nhận');
   if(rep.dup)parts.push('bỏ '+rep.dup+' tin đã nhập');if(rep.skip)parts.push(rep.skip+' tin không phải giao dịch (OTP…)');
   lastNote=parts.length?'Đã nhận: '+parts.join(' · ')+'.':'Không có giao dịch nào trong nội dung đã dán.';
-  shownAuto=rep.auto;
-  if(rep.pend||rep.auto.length)openBankInbox();else showMiniToast(lastNote,true);
+  if(opts.silent){
+    shownAuto=rep.auto.concat(shownAuto).slice(0,20);
+    if(rep.auto.length||rep.pend)showMiniToast('📩 Hộp thư: '+parts.filter(x=>!/^bỏ|không phải/.test(x)).join(' · '));
+  }else{
+    shownAuto=rep.auto;
+    if(rep.pend||rep.auto.length)openBankInbox();else showMiniToast(lastNote,true);
+  }
   return rep;
-};
+}
+window.bankIngest=function(text,opts){return ingestCore([{text,bank:(opts||{}).bank}],opts||{});};
 
 /* ---------- hộp "Chờ xác nhận" ---------- */
 function otherOpts(type){return '<option value="">Hạng mục khác…</option>'+(GROUPS[type]||[]).map(G=>'<optgroup label="'+E(G.name)+'">'+visibleItems(type,G).map(it=>'<option value="'+E(G.name+'|||'+it)+'">'+E(itemEmoji(type,G.name,it)+' '+it)+'</option>').join('')+'</optgroup>').join('');}
@@ -180,7 +190,8 @@ window.openBankSettings=function(){
     '<div class="bk-set"><div><b>Tự ghi khoản quen</b><small>Nơi chi đã chọn hạng mục một lần thì lần sau ghi thẳng, không hỏi lại.</small></div><div class="switch'+(bankDB.auto?' on':'')+'" onclick="bankToggleAuto()" role="switch" aria-checked="'+(bankDB.auto?'true':'false')+'"><span></span></div></div>'+
     '<div class="bk-sec">Nơi chi đã nhớ ('+rows.length+')</div>'+
     (rows.length?rows.map(([k,m])=>'<div class="bk-mem"><span><b>'+E(m.name||k)+'</b><small>→ '+(m.nocf?'Không tính thu chi':E(m.i||''))+' · '+(m.n||1)+' lần</small></span><button type="button" data-k="'+encodeURIComponent(k)+'" onclick="bankForget(this.dataset.k)" aria-label="Quên">✕</button></div>').join('')+'<button type="button" class="hq-toggle" onclick="bankForgetAll()">Xoá tất cả nơi chi đã nhớ</button>':'<div class="bk-hint">Chưa nhớ nơi chi nào. Khi bạn chọn hạng mục cho một khoản ở "Chờ xác nhận", nơi chi đó sẽ hiện ở đây.</div>')+
-    '<div class="bk-sec">Đưa tin vào app nhanh hơn</div>'+
+    inboxSection()+
+    '<div class="bk-sec">Cách khác: dán tin / link</div>'+
     '<div class="bk-tip"><b>iPhone</b> (Phím tắt): Tự động hoá → Tin nhắn → chọn người gửi hoặc nội dung chứa "VND" → <i>Chạy ngay</i> → thêm "Sao chép vào bộ nhớ tạm" với <i>Nội dung tin nhắn</i>. Khi mở Sổ Thu Chi, bấm <b>📋 Dán tin ngân hàng</b>. (iPhone chỉ đọc được SMS, không đọc được thông báo trong app ngân hàng.)</div>'+
     '<div class="bk-tip"><b>Android</b> (MacroDroid / Tasker): khi có thông báo từ app ngân hàng → mở link <code>'+E(site)+'?sms=</code> kèm nội dung thông báo. App tự nhận tin ngay khi mở.</div>'+
     '<div class="bk-foot"><button type="button" class="save-btn" onclick="closeAppModal()">Xong</button></div></div>');
@@ -188,6 +199,115 @@ window.openBankSettings=function(){
 window.bankToggleAuto=function(){bankDB.auto=!bankDB.auto;saveAll();openBankSettings();};
 window.bankForget=function(k){delete bankDB.merch[decodeURIComponent(k)];saveAll();openBankSettings();};
 window.bankForgetAll=function(){if(!confirm('Xoá tất cả nơi chi đã nhớ? Lần sau máy sẽ hỏi lại từng nơi.'))return;bankDB.merch={};saveAll();openBankSettings();};
+
+/* ---------- hộp thư tự động (Phím tắt / MacroDroid → Firebase của bạn → app) ---------- */
+const SK='tc_inbox_secret',STK='tc_inbox_stat';
+const cl=()=>window.Cloud;
+const secret=()=>{try{return localStorage.getItem(SK)||'';}catch(e){return '';}};
+const setSecret=v=>{try{if(v)localStorage.setItem(SK,v);else localStorage.removeItem(SK);}catch(e){}};
+const readStat=()=>{try{return JSON.parse(localStorage.getItem(STK)||'null');}catch(e){return null;}};
+const setStat=o=>{try{localStorage.setItem(STK,JSON.stringify(o));}catch(e){}};
+const logged=()=>{const C=cl();return !!(C&&C.isLoggedIn&&C.isLoggedIn());};
+function newSecret(){const a=new Uint8Array(32);crypto.getRandomValues(a);return Array.from(a,b=>'abcdefghijklmnopqrstuvwxyz0123456789'[b%36]).join('');}
+function inboxUrl(){const c=cl().config;return 'https://firestore.googleapis.com/v1/projects/'+c.projectId+'/databases/(default)/documents/inbox/'+secret()+'/items?key='+c.apiKey;}
+/* "APPLEPAY|số tiền|nơi bán|thẻ[|tiền tệ]" (Phím tắt tự ghép) → tin chuẩn để bộ đọc hiểu; ngoại tệ thì bỏ qua */
+function amountOf(s){s=String(s||'').replace(/[^\d.,]/g,'');if(!s)return 0;if(/[.,]\d{1,2}$/.test(s)&&!/[.,]\d{3}$/.test(s))s=s.replace(/[.,]\d{1,2}$/,'');return parseInt(s.replace(/[.,]/g,''),10)||0;}
+function fromInbox(it){
+  const t=String(it.t||'').slice(0,2000).trim();if(!t)return null;
+  const m=t.match(/^APPLEPAY\|([^|]*)\|([^|]*)(?:\|([^|]*))?(?:\|([^|]*))?$/i);
+  if(!m)return {text:t,bank:''};
+  const rawAmt=m[1],merchant=(m[2]||'').replace(/\s+/g,' ').trim(),card=(m[3]||'').replace(/\s+/g,' ').trim(),cur=(m[4]||'').trim();
+  if((cur&&!/^(vnd|₫|đ|d)$/i.test(cur))||/[$€£¥]|usd|eur|gbp|jpy/i.test(rawAmt))return {skip:true};
+  const amt=amountOf(rawAmt);if(!amt)return {skip:true};
+  return {text:'Apple Pay'+(card?' '+card:'')+': -'+amt.toLocaleString('en-US')+' VND tai '+(merchant||'Apple Pay')+'.',bank:'Apple Pay'};
+}
+let pulling=false,lastPullAt=0;
+async function inboxRecover(){const C=cl();if(secret()||!logged())return;try{const s=await C.inboxGetSecret();if(s)setSecret(s);}catch(e){}}
+window.bankInboxPull=async function(force){
+  const C=cl();
+  if(!logged()||!navigator.onLine||pulling)return null;
+  if(!secret()){await inboxRecover();}
+  const sec=secret();if(!sec)return null;
+  if(!force&&Date.now()-lastPullAt<20000)return null;
+  pulling=true;lastPullAt=Date.now();
+  try{
+    const items=await C.inboxPull(sec,30);
+    setStat({t:Date.now(),n:items.length,err:''});
+    if(!items.length)return {n:0};
+    const entries=[];let skipped=0;
+    items.forEach(it=>{const e=fromInbox(it);if(!e||e.skip)skipped++;else entries.push(e);});
+    const rep=entries.length?ingestCore(entries,{silent:true}):{auto:[],pend:0,dup:0,skip:0};
+    if(rep===null)return {n:items.length,kept:true}; /* chưa có ví: giữ tin trong hộp thư, lần sau lấy lại */
+    await C.inboxDelete(sec,items.map(i=>i.id));
+    if(skipped)showMiniToast('📩 '+skipped+' tin bỏ qua (ngoại tệ hoặc không đọc được)',true);
+    return {n:items.length,rep};
+  }catch(e){setStat({t:Date.now(),n:0,err:String(e&&e.message||e).slice(0,80)});return null;}
+  finally{pulling=false;}
+};
+window.bankInboxEnable=async function(){
+  const C=cl();if(!logged()){alert('Hãy đăng nhập Google trước (Cài đặt → Sao lưu và đồng bộ).');return;}
+  try{await inboxRecover();let s=secret();if(!s){s=newSecret();await C.inboxClaim(s);setSecret(s);}}
+  catch(e){alert('Chưa bật được hộp thư. Hãy kiểm tra đã dán luật Firebase mới chưa (bấm "Xem luật Firebase cần dán").\n\n'+String(e&&e.message||e).slice(0,120));return;}
+  showMiniToast('✓ Đã bật hộp thư tự động');openBankSettings();
+};
+window.bankInboxRotate=async function(){
+  if(!confirm('Đổi sang mã mới? Phím tắt cũ sẽ ngừng hoạt động cho tới khi bạn dán lại địa chỉ mới.'))return;
+  const C=cl(),old=secret();
+  try{const s=newSecret();await C.inboxClaim(s);setSecret(s);if(old){try{await C.inboxRelease(old);}catch(e){}}}
+  catch(e){alert('Không đổi được mã: '+String(e&&e.message||e).slice(0,120));return;}
+  showMiniToast('✓ Đã đổi mã mới. Nhớ cập nhật lại địa chỉ trong Phím tắt.');openBankSettings();
+};
+window.bankInboxOff=async function(){
+  if(!confirm('Tắt hộp thư tự động? Phím tắt đang chạy sẽ không gửi được tin vào nữa.'))return;
+  const old=secret();try{if(old&&logged())await cl().inboxRelease(old);}catch(e){}
+  setSecret('');setStat(null);openBankSettings();
+};
+window.bankInboxCheck=async function(){
+  const r=await window.bankInboxPull(true);
+  showMiniToast(r?(r.n?'✓ Đã lấy '+r.n+' tin từ hộp thư':'Hộp thư đang trống'):'Chưa kiểm tra được (kiểm tra mạng và luật Firebase)',!r);
+  openBankSettings();
+};
+window.bankCopy=function(what){
+  const t=what==='url'?inboxUrl():String(what||'');
+  const done=()=>showMiniToast('✓ Đã chép');
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>fb());return;}}catch(e){}
+  fb();function fb(){const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy');done();}catch(e){}a.remove();}
+};
+window.bankRulesShow=async function(){
+  let txt='';try{const r=await fetch('firestore.rules',{cache:'no-store'});txt=await r.text();}catch(e){}
+  const i=txt.indexOf('// v96'),j=txt.indexOf('// Mọi thứ khác');
+  const block=i>=0?txt.slice(i,j>i?j:undefined).replace(/\s+$/,''):'(Không tải được luật. Hãy xem tệp firestore.rules trong kho mã.)';
+  window.__bkRules=block;
+  openModal('<div class="bk-box"><h3 style="margin:0">Luật Firebase cần dán</h3><div class="bk-hint">1) Mở <b>Firebase Console</b> → dự án của bạn → <b>Firestore Database</b> → thẻ <b>Rules</b>.<br>2) Dán đoạn dưới đây <b>ngay phía trên dòng</b> <code>// Mọi thứ khác: cấm</code> (giữ nguyên các luật đang có).<br>3) Bấm <b>Publish</b>.</div><pre class="bk-pre">'+E(block)+'</pre><div class="bk-foot"><button type="button" class="save-btn ghost-btn" onclick="bankCopy(window.__bkRules)">Chép luật</button><button type="button" class="save-btn" onclick="openBankSettings()">Quay lại</button></div></div>');
+};
+window.bankGuide=function(kind){
+  const url=secret()?inboxUrl():'(bật hộp thư trước để có địa chỉ)';
+  const send='Thêm hành động <b>Lấy nội dung của URL</b>: dán địa chỉ gửi tin (nút "Chép địa chỉ"). Bấm <b>Hiện thêm</b> → Phương thức <b>POST</b> → Nội dung yêu cầu <b>JSON</b> → thêm trường loại <b>Từ điển</b> tên <code>fields</code> → mở nó, thêm trường <b>Từ điển</b> tên <code>t</code> → mở nó, thêm trường <b>Văn bản</b> tên <code>stringValue</code>, giá trị = ';
+  const G={
+    applepay:{t:'Apple Pay (quẹt thẻ)',steps:['Mở app <b>Phím tắt</b> → thẻ <b>Tự động hóa</b> → bấm <b>+</b>.','Chọn kiểu kích hoạt <b>Giao dịch</b>, chọn các thẻ trong Ví muốn theo dõi → <b>Tiếp</b>.','Chọn <b>Chạy ngay</b> (tắt "Thông báo khi chạy") → <b>Tiếp</b> → tạo phím tắt mới trống.','Thêm hành động <b>Văn bản</b>. Gõ <code>APPLEPAY|</code>, chạm vào ô rồi chọn biến <b>Đầu vào phím tắt</b> → thuộc tính <b>Số tiền</b>; gõ <code>|</code> rồi chọn <b>Người bán</b>; gõ <code>|</code> rồi chọn <b>Thẻ hoặc vé</b>. Kết quả: <code>APPLEPAY|[Số tiền]|[Người bán]|[Thẻ hoặc vé]</code>.',send+'biến <b>Văn bản</b> ở bước trên.','Xong. Quẹt thử một khoản nhỏ rồi mở Sổ Thu Chi (hoặc bấm "Kiểm tra ngay").'],note:'Khoản bằng ngoại tệ không tự ghi (bị bỏ qua). Nơi bán lạ vào Chờ xác nhận, nơi bán quen tự ghi.'},
+    notif:{t:'Thông báo của app ngân hàng (iOS 27)',steps:['Theo màn hình của K2, kiểu kích hoạt <b>Thông báo</b> của app khác chỉ có từ <b>iOS 27</b>. Mình chưa kiểm chứng tên các mục trên iOS 27 nên có thể hơi khác.','Phím tắt → <b>Tự động hóa</b> → <b>+</b> → kiểu kích hoạt Thông báo (nếu có) → chọn app ngân hàng → <b>Chạy ngay</b>.',send+'biến <b>Đầu vào phím tắt</b> (nội dung thông báo).','Tin dạng "VCB: TK … -128,000 VND … ND: …" sẽ được đọc như tin nhắn ngân hàng bình thường.'],note:''},
+    sms:{t:'SMS · Email · Android',steps:['<b>SMS / Email (iPhone):</b> Phím tắt → Tự động hóa → <b>Tin nhắn</b> (tin chứa "VND" hoặc người gửi là ngân hàng) hoặc <b>Email</b> (người gửi là ngân hàng) → <b>Chạy ngay</b>. '+send+'<b>Nội dung tin nhắn</b> (hoặc <b>Nội dung email</b>).','<b>Android (MacroDroid / Tasker):</b> kích hoạt <b>Thông báo nhận được</b> từ app ngân hàng → hành động <b>HTTP Request</b>: POST tới địa chỉ gửi tin, tiêu đề <code>Content-Type: application/json</code>, nội dung <code>{"fields":{"t":{"stringValue":"[nội dung thông báo]"}}}</code>.'],note:'Android đọc được cả thông báo của app ngân hàng.'}
+  }[kind];if(!G)return;
+  openModal('<div class="bk-box"><h3 style="margin:0">'+G.t+'</h3><ol class="bk-steps">'+G.steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+(G.note?'<div class="bk-hint">'+G.note+'</div>':'')+
+    '<div class="bk-foot"><button type="button" class="save-btn ghost-btn" onclick="bankCopy(\'url\')">Chép địa chỉ gửi tin</button><button type="button" class="save-btn" onclick="openBankSettings()">Quay lại</button></div></div>');
+};
+function inboxSection(){
+  const sec=secret(),st=readStat();
+  if(!logged())return '<div class="bk-sec">Hộp thư tự động</div><div class="bk-hint">Cần <b>đăng nhập Google</b> trước (Cài đặt → Sao lưu và đồng bộ). Khi đó Phím tắt có thể tự gửi tin ngân hàng vào app, không cần bấm Dán.</div>';
+  if(!sec)return '<div class="bk-sec">Hộp thư tự động</div><div class="bk-hint">Phím tắt của iPhone tự gửi tin (Apple Pay, thông báo ngân hàng…) lên Firebase của bạn, app tự lấy về và ghi, không cần bấm Dán.</div><div class="bk-btnrow"><button type="button" class="bk-main" onclick="bankInboxEnable()">Bật hộp thư tự động</button><button type="button" onclick="bankRulesShow()">Xem luật Firebase cần dán</button></div>';
+  return '<div class="bk-sec">Hộp thư tự động · đang bật</div>'+
+    '<div class="bk-hint">'+(st&&st.t?'Lần kiểm tra gần nhất '+new Date(st.t).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})+(st.err?' · <b>lỗi:</b> '+E(st.err):' · '+st.n+' tin'):'Chưa kiểm tra lần nào.')+'</div>'+
+    '<div class="bk-url"><small>Địa chỉ gửi tin — giữ kín, ai có địa chỉ này đều gửi được tin vào hộp thư của bạn</small><code id="bkUrl">'+E(inboxUrl())+'</code></div>'+
+    '<div class="bk-btnrow"><button type="button" class="bk-main" onclick="bankCopy(\'url\')">Chép địa chỉ gửi tin</button><button type="button" onclick="bankInboxCheck()">Kiểm tra ngay</button></div>'+
+    '<div class="bk-btnrow"><button type="button" onclick="bankGuide(\'applepay\')">Hướng dẫn Apple Pay</button><button type="button" onclick="bankGuide(\'notif\')">Thông báo app ngân hàng</button><button type="button" onclick="bankGuide(\'sms\')">SMS · Email · Android</button></div>'+
+    '<div class="bk-btnrow"><button type="button" onclick="bankRulesShow()">Luật Firebase</button><button type="button" onclick="bankInboxRotate()">Đổi mã mới</button><button type="button" class="bk-danger" onclick="bankInboxOff()">Tắt hộp thư</button></div>';
+}
+/* tự lấy tin: khi đăng nhập / mở lại app / có mạng / kéo làm mới / mỗi 90 giây khi đang mở */
+window.addEventListener('cloud-auth-changed',()=>setTimeout(()=>window.bankInboxPull(true),1500));
+window.addEventListener('cloud-resume',()=>window.bankInboxPull(false));
+window.addEventListener('online',()=>window.bankInboxPull(false));
+setInterval(()=>{if(document.visibilityState==='visible')window.bankInboxPull(false);},90000);
+const _refresh=window.refreshNow;if(_refresh)window.refreshNow=async function(){const r=await _refresh.apply(this,arguments);try{await window.bankInboxPull(true);}catch(e){}return r;};
 
 /* ---------- thanh ở Tổng quan + menu ---------- */
 function renderBar(){

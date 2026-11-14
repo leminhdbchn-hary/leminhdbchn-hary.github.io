@@ -27,6 +27,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // v96: Hộp thư tự động (Phím tắt iPhone / MacroDroid gửi tin ngân hàng vào, app lấy về rồi xoá).
+    //  - inboxOwners/{mã}: chủ sổ (đã đăng nhập) đăng ký mã bí mật ngẫu nhiên của mình.
+    //  - inbox/{mã}/items: ai biết mã (Phím tắt, không đăng nhập) chỉ được GHI tin mới;
+    //    chỉ chủ sổ mới đọc và xoá được. Mã chưa đăng ký thì không ghi được.
+    match /inboxOwners/{secret} {
+      allow create: if request.auth != null
+                    && secret.matches('^[a-z0-9]{24,64}$')
+                    && request.resource.data.keys().hasOnly(['uid','at'])
+                    && request.resource.data.uid == request.auth.uid;
+      allow read, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow update: if false;
+    }
+    match /inbox/{secret}/items/{itemId} {
+      allow create: if secret.matches('^[a-z0-9]{24,64}$')
+                    && exists(/databases/$(database)/documents/inboxOwners/$(secret))
+                    && request.resource.data.keys().hasOnly(['t','s'])
+                    && request.resource.data.t is string
+                    && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 2000
+                    && (!('s' in request.resource.data) || (request.resource.data.s is string && request.resource.data.s.size() <= 16));
+      allow read, delete: if request.auth != null
+                    && get(/databases/$(database)/documents/inboxOwners/$(secret)).data.uid == request.auth.uid;
+      allow update: if false;
+    }
+
     // Mọi thứ khác: cấm
     match /{document=**} {
       allow read, write: if false;
