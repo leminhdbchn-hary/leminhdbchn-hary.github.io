@@ -1363,3 +1363,42 @@ button:active,.tx-item:active,.more-item:active,.acc-row:active,.dc-row:active,.
 /* v94: chữ đủ rõ ở mọi giao diện (kiểm bằng tests/contrast.js) */
 html:not([class*="skin-"]) .debt-pay-row button{color:#062a14;}
 html:not([class*="skin-"]) .loan-badge.overdue,html.skin-mono .loan-badge.overdue{color:#a61b13!important;}
+
+/* v95: tin ngân hàng – thanh ở Tổng quan, hộp Chờ xác nhận */
+.bank-bar{display:flex;gap:8px;margin:0 0 12px;}
+.bank-bar button{flex:1;padding:11px 12px;border-radius:14px;border:1px solid rgba(226,194,139,.28);background:var(--card);color:var(--text);font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;}
+.bank-bar .bb-pend{flex:0 0 auto;border-color:#c9860b;color:#e0a000;}
+.bank-bar .bb-pend b{background:#c9860b;color:#fff;border-radius:999px;padding:1px 7px;margin:0 2px;font-size:12px;}
+.bk-box{display:flex;flex-direction:column;gap:8px;}
+.bk-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.bk-head h3{margin:0;font-size:17px;}
+.bk-approve{padding:8px 12px;border-radius:10px;border:0;background:#1f3a8a;color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+.bk-sum{font-size:12.5px;color:var(--sub);background:rgba(127,127,127,.1);border-radius:10px;padding:8px 10px;}
+.bk-hint{font-size:12.5px;color:var(--sub);line-height:1.45;background:rgba(127,127,127,.08);border-radius:10px;padding:9px 11px;}
+.bk-sec{font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.4px;margin-top:6px;}
+.bk-auto,.bk-mem,.bk-set{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(127,127,127,.08);border-radius:10px;padding:8px 10px;font-size:12.5px;}
+.bk-auto button,.bk-mem button{flex:none;border:0;background:none;color:#e0a000;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
+.bk-mem span,.bk-set div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.bk-mem small,.bk-set small{color:var(--sub);font-size:11.5px;}
+.bk-card{background:var(--card);border-radius:14px;border-left:4px solid #c9860b;padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+.bk-card.dup{border-left-color:#e0483c;}
+.bk-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.bk-tag{font-size:11.5px;font-weight:600;background:rgba(224,160,0,.16);color:#c9860b;border-radius:6px;padding:2px 8px;}
+.bk-amt{font-size:16px;font-weight:800;}
+.bk-amt.chi{color:#e0483c;}.bk-amt.thu{color:#248a3d;}
+.bk-name{font-size:14.5px;font-weight:700;}
+.bk-warn{font-size:12px;color:#c9860b;}
+.bk-sub{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--sub);}
+.bk-sub select{max-width:150px;border:1px solid rgba(127,127,127,.3);border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:12px;padding:3px 6px;}
+.bk-link{border:0;background:none;color:#e2c28b;font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.bk-raw summary{font-size:12px;color:var(--sub);cursor:pointer;}
+.bk-raw div{margin-top:6px;background:#1f2937;color:#e5e7eb;border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.45;word-break:break-word;}
+.bk-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.bk-chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(127,127,127,.35);background:transparent;color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;max-width:100%;}
+.bk-chip.star{background:#1f3a8a;border-color:#1f3a8a;color:#fff;}
+.bk-chip.ghost{color:var(--sub);font-weight:500;}
+select.bk-chip.other{appearance:none;-webkit-appearance:none;}
+.bk-foot{display:flex;gap:8px;margin-top:6px;}
+.bk-foot .save-btn{flex:1;margin-top:0;}
+.bk-tip{font-size:12px;color:var(--sub);line-height:1.5;background:rgba(127,127,127,.07);border-radius:10px;padding:9px 11px;}
+.bk-tip code{font-size:11.5px;word-break:break-all;}

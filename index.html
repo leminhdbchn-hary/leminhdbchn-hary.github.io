@@ -10,23 +10,23 @@
 <meta name="theme-color" content="#0e0d0c">
 <link rel="manifest" href="manifest.json">
 <meta name="format-detection" content="telephone=no">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=94">
-<link rel="icon" type="image/png" href="favicon.png?v=94">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=95">
+<link rel="icon" type="image/png" href="favicon.png?v=95">
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<link rel="modulepreload" href="cloud.js?v=94">
+<link rel="modulepreload" href="cloud.js?v=95">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
-<link rel="stylesheet" href="app.css?v=94">
-<script src="skin.js?v=94"></script>
+<link rel="stylesheet" href="app.css?v=95">
+<script src="skin.js?v=95"></script>
 <script>try{if(localStorage.getItem('tc_mode')==='tutien'&&localStorage.getItem('tc_owner')==='1')document.documentElement.classList.add('tt');var _f=localStorage.getItem('tc_fs');if(_f)document.documentElement.style.setProperty('--fs',_f+'px');if(localStorage.getItem('tc_ls_partial')==='1')document.documentElement.classList.add('idb-wait');}catch(e){}</script>
 </head>
 <body>
-<div id="splash" class="splash" aria-hidden="true"><img src="icon-192.png?v=94" alt=""><b>Sổ Thu Chi</b></div>
+<div id="splash" class="splash" aria-hidden="true"><img src="icon-192.png?v=95" alt=""><b>Sổ Thu Chi</b></div>
 <div id="lockScreen" class="lock-screen">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=94" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=95" alt="">
   <div class="lock-title" id="lockTitle">Nhập mật khẩu</div>
   <div class="lock-sub" id="lockSub">Nhập mật khẩu để mở sổ thu chi</div>
   <input id="lockUser" class="lock-user" type="text" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" style="display:none" onkeydown="if(event.key==='Enter'){if(pinMode==='setUser')pinUserNext();else this.blur();}">
@@ -38,7 +38,7 @@
 <script>try{if(localStorage.getItem('tc_pin_hash')||localStorage.getItem('tc_bio_id'))document.documentElement.classList.add('is-locked');}catch(e){}</script>
 
 <div id="cloudGateScreen" class="cloud-gate">
-  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=94" alt="">
+  <img class="lock-pet tt-only" src="pets/stage1.jpg" alt=""><img class="lock-pet lock-logo normal-only" src="icon-192.png?v=95" alt="">
   <div class="lock-title">Sổ Thu Chi</div>
   <div class="lock-sub" id="gateSub">Đang kiểm tra đăng nhập...</div>
   <div id="gateBtnWrap" style="display:none;width:100%;max-width:300px;">
@@ -492,6 +492,7 @@
   </div>
   <div class="more-item tt-only" onclick="showScreen('reward')" id="more-reward">Nuôi Linh Thú 🐾</div>
   <div class="more-item tt-only" onclick="showScreen('chars')" id="more-chars">Bộ sưu tập nhân vật</div>
+  <div class="more-item" onclick="openBankSettings()" id="more-bank">Tin ngân hàng & nơi chi đã nhớ</div>
   <div class="more-item" onclick="openSmsImport()" id="more-sms">📩 Dán SMS ngân hàng</div>
   <div class="more-item" onclick="showScreen('budget')" id="more-budget">Ngân sách</div>
   <div class="more-item" onclick="showScreen('goals')" id="more-goals">Mục tiêu tiết kiệm</div>
@@ -612,16 +613,17 @@
   <button class="tab" data-s="more" onclick="showScreen('more')"><span class="tab-icon" id="nav-more"></span><span class="tab-label">Cài đặt</span></button>
 </div>
 
-<script type="module" src="cloud.js?v=94"></script>
-<script src="store.js?v=94"></script>
-<script src="icons.js?v=94"></script>
-<script src="app.js?v=94"></script>
-<script src="features.js?v=94"></script>
-<script src="sms.js?v=94"></script>
-<script src="ux.js?v=94"></script>
-<script src="more.js?v=94"></script>
-<script src="ux2.js?v=94"></script>
-<script src="ux3.js?v=94"></script>
-<script src="pro.js?v=94"></script>
+<script type="module" src="cloud.js?v=95"></script>
+<script src="store.js?v=95"></script>
+<script src="icons.js?v=95"></script>
+<script src="app.js?v=95"></script>
+<script src="features.js?v=95"></script>
+<script src="sms.js?v=95"></script>
+<script src="ux.js?v=95"></script>
+<script src="more.js?v=95"></script>
+<script src="ux2.js?v=95"></script>
+<script src="ux3.js?v=95"></script>
+<script src="pro.js?v=95"></script>
+<script src="bank.js?v=95"></script>
 </body>
 </html>

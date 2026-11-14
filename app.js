@@ -199,6 +199,10 @@ try{goals=JSON.parse(localStorage.getItem('tc_goals')||'[]');}catch(e){goals=[];
 /* Giao dịch mẫu (more.js): [{id,name,type,group,item,amount,walletId,note,person,noCF}] */
 let txTemplates=[];
 try{txTemplates=JSON.parse(localStorage.getItem('tc_templates')||'[]')||[];}catch(e){txTemplates=[];}
+/* Tin ngân hàng (bank.js): merch = nơi chi đã nhớ → hạng mục; wal = ngân hàng → ví; pend = khoản chờ xác nhận; auto = tự ghi khoản quen */
+let bankDB={merch:{},wal:{},pend:[],auto:true};
+function bankDBFix(b){const d={merch:{},wal:{},pend:[],auto:true};if(b&&typeof b==='object'){if(b.merch&&typeof b.merch==='object')d.merch=b.merch;if(b.wal&&typeof b.wal==='object')d.wal=b.wal;if(Array.isArray(b.pend))d.pend=b.pend;if(b.auto===false)d.auto=false;}return d;}
+try{bankDB=bankDBFix(JSON.parse(localStorage.getItem('tc_bankdb')||'null'));}catch(e){}
 /* Ví "Tiết kiệm" bị khoá khỏi các thao tác chi tiêu/chuyển tiền thủ công.
    Toàn bộ tiền vào/ra sổ tiết kiệm chỉ được xử lý qua màn hình Ví tiền
    (gửi mới, đáo hạn, tất toán...) để tránh làm sai lệch lãi suất/kỳ hạn. */
@@ -233,7 +237,7 @@ try{userAchievements=JSON.parse(localStorage.getItem('tc_user_achievements')||'[
 
 /* Lưu dữ liệu: localStorage (mở app nhanh) + IndexedDB (dung lượng lớn, bản chính khi localStorage đầy) */
 const LS_KEYS=[['tc_txs',()=>txs],['tc_wallets',()=>wallets],['tc_budgets',()=>budgets],['tc_recurring',()=>recurring],['tc_debts',()=>debts],['tc_loans',()=>loans],
-  ['tc_reward_profile',()=>rewardProfile],['tc_reward_history',()=>rewardHistory],['tc_user_achievements',()=>userAchievements],['tc_custom_cats',()=>customCats],['tc_goals',()=>goals],['tc_templates',()=>txTemplates]];
+  ['tc_reward_profile',()=>rewardProfile],['tc_reward_history',()=>rewardHistory],['tc_user_achievements',()=>userAchievements],['tc_custom_cats',()=>customCats],['tc_goals',()=>goals],['tc_templates',()=>txTemplates],['tc_bankdb',()=>bankDB]];
 let storeReady=false,storePending=false,storeTimer=null,lsPartial=false;
 try{lsPartial=localStorage.getItem('tc_ls_partial')==='1';}catch(e){}
 /* Chống chèn mã HTML (vd. nội dung SMS dán vào): đổi < > trong chữ người dùng nhập thành ‹ › */
@@ -285,7 +289,7 @@ async function storeInit(){
   if(storeReady){storePending=false;storeFlush().then(()=>{try{autoBackupCheck();}catch(e){}});}
 }
 function buildCloudPayload(){
-  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,txTemplates,profile:profileExport()};
+  return {txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,txTemplates,bankDB,profile:profileExport()};
 }
 function applyCloudPayload(data){
   txs=data.txs||[];wallets=data.wallets||[];budgets=data.budgets||{};recurring=data.recurring||[];
@@ -297,6 +301,7 @@ function applyCloudPayload(data){
   if(data.customCats&&typeof data.customCats==='object'){customCats=data.customCats;rebuildGroups();}
   if(Array.isArray(data.goals))goals=data.goals;
   if(Array.isArray(data.txTemplates))txTemplates=data.txTemplates;
+  if(data.bankDB&&typeof data.bankDB==='object')bankDB=bankDBFix(data.bankDB);
   try{sanitizeData();}catch(e){}
   if(data.profile&&typeof data.profile==='object')profileImport(data.profile);
   try{migrateCategories();}catch(e){}
@@ -1023,7 +1028,7 @@ function deleteTx(id){
   const t=txs.find(x=>x.id===id);if(t){reverseTxBalance(t);revokeTxLinhLuc(t,false);}
   txs=txs.filter(x=>x.id!==id);saveAll();renderHistory();renderHome();
 }
-function clearAll(){if(confirm('Xoá toàn bộ dữ liệu (giao dịch, ví, ngân sách, định kỳ, vay nợ, vay ngân hàng, linh lực tu luyện)?')){txs=[];wallets=[];budgets={};recurring=[];debts=[];loans=[];rewardProfile={total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};rewardHistory=[];userAchievements=[];goals=[];customCats={};rebuildGroups();saveAll();renderHome();}}
+function clearAll(){if(confirm('Xoá toàn bộ dữ liệu (giao dịch, ví, ngân sách, định kỳ, vay nợ, vay ngân hàng, linh lực tu luyện)?')){txs=[];wallets=[];budgets={};recurring=[];debts=[];loans=[];rewardProfile={total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};rewardHistory=[];userAchievements=[];goals=[];customCats={};bankDB=bankDBFix(null);rebuildGroups();saveAll();renderHome();}}
 
 function txItemHTML(t){
   /* hiển thị an toàn: mọi chữ người dùng nhập đều được mã hoá HTML */
@@ -1040,7 +1045,7 @@ function txItemHTML(t){
   }
   const sign=t.type==='chi'?'-':'+';const cls=t.type==='chi'?'out':'in';
   const wl=wallets.find(x=>String(x.id)===String(t0.walletId));const sub=[wl?H(wl.name):'',t.time||''].filter(Boolean).join(' · ')||dmy(t.date);
-  return '<div class="tx-item" onclick="if(!event.target.closest(\'button\'))openEditTx('+t.id+')" style="cursor:pointer"><div class="tx-icon" style="background:'+(t.bg||'#e7f2fa')+'">'+icon(t.icon||'khac',t.accent||'#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+t.item+(isCashFlow(t0)?'':' <span class="fam-tag">không tính thu chi</span>')+'</div><div class="note">'+(t.note||t.person||sub)+(t.fx&&t.fx.cur?' · '+t.fx.amt+' '+t.fx.cur:'')+'</div></div><div class="tx-amt '+cls+'">'+sign+fmt(t.amount)+'</div>'+rewardBtnHTML(t)+'<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
+  return '<div class="tx-item" onclick="if(!event.target.closest(\'button\'))openEditTx('+t.id+')" style="cursor:pointer"><div class="tx-icon" style="background:'+(t.bg||'#e7f2fa')+'">'+icon(t.icon||'khac',t.accent||'#1487d8',19)+'</div><div class="tx-info"><div class="cat">'+t.item+(isCashFlow(t0)?'':' <span class="fam-tag">không tính thu chi</span>')+(t0.bankAuto?' <span class="fam-tag">tự ghi</span>':'')+'</div><div class="note">'+(t.note||t.person||sub)+(t.fx&&t.fx.cur?' · '+t.fx.amt+' '+t.fx.cur:'')+'</div></div><div class="tx-amt '+cls+'">'+sign+fmt(t.amount)+'</div>'+rewardBtnHTML(t)+'<button class="icon-btn" onclick="event.stopPropagation();openEditTx('+t.id+')" aria-label="Sửa">'+icon('khac','#e2c28b',19)+'</button><button class="icon-btn" onclick="event.stopPropagation();deleteTx('+t.id+')" aria-label="Xoá">'+icon('trash','#e0766c',19)+'</button></div>';
 }
 function rewardBtnHTML(t){
   if(!isTuTien())return '';
@@ -2589,7 +2594,7 @@ function updateBackupInfo(){
 }
 function snoozeBackup(){try{localStorage.setItem('tc_backup_snooze',String(Date.now()+864e5));}catch(e){}checkBackupReminder();}
 async function exportJSON(){
-  const data={txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,txTemplates,profile:profileExport(),exportedAt:new Date().toISOString()};
+  const data={txs,wallets,budgets,recurring,debts,loans,customBanks,rewardProfile,rewardHistory,userAchievements,customCats,goals,txTemplates,bankDB,profile:profileExport(),exportedAt:new Date().toISOString()};
   const ok=await downloadFile(JSON.stringify(data,null,2),'so-thu-chi-backup-'+todayStr()+'.json','application/json');
   if(ok!==false){try{localStorage.setItem('tc_last_backup',String(Date.now()));}catch(e){}checkBackupReminder();}
 }
@@ -2610,6 +2615,7 @@ function onImportFile(e){
       customCats=(data.customCats&&typeof data.customCats==='object')?data.customCats:{};rebuildGroups();
       goals=Array.isArray(data.goals)?data.goals:[];
       if(Array.isArray(data.txTemplates))txTemplates=data.txTemplates;
+      if(data.bankDB&&typeof data.bankDB==='object')bankDB=bankDBFix(data.bankDB);
       if(data.profile&&typeof data.profile==='object'){try{profileImport(data.profile);}catch(e){}}
       try{migrateCategories();}catch(e){}
       saveAll();renderHome();alert('Đã khôi phục dữ liệu thành công.');
@@ -3138,7 +3144,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='94';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='95';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
