@@ -38,7 +38,9 @@ function layoutAdd(){
   /* "Lưu & ghi tiếp" cạnh nút Lưu */
   const save=$('saveTxBtn');
   if(save&&!$('saveNextBtn')){const row=document.createElement('div');row.className='save-row';save.parentNode.insertBefore(row,save);row.appendChild(save);
-    const nx=document.createElement('button');nx.className='save-btn ghost-btn';nx.id='saveNextBtn';nx.type='button';nx.textContent='Lưu & ghi tiếp';nx.onclick=()=>saveAndNext();row.appendChild(nx);}
+    const nx=document.createElement('button');nx.className='save-btn ghost-btn';nx.id='saveNextBtn';nx.type='button';nx.textContent='Lưu & ghi tiếp';nx.onclick=()=>saveAndNext();row.appendChild(nx);
+    /* v97: nút Lưu lên đầu màn (ngay dưới tab Chi/Thu), dính khi cuộn */
+    const top=document.createElement('div');top.className='save-top';top.id='saveTop';top.appendChild(row);const cb=$('cancelEditBtn');if(cb)top.appendChild(cb);tabs.parentNode.insertBefore(top,tabs.nextSibling);}
   /* thông báo vừa lưu (hoàn tác) + nháp */
   const bar=document.createElement('div');bar.id='addInfo';bar.className='add-info';tabs.parentNode.insertBefore(bar,tabs);
 }
