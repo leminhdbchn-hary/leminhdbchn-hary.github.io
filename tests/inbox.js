@@ -51,6 +51,14 @@ async function page(browser, seed) {
   const r4 = await feed([{ id: 'h', t: '<img src=x onerror=alert(1)>APPLEPAY|1000|<b>x</b>|Visa' }, { id: 'l', t: 'x'.repeat(5000) }, { id: 'e', t: '' }]);
   ok(await p.evaluate(() => !document.querySelector('img[src="x"]')) && p.errs.length === 0, '4 nội dung lạ/HTML/quá dài: không lỗi, không chèn mã', p.errs);
 
+  /* 4b. email dài có HTML + chân trang → đọc đúng */
+  const longFooter = ' Đây là email tự động. ' + 'Lorem ipsum chân trang. '.repeat(400);
+  const em = '<html><body><p>Vietcombank thông báo biến động số dư</p><p>Số tài khoản: 0071000123456</p><p>Ngày giao dịch: 18/11/2026 16:05:12</p><p>Số tiền giao dịch: -50,000&nbsp;VND</p><p>Số dư sau giao dịch: 1,234,567 VND</p><p>Nội dung giao dịch: MBVCB.123.NGUYEN VAN B chuyen tien an trua</p><p>Cảm ơn Quý khách đã sử dụng dịch vụ.</p>' + longFooter + '</body></html>';
+  const r4b = await p.evaluate(async t => { bankDB.pend = []; window.__db.items = [{ id: 'em', t }]; await bankInboxPull(true); const x = bankDB.pend[0]; return x && { a: x.amount, t: x.type, d: x.date, b: x.bank, raw: x.raw.length, left: window.__db.items.length }; }, em);
+  ok(em.length > 9000 && r4b && r4b.a === 50000 && r4b.t === 'chi' && r4b.d === '2026-11-18' && r4b.b === 'Vietcombank' && r4b.raw < 600 && r4b.left === 0, '4b email Vietcombank dài (HTML + chân trang): đọc đúng số tiền/ngày/ngân hàng, bỏ chân trang', r4b);
+  const r4c = await p.evaluate(async () => { bankGuide('email'); return document.querySelector('.bk-steps').innerText; });
+  ok(/Email/.test(r4c) && /Mail/.test(r4c) && /POST/.test(r4c), '4c có hướng dẫn Email ngân hàng');
+
   /* 5. không có ví → giữ tin */
   const p2 = await page(browser, { tc_wallets: [], tc_txs: [] });
   await p2.evaluate(() => bankInboxEnable());
@@ -70,7 +78,7 @@ async function page(browser, seed) {
   const r7 = await p.evaluate(async () => { bankGuide('applepay'); const g = document.querySelector('.bk-steps').innerText; await bankRulesShow(); const pre = document.querySelector('.bk-pre').innerText; return { g: /APPLEPAY\|/.test(g) && /POST/.test(g), pre }; });
   ok(r7.g && /inboxOwners/.test(r7.pre) && /inbox\/\{secret\}\/items/.test(r7.pre) && !/users\/\{userId\}/.test(r7.pre), '7 hướng dẫn Apple Pay đủ bước; màn "Luật Firebase" hiện đúng khối luật mới', r7.pre.slice(0, 80));
   const rules = fs.readFileSync('firestore.rules', 'utf8');
-  ok(rules.includes('// v96') && rules.includes('// Mọi thứ khác') && rules.indexOf('// v96') < rules.indexOf('// Mọi thứ khác') && /allow create:[\s\S]*hasOnly\(\['t','s'\]\)/.test(rules) && !/inbox\/\{secret\}\/items\/\{itemId\} \{[^}]*allow read, write/.test(rules), '7b firestore.rules: chỉ cho ghi, đọc/xoá chỉ chủ');
+  ok(rules.includes('// v96') && rules.includes('// Mọi thứ khác') && rules.indexOf('// v96') < rules.indexOf('// Mọi thứ khác') && /allow create:[\s\S]*hasOnly\(\['t','s'\]\)/.test(rules) && rules.includes('size() <= 20000') && !/inbox\/\{secret\}\/items\/\{itemId\} \{[^}]*allow read, write/.test(rules), '7b firestore.rules: chỉ cho ghi, đọc/xoá chỉ chủ');
 
   ok(p.errs.length === 0, '8 không có lỗi JS', p.errs);
   await browser.close();

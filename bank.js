@@ -213,7 +213,13 @@ function inboxUrl(){const c=cl().config;return 'https://firestore.googleapis.com
 /* "APPLEPAY|số tiền|nơi bán|thẻ[|tiền tệ]" (Phím tắt tự ghép) → tin chuẩn để bộ đọc hiểu; ngoại tệ thì bỏ qua */
 function amountOf(s){s=String(s||'').replace(/[^\d.,]/g,'');if(!s)return 0;if(/[.,]\d{1,2}$/.test(s)&&!/[.,]\d{3}$/.test(s))s=s.replace(/[.,]\d{1,2}$/,'');return parseInt(s.replace(/[.,]/g,''),10)||0;}
 function fromInbox(it){
-  const t=String(it.t||'').slice(0,2000).trim();if(!t)return null;
+  let t=String(it.t||'').slice(0,20000);
+  /* v100: email (Vietcombank…) – bỏ thẻ HTML, gộp khoảng trắng, cắt phần chào/chân trang để nội dung gọn */
+  if(t.length>300||/<[a-z][^>]*>/i.test(t)){
+    t=t.replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/\s+/g,' ');
+    const cut=t.search(/(Cảm ơn Quý khách|Cám ơn Quý khách|Trân trọng|Thank you for|Đây là email tự động|This is an automatic)/i);if(cut>40)t=t.slice(0,cut);
+  }
+  t=t.slice(0,3000).trim();if(!t)return null;
   const m=t.match(/^APPLEPAY\|([^|]*)\|([^|]*)(?:\|([^|]*))?(?:\|([^|]*))?$/i);
   if(!m)return {text:t,bank:''};
   const rawAmt=m[1],merchant=(m[2]||'').replace(/\s+/g,' ').trim(),card=(m[3]||'').replace(/\s+/g,' ').trim(),cur=(m[4]||'').trim();
@@ -286,6 +292,7 @@ window.bankGuide=function(kind){
   const G={
     applepay:{t:'Apple Pay (quẹt thẻ)',steps:['Mở app <b>Phím tắt</b> → thẻ <b>Tự động hóa</b> → bấm <b>+</b>.','Chọn kiểu kích hoạt <b>Giao dịch</b>, chọn các thẻ trong Ví muốn theo dõi → <b>Tiếp</b>.','Chọn <b>Chạy ngay</b> (tắt "Thông báo khi chạy") → <b>Tiếp</b> → tạo phím tắt mới trống.','Thêm hành động <b>Văn bản</b>. Gõ <code>APPLEPAY|</code>, chạm vào ô rồi chọn biến <b>Đầu vào phím tắt</b> → thuộc tính <b>Số tiền</b>; gõ <code>|</code> rồi chọn <b>Người bán</b>; gõ <code>|</code> rồi chọn <b>Thẻ hoặc vé</b>. Kết quả: <code>APPLEPAY|[Số tiền]|[Người bán]|[Thẻ hoặc vé]</code>.',send+'biến <b>Văn bản</b> ở bước trên.','Xong. Quẹt thử một khoản nhỏ rồi mở Sổ Thu Chi (hoặc bấm "Kiểm tra ngay").'],note:'Khoản bằng ngoại tệ không tự ghi (bị bỏ qua). Nơi bán lạ vào Chờ xác nhận, nơi bán quen tự ghi.'},
     notif:{t:'Thông báo của app ngân hàng (iOS 27)',steps:['Theo màn hình của K2, kiểu kích hoạt <b>Thông báo</b> của app khác chỉ có từ <b>iOS 27</b>. Mình chưa kiểm chứng tên các mục trên iOS 27 nên có thể hơi khác.','Phím tắt → <b>Tự động hóa</b> → <b>+</b> → kiểu kích hoạt Thông báo (nếu có) → chọn app ngân hàng → <b>Chạy ngay</b>.',send+'biến <b>Đầu vào phím tắt</b> (nội dung thông báo).','Tin dạng "VCB: TK … -128,000 VND … ND: …" sẽ được đọc như tin nhắn ngân hàng bình thường.'],note:''},
+    email:{t:'Email ngân hàng (iPhone)',steps:['<b>Chuẩn bị:</b> đăng ký nhận <b>thông báo biến động số dư qua email</b> với ngân hàng (Vietcombank: trong VCB Digibank hoặc tại quầy). Thêm hộp thư đó vào app <b>Mail</b> của iPhone (Cài đặt → Ứng dụng → Mail → Tài khoản) – Phím tắt chỉ đọc được email trong app Mail.','Phím tắt → <b>Tự động hóa</b> → <b>+</b> → <b>Email</b>.','<b>Người gửi</b>: chọn địa chỉ email ngân hàng gửi tới (xem trong một email cũ, ví dụ VCB). Có thể thêm <b>Chủ đề chứa</b> để chỉ bắt email biến động số dư. → <b>Chạy ngay</b>, tắt "Thông báo khi chạy" → <b>Tiếp</b> → <b>Phím tắt trống mới</b>.','Thêm hành động <b>Văn bản</b>: chèn biến <b>Đầu vào phím tắt</b> chọn thuộc tính <b>Chủ đề</b>, gõ dấu cách, chèn tiếp <b>Đầu vào phím tắt</b> chọn <b>Nội dung</b> (nếu không có thuộc tính thì để nguyên <b>Đầu vào phím tắt</b>).',send+'biến <b>Văn bản</b> ở bước trên.','Thử: chuyển một khoản nhỏ, đợi email về Mail, rồi mở Sổ Thu Chi (hoặc bấm "Kiểm tra ngay") → khoản đó nằm ở Chờ xác nhận.'],note:'App tự bỏ phần chào hỏi, chân trang của email. Email dài tối đa 20.000 ký tự (cần luật Firebase bản mới – bấm "Luật Firebase" để xem).'},
     sms:{t:'SMS · Email · Android',steps:['<b>SMS / Email (iPhone):</b> Phím tắt → Tự động hóa → <b>Tin nhắn</b> (tin chứa "VND" hoặc người gửi là ngân hàng) hoặc <b>Email</b> (người gửi là ngân hàng) → <b>Chạy ngay</b>. '+send+'<b>Nội dung tin nhắn</b> (hoặc <b>Nội dung email</b>).','<b>Android (MacroDroid / Tasker):</b> kích hoạt <b>Thông báo nhận được</b> từ app ngân hàng → hành động <b>HTTP Request</b>: POST tới địa chỉ gửi tin, tiêu đề <code>Content-Type: application/json</code>, nội dung <code>{"fields":{"t":{"stringValue":"[nội dung thông báo]"}}}</code>.'],note:'Android đọc được cả thông báo của app ngân hàng.'}
   }[kind];if(!G)return;
   openModal('<div class="bk-box"><h3 style="margin:0">'+G.t+'</h3><ol class="bk-steps">'+G.steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+(G.note?'<div class="bk-hint">'+G.note+'</div>':'')+
@@ -299,7 +306,7 @@ function inboxSection(){
     '<div class="bk-hint">'+(st&&st.t?'Lần kiểm tra gần nhất '+new Date(st.t).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})+(st.err?' · <b>lỗi:</b> '+E(st.err):' · '+st.n+' tin'):'Chưa kiểm tra lần nào.')+'</div>'+
     '<div class="bk-url"><small>Địa chỉ gửi tin — giữ kín, ai có địa chỉ này đều gửi được tin vào hộp thư của bạn</small><code id="bkUrl">'+E(inboxUrl())+'</code></div>'+
     '<div class="bk-btnrow"><button type="button" class="bk-main" onclick="bankCopy(\'url\')">Chép địa chỉ gửi tin</button><button type="button" onclick="bankInboxCheck()">Kiểm tra ngay</button></div>'+
-    '<div class="bk-btnrow"><button type="button" onclick="bankGuide(\'applepay\')">Hướng dẫn Apple Pay</button><button type="button" onclick="bankGuide(\'notif\')">Thông báo app ngân hàng</button><button type="button" onclick="bankGuide(\'sms\')">SMS · Email · Android</button></div>'+
+    '<div class="bk-btnrow"><button type="button" onclick="bankGuide(\'applepay\')">Hướng dẫn Apple Pay</button><button type="button" onclick="bankGuide(\'email\')">Email ngân hàng</button><button type="button" onclick="bankGuide(\'notif\')">Thông báo app ngân hàng</button><button type="button" onclick="bankGuide(\'sms\')">SMS · Email · Android</button></div>'+
     '<div class="bk-btnrow"><button type="button" onclick="bankRulesShow()">Luật Firebase</button><button type="button" onclick="bankInboxRotate()">Đổi mã mới</button><button type="button" class="bk-danger" onclick="bankInboxOff()">Tắt hộp thư</button></div>';
 }
 /* tự lấy tin: khi đăng nhập / mở lại app / có mạng / kéo làm mới / mỗi 90 giây khi đang mở */
