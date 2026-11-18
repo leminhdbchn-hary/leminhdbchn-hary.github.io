@@ -1,7 +1,7 @@
 /* Sổ Thu Chi – Tin ngân hàng: dán tin → khoản quen tự ghi, khoản lạ vào "Chờ xác nhận" (chạm 1 nút chọn hạng mục, máy nhớ).
    Dùng bộ đọc tin có sẵn (sms.js · SmsParse). Mọi xử lý chạy trên máy, không gửi nội dung tin đi đâu.
    Dữ liệu: bankDB = { merch: {khoá nơi chi → hạng mục}, wal: {ngân hàng → ví}, pend: [khoản chờ], auto: bật/tắt tự ghi }.
-   Cách đưa tin vào: nút "📋 Dán tin ngân hàng" ở Tổng quan, mục Dán SMS, hoặc mở link ...?sms=<nội dung> (Phím tắt iPhone / MacroDroid). */
+   Cách đưa tin vào: mục 📩 Dán SMS trong màn Thêm, hoặc mở link ...?sms=<nội dung> (Phím tắt iPhone / MacroDroid). */
 (function(){
 if(typeof document==='undefined'||typeof SmsParse==='undefined'||typeof bankDB==='undefined')return;
 const $=id=>document.getElementById(id);
@@ -192,7 +192,7 @@ window.openBankSettings=function(){
     (rows.length?rows.map(([k,m])=>'<div class="bk-mem"><span><b>'+E(m.name||k)+'</b><small>→ '+(m.nocf?'Không tính thu chi':E(m.i||''))+' · '+(m.n||1)+' lần</small></span><button type="button" data-k="'+encodeURIComponent(k)+'" onclick="bankForget(this.dataset.k)" aria-label="Quên">✕</button></div>').join('')+'<button type="button" class="hq-toggle" onclick="bankForgetAll()">Xoá tất cả nơi chi đã nhớ</button>':'<div class="bk-hint">Chưa nhớ nơi chi nào. Khi bạn chọn hạng mục cho một khoản ở "Chờ xác nhận", nơi chi đó sẽ hiện ở đây.</div>')+
     inboxSection()+
     '<div class="bk-sec">Cách khác: dán tin / link</div>'+
-    '<div class="bk-tip"><b>iPhone</b> (Phím tắt): Tự động hoá → Tin nhắn → chọn người gửi hoặc nội dung chứa "VND" → <i>Chạy ngay</i> → thêm "Sao chép vào bộ nhớ tạm" với <i>Nội dung tin nhắn</i>. Khi mở Sổ Thu Chi, bấm <b>📋 Dán tin ngân hàng</b>. (iPhone chỉ đọc được SMS, không đọc được thông báo trong app ngân hàng.)</div>'+
+    '<div class="bk-tip"><b>iPhone</b> (Phím tắt): Tự động hoá → Tin nhắn → chọn người gửi hoặc nội dung chứa "VND" → <i>Chạy ngay</i> → thêm "Sao chép vào bộ nhớ tạm" với <i>Nội dung tin nhắn</i>. Khi mở Sổ Thu Chi, vào màn Thêm → <b>📩 Dán SMS</b>. (iPhone chỉ đọc được SMS, không đọc được thông báo trong app ngân hàng.)</div>'+
     '<div class="bk-tip"><b>Android</b> (MacroDroid / Tasker): khi có thông báo từ app ngân hàng → mở link <code>'+E(site)+'?sms=</code> kèm nội dung thông báo. App tự nhận tin ngay khi mở.</div>'+
     '<div class="bk-foot"><button type="button" class="save-btn" onclick="closeAppModal()">Xong</button></div></div>');
 };
@@ -314,7 +314,9 @@ function renderBar(){
   let el=$('bankBar');
   if(!el){const ref=$('debtCard');if(!ref)return;el=document.createElement('div');el.id='bankBar';el.className='bank-bar';ref.parentNode.insertBefore(el,ref.nextSibling);}
   const n=bankDB.pend.length;
-  el.innerHTML='<button type="button" class="bb-paste" onclick="bankPasteClip()">📋 Dán tin ngân hàng</button>'+(n?'<button type="button" class="bb-pend" onclick="openBankInbox()">Chờ xác nhận <b>'+n+'</b> ›</button>':'');
+  /* v99: Tổng quan gọn – không còn nút Dán; chỉ hiện khi có khoản chờ xác nhận (dán tin ở nút 📩 Dán SMS trong màn Thêm) */
+  el.style.display=n?'':'none';
+  el.innerHTML=n?'<button type="button" class="bb-pend" onclick="openBankInbox()">Chờ xác nhận <b>'+n+'</b> ›</button>':'';
   const m=$('more-bank');if(m)m.innerHTML='<span>'+icon('bank','#c29a5c',20)+'</span><span>Tin ngân hàng & nơi chi đã nhớ<small class="more-sub">'+(n?n+' khoản chờ xác nhận':'Đã nhớ '+Object.keys(bankDB.merch).length+' nơi chi')+'</small></span>';
 }
 const _rh=window.renderHome;

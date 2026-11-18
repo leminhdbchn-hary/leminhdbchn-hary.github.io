@@ -93,16 +93,18 @@ async function page(browser, seed, opts) {
 
   /* 11. thanh ở Tổng quan + menu Cài đặt */
   const r11 = await p.evaluate(() => { bankIngest('VCB: TK 1 -21,000 VND luc 13/11/2026 12:00. ND: Quan Lạ Một'); closeAppModal(); showScreen('home'); const bar = document.getElementById('bankBar'); showScreen('more');
-    return { paste: !!bar.querySelector('.bb-paste'), pend: bar.querySelector('.bb-pend') && bar.querySelector('.bb-pend').innerText, menu: document.getElementById('more-bank').innerText, inSec: [...document.querySelectorAll('#screen-more .more-sec')].some(h => h.textContent === 'Ghi chép') }; });
-  ok(r11.paste && /Chờ xác nhận\s*1/.test(r11.pend) && /1 khoản chờ xác nhận/.test(r11.menu), '11 Tổng quan có nút "📋 Dán tin ngân hàng" + "Chờ xác nhận 1"; menu Cài đặt hiện số khoản chờ', r11);
+    return { paste: !bar.querySelector('.bb-paste') && bar.style.display !== 'none', pend: bar.querySelector('.bb-pend') && bar.querySelector('.bb-pend').innerText, menu: document.getElementById('more-bank').innerText, inSec: [...document.querySelectorAll('#screen-more .more-sec')].some(h => h.textContent === 'Ghi chép') }; });
+  const hidden = await p.evaluate(() => { bankDB.pend = []; renderHome(); return document.getElementById('bankBar').style.display === 'none'; });
+  ok(hidden, '11b không có khoản chờ: thanh ẩn hẳn');
+  ok(r11.paste && /Chờ xác nhận\s*1/.test(r11.pend) && /1 khoản chờ xác nhận/.test(r11.menu), '11 Tổng quan gọn: không còn nút Dán, chỉ hiện "Chờ xác nhận 1"; menu Cài đặt hiện số khoản chờ', r11);
   await p.evaluate(() => { bankDB.pend = []; saveAll(); });
 
   /* 12. nút dán nhanh đọc bộ nhớ tạm; không có tin thì mở ô dán */
   await p.ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(BASE).origin });
   await p.evaluate(t => navigator.clipboard.writeText(t), 'VCB: TK 7 -45,000 VND luc 09/11/2026 06:00. ND: GD THE TAI SHOP MOI. SD: ***');
-  await p.evaluate(() => showScreen('home')); await p.click('.bb-paste'); await p.waitForTimeout(500);
+  await p.evaluate(() => { showScreen('home'); return bankPasteClip(); }); await p.waitForTimeout(500);
   ok(await p.evaluate(() => bankDB.pend.length === 1 && /Chờ xác nhận/.test(document.querySelector('.bk-head h3').innerText)), '12 bấm "Dán tin ngân hàng": đọc bộ nhớ tạm và nhận tin');
-  await p.evaluate(() => { closeAppModal(); bankDB.pend = []; saveAll(); navigator.clipboard.writeText('xin chao ban'); }); await p.click('.bb-paste'); await p.waitForTimeout(500);
+  await p.evaluate(() => { closeAppModal(); bankDB.pend = []; saveAll(); return navigator.clipboard.writeText('xin chao ban'); }); await p.evaluate(() => bankPasteClip()); await p.waitForTimeout(500);
   ok(await p.evaluate(() => !!document.getElementById('bkText') && bankDB.pend.length === 0), '12b bộ nhớ tạm không có tin ngân hàng: mở ô dán thủ công'); await p.evaluate(() => closeAppModal());
   /* ô dán + "Xem trước kỹ" vẫn dùng được luồng cũ */
   const r12 = await p.evaluate(t => { openSmsImport(); document.getElementById('bkText').value = t; bankClassic(); const ta = document.getElementById('smsText'); const v = ta && ta.value; closeAppModal(); return v; }, VCB);
