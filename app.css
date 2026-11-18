@@ -1419,3 +1419,16 @@ select.bk-chip.other{appearance:none;-webkit-appearance:none;}
 .save-top{position:sticky;top:0;z-index:5;padding:6px 0 8px;margin:0 0 4px;background:var(--bg,#fff);}
 .save-top .save-btn{margin-top:0;}
 .save-top #cancelEditBtn{margin-top:6px;}
+
+/* v98: linh vật Mèo Xu – thò đầu lên mép thẻ, ôm đồng xu */
+.mx-card{position:relative;display:block;margin:52px 16px 12px;padding:14px 112px 14px 16px;min-height:64px;background:var(--card);color:var(--text);border-radius:20px;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 14px rgba(0,0,0,.12);}
+.mx-pic{position:absolute;right:8px;top:-52px;width:104px;pointer-events:none;filter:drop-shadow(0 4px 5px rgba(0,0,0,.22));}
+.mx-pic .mx-svg{display:block;}
+.mx-bubble{display:flex;flex-direction:column;gap:3px;font-size:13.5px;line-height:1.4;min-width:0;}
+.mx-name{font-size:12px;font-weight:700;opacity:.65;}
+.mx-card.mx-hop .mx-pic{animation:mxhop .55s ease;}
+@keyframes mxhop{0%{transform:translateY(0)}30%{transform:translateY(-12px) rotate(-6deg)}60%{transform:translateY(0) rotate(4deg)}100%{transform:none}}
+.mx-tail{transform-origin:88px 104px;animation:mxtail 3.2s ease-in-out infinite;}
+@keyframes mxtail{0%,100%{transform:rotate(0)}50%{transform:rotate(-8deg)}}
+.empty-rich .er-ic .mx-svg{display:block;margin:0 auto;}
+@media (prefers-reduced-motion:reduce){.mx-tail,.mx-card.mx-hop .mx-pic{animation:none}}

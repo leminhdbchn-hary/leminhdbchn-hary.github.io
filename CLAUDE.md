@@ -22,4 +22,5 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 - `pro.js` – hộp thông báo/xác nhận của app, màn chào người mới, kéo xuống làm mới, màn trống có hướng dẫn, số tiền "chạy", tự khoá, Giới thiệu & Bảo mật, màn khởi động
 - Giao diện màu thêm `apple` (phong cách iOS) trong `skin.js`; `tests/contrast.js [skin...]` quét độ rõ chữ ở mọi màn hình
 - `bank.js` – tin ngân hàng: hàng chờ xác nhận, nhớ nơi chi, tự ghi khoản quen; v96: hộp thư tự động (Phím tắt/MacroDroid POST vào Firestore `inbox/{mã}/items`, app lấy về rồi xoá; luật trong `firestore.rules`, mã lưu `tc_inbox_secret`, không đồng bộ); `tests/inbox.js`
+- `mascot.js` – linh vật Mèo Xu (mèo con SVG): thẻ lời nhắn ở Tổng quan, mèo ở màn trống; `Mascot.svg(mood,size,peek)`; `tests/mascot.js`
 - `cloud.js` – đăng nhập Google / Firestore; `store.js` – IndexedDB; `sw.js` – chạy offline
