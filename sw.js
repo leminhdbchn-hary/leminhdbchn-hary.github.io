@@ -1,6 +1,6 @@
 /* Sổ Thu Chi – service worker: chạy khi mất mạng, tải nhanh hơn */
-const CACHE='stc-v100';
-const CORE=['./','index.html','app.css?v=100','icons.js?v=100','app.js?v=100','cloud.js?v=100','skin.js?v=100','store.js?v=100','features.js?v=100','sms.js?v=100','ux.js?v=100','more.js?v=100','ux2.js?v=100','ux3.js?v=100','pro.js?v=100','bank.js?v=100','mascot.js?v=100','mascot/hug.webp?v=100','manifest.json','icon-192.png?v=100','icon-512.png?v=100','apple-touch-icon.png?v=100','favicon.png?v=100','pets/stage1.jpg','characters/char1.jpg'];
+const CACHE='stc-v101';
+const CORE=['./','index.html','app.css?v=101','icons.js?v=101','app.js?v=101','cloud.js?v=101','skin.js?v=101','store.js?v=101','features.js?v=101','ux.js?v=101','more.js?v=101','ux2.js?v=101','ux3.js?v=101','pro.js?v=101','mascot.js?v=101','mascot/hug.webp?v=101','manifest.json','icon-192.png?v=101','icon-512.png?v=101','apple-touch-icon.png?v=101','favicon.png?v=101','pets/stage1.jpg','characters/char1.jpg'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>Promise.all(CORE.map(u=>c.add(u).catch(()=>{})))));

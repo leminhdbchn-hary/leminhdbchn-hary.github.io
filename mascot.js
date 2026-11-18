@@ -3,7 +3,7 @@
    - Các màn trống dùng tư thế phù hợp 
    Ảnh (người dùng gửi, đã tách nền): mascot/hug|wave|bag|hold.webp */
 (function(){
-const V='100';
+const V='101';
 const src=n=>'mascot/'+n+'.webp?v='+V;
 const pick={accList:'bag',debtList:'wave',loanList:'hold',topSpendList:'wave'};
 function img(n,cls){return '<img class="'+cls+'" src="'+src(n)+'" alt="" aria-hidden="true" decoding="async" draggable="false">';}

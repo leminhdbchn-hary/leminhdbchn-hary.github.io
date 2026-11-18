@@ -18,7 +18,7 @@ function layoutAdd(){
   const qe=$('qeBar'),qh=$('qeHint'),debtQ=$('debtQuick'),sms=inner.querySelector('.sms-open'),nocf=$('noCfRow'),tpl=$('tplBar');
   /* hàng công cụ nhỏ ngay dưới tab Chi/Thu */
   const tools=document.createElement('div');tools.className='add-tools';tools.id='addTools';
-  tools.innerHTML='<button type="button" id="atQe" onclick="toggleQuickEntry()">⚡ Nhập nhanh</button><button type="button" onclick="openSmsImport()">📩 Dán SMS</button>'+
+  tools.innerHTML='<button type="button" id="atQe" onclick="toggleQuickEntry()">⚡ Nhập nhanh</button>'+
     '<button type="button" onclick="openDebts(\'out\',true)">🤝 Cho vay</button><button type="button" onclick="openDebts(\'in\',true)">💳 Vay nợ</button>';
   tabs.parentNode.insertBefore(tools,tabs.nextSibling);
   /* ô nhập nhanh: thu gọn, bấm "⚡ Nhập nhanh" mới hiện (nhớ lựa chọn) */

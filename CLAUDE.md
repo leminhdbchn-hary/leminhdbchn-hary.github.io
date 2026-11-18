@@ -13,7 +13,7 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 4. Trả lời người dùng bằng tiếng Việt, ngắn gọn.
 
 ## Cấu trúc
-- `index.html` – giao diện; `app.js` – logic chính; `features.js` – tính năng mở rộng; `sms.js` – dán SMS ngân hàng
+- `index.html` – giao diện; `app.js` – logic chính; `features.js` – tính năng mở rộng
 - `skin.js` – giao diện màu (gold, sky, red, mono = Tối giản); `app.css` – style
 - `more.js` – mẫu ghi nhanh, gợi ý hạng mục, tạm ứng chờ thu, lọc báo cáo theo ví, tỷ lệ tiết kiệm, nhắc vay, nhắc sao lưu, tìm kiếm giao dịch
 - `ux2.js` – màn Thêm gọn (số tiền lên đầu, gợi ý số tiền, Lưu & ghi tiếp, giữ nháp), vuốt để xoá, thanh ngân sách tháng
@@ -21,6 +21,6 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 - `icons.js` + `icons3d/` – bộ biểu tượng (Fluent Emoji phẳng & 3D – MIT, Solar – CC BY 4.0), xem ICONS-LICENSE.md; Cài đặt › Kiểu biểu tượng hạng mục: Emoji của máy (mặc định) / Phẳng / 3D; icon giao diện luôn là Solar
 - `pro.js` – hộp thông báo/xác nhận của app, màn chào người mới, kéo xuống làm mới, màn trống có hướng dẫn, số tiền "chạy", tự khoá, Giới thiệu & Bảo mật, màn khởi động
 - Giao diện màu thêm `apple` (phong cách iOS) trong `skin.js`; `tests/contrast.js [skin...]` quét độ rõ chữ ở mọi màn hình
-- `bank.js` – tin ngân hàng: hàng chờ xác nhận, nhớ nơi chi, tự ghi khoản quen; v96: hộp thư tự động (Phím tắt/MacroDroid POST vào Firestore `inbox/{mã}/items`, app lấy về rồi xoá; luật trong `firestore.rules`, mã lưu `tc_inbox_secret`, không đồng bộ); `tests/inbox.js`
-- `mascot.js` + `mascot/*.webp` – linh vật Mèo Xu (ảnh người dùng gửi đã tách nền: hug, wave, bag, hold): `hug` trang trí góc thẻ chào ở Tổng quan (không chữ), màn trống dùng các tư thế còn lại; icon app (icon-*.png, apple-touch-icon, favicon) làm từ `hold`. Tổng quan không còn nút "Dán tin ngân hàng" (thanh `#bankBar` chỉ hiện khi có khoản chờ xác nhận); `tests/mascot.js`
+- v101: đã BỎ hẳn tính năng tin ngân hàng (bank.js, sms.js, hộp thư tự động Firebase, nút Dán SMS) theo yêu cầu người dùng – không thêm lại nếu không được yêu cầu
+- `mascot.js` + `mascot/*.webp` – linh vật Mèo Xu (ảnh người dùng gửi đã tách nền: hug, wave, bag, hold): `hug` trang trí góc thẻ chào ở Tổng quan (không chữ), màn trống dùng các tư thế còn lại; icon app (icon-*.png, apple-touch-icon, favicon) làm từ `hold`.; `tests/mascot.js`
 - `cloud.js` – đăng nhập Google / Firestore; `store.js` – IndexedDB; `sw.js` – chạy offline

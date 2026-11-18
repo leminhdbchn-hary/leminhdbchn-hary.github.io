@@ -21,8 +21,8 @@ async function page(browser, seed, opts) {
   const L = await p.evaluate(() => { showScreen('add'); const kids = [...document.querySelector('#screen-add .inner').children].map(e => e.id || e.className.split(' ')[0]);
     const idx = k => kids.indexOf(k); return { kids, amountBeforeNote: document.querySelector('.amount-card').compareDocumentPosition(document.getElementById('noteInput')) & 4,
       order: idx('amount-card') < idx('normalFields') && idx('normalFields') < idx('noCfRow') && idx('addTools') < idx('amount-card'), qeHidden: getComputedStyle(document.getElementById('qeBar')).display === 'none',
-      smsHidden: getComputedStyle(document.querySelector('.sms-open')).display === 'none', debtHidden: getComputedStyle(document.getElementById('debtQuick')).display === 'none' }; });
-  ok(L.order && L.amountBeforeNote && L.qeHidden && L.smsHidden && L.debtHidden, '1 màn Thêm: công cụ gọn → số tiền → ví/hạng mục → không tính thu chi', L);
+      debtHidden: getComputedStyle(document.getElementById('debtQuick')).display === 'none' }; });
+  ok(L.order && L.amountBeforeNote && L.qeHidden && L.debtHidden, '1 màn Thêm: công cụ gọn → số tiền → ví/hạng mục → không tính thu chi', L);
   ok(await p.evaluate(() => { toggleQuickEntry(); const a = getComputedStyle(document.getElementById('qeBar')).display !== 'none'; toggleQuickEntry(); return a && localStorage.getItem('tc_qe_open') === '0'; }), '1b bấm ⚡ Nhập nhanh: hiện/ẩn ô, nhớ lựa chọn');
 
   /* 2. gợi ý số tiền */
