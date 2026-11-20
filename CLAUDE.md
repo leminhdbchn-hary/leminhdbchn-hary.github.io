@@ -21,6 +21,7 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 - `icons.js` + `icons3d/` – bộ biểu tượng (Fluent Emoji phẳng & 3D – MIT, Solar – CC BY 4.0), xem ICONS-LICENSE.md; Cài đặt › Kiểu biểu tượng hạng mục: Emoji của máy (mặc định) / Phẳng / 3D; icon giao diện luôn là Solar
 - `pro.js` – hộp thông báo/xác nhận của app, màn chào người mới, kéo xuống làm mới, màn trống có hướng dẫn, số tiền "chạy", tự khoá, Giới thiệu & Bảo mật, màn khởi động
 - Giao diện màu thêm `apple` (phong cách iOS) trong `skin.js`; `tests/contrast.js [skin...]` quét độ rõ chữ ở mọi màn hình
+- v102: đã BỎ chế độ Tu tiên (isTuTien() luôn false, gỡ công tắc ở Cài đặt; mã linh thú/nhân vật còn nằm im, ẩn bằng class `tt-only`)
 - v101: đã BỎ hẳn tính năng tin ngân hàng (bank.js, sms.js, hộp thư tự động Firebase, nút Dán SMS) theo yêu cầu người dùng – không thêm lại nếu không được yêu cầu
 - `mascot.js` + `mascot/*.webp` – linh vật Mèo Xu (ảnh người dùng gửi đã tách nền: hug, wave, bag, hold): `hug` trang trí góc thẻ chào ở Tổng quan (không chữ), màn trống dùng các tư thế còn lại; icon app (icon-*.png, apple-touch-icon, favicon) làm từ `hold`.; `tests/mascot.js`
 - `cloud.js` – đăng nhập Google / Firestore; `store.js` – IndexedDB; `sw.js` – chạy offline

@@ -1025,7 +1025,7 @@ function deleteTx(id){
   const t=txs.find(x=>x.id===id);if(t){reverseTxBalance(t);revokeTxLinhLuc(t,false);}
   txs=txs.filter(x=>x.id!==id);saveAll();renderHistory();renderHome();
 }
-function clearAll(){if(confirm('Xoá toàn bộ dữ liệu (giao dịch, ví, ngân sách, định kỳ, vay nợ, vay ngân hàng, linh lực tu luyện)?')){txs=[];wallets=[];budgets={};recurring=[];debts=[];loans=[];rewardProfile={total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};rewardHistory=[];userAchievements=[];goals=[];customCats={};rebuildGroups();saveAll();renderHome();}}
+function clearAll(){if(confirm('Xoá toàn bộ dữ liệu (giao dịch, ví, ngân sách, định kỳ, vay nợ, vay ngân hàng)?')){txs=[];wallets=[];budgets={};recurring=[];debts=[];loans=[];rewardProfile={total_points:0,current_streak:0,longest_streak:0,last_reward_date:null};rewardHistory=[];userAchievements=[];goals=[];customCats={};rebuildGroups();saveAll();renderHome();}}
 
 function txItemHTML(t){
   /* hiển thị an toàn: mọi chữ người dùng nhập đều được mã hoá HTML */
@@ -1086,12 +1086,13 @@ function clearHistF(){histF.q='';histF.type='';histF.group='';histF.month='';his
 /* ---------- CHẾ ĐỘ: Bình thường (mặc định) / Tu tiên (linh thú, nhân vật, video) ---------- */
 /* v63: Chế độ Tu tiên & trang Admin chỉ dành cho chủ app (đăng nhập đúng Gmail chủ). Người dùng khác không thấy. */
 function isOwner(){try{if(window.Cloud&&Cloud.isLoggedIn())return Cloud.isOwner();return localStorage.getItem('tc_owner')==='1';}catch(e){return false;}}
-function isTuTien(){try{return isOwner()&&localStorage.getItem('tc_mode')==='tutien';}catch(e){return false;}}
+/* v102: đã bỏ chế độ Tu tiên – luôn là chế độ bình thường */
+function isTuTien(){return false;}
+try{localStorage.removeItem('tc_mode');}catch(e){}
 function updateOwnerUI(){
   const own=isOwner();
-  const m=document.getElementById('more-mode');if(m)m.style.display=own?'':'none';
   const a=document.getElementById('more-admin');if(a)a.style.display=own?'':'none';
-  if(!own)stopTuTienMedia();
+  stopTuTienMedia();
   renderModeSwitch();
 }
 function stopTuTienMedia(){
@@ -1116,7 +1117,7 @@ function renderMoreGroups(){
 function chooseFontSize(v){try{localStorage.setItem('tc_fs',String(v));}catch(e){}document.documentElement.style.setProperty('--fs',v+'px');renderFsOpts();renderMoreGroups();showMiniToast('Đã đổi cỡ chữ & số: '+(FS_NAMES[v]||v+'px'));}
 function chooseSkin(s){if(window.setSkin)setSkin(s);renderSkinOpts();showMiniToast(s==='auto'?'Giao diện tự đổi sáng/tối theo cài đặt điện thoại':'Đã đổi sang giao diện '+({sky:'Xanh trắng',red:'Đỏ trắng',mono:'Tối giản',apple:'Apple'}[s]||'Vàng đen'));try{renderMoreGroups();}catch(e){}}
 function toggleTuTien(){
-  if(!isOwner()){showMiniToast('Chế độ Tu tiên chỉ dành cho chủ app',true);return;}
+  return; /* v102: đã bỏ chế độ Tu tiên */
   const on=!isTuTien();
   try{localStorage.setItem('tc_mode',on?'tutien':'normal');}catch(e){}
   if(!on)stopTuTienMedia();
@@ -3140,7 +3141,7 @@ try{updateOwnerUI();}catch(e){}
 
 /* ---------- INIT ---------- */
 /* ---------- TỰ CẬP NHẬT PHIÊN BẢN MỚI ---------- */
-const APP_VERSION='101';window.APP_VERSION=APP_VERSION;
+const APP_VERSION='102';window.APP_VERSION=APP_VERSION;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{try{r.update();}catch(e){}}).catch(()=>{}));}
 async function hardUpdate(){
   try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
