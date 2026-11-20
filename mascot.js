@@ -1,9 +1,9 @@
 /* Sổ Thu Chi – linh vật Mèo Xu (v99): chỉ để trang trí, không có chữ.
-   - Mèo ôm lịch + túi tiền ở góc trên bên phải thẻ chào (Tổng quan)
+   - Mèo ôm đồng xu ở góc trên bên phải thẻ chào (Tổng quan)
    - Các màn trống dùng tư thế phù hợp 
-   Ảnh (người dùng gửi, đã tách nền): mascot/hug|wave|bag|hold.webp */
+   Ảnh (người dùng gửi, đã tách nền): mascot/coin|hug|wave|bag|hold.webp */
 (function(){
-const V='102';
+const V='103';
 const src=n=>'mascot/'+n+'.webp?v='+V;
 const pick={accList:'bag',debtList:'wave',loanList:'hold',topSpendList:'wave'};
 function img(n,cls){return '<img class="'+cls+'" src="'+src(n)+'" alt="" aria-hidden="true" decoding="async" draggable="false">';}
@@ -11,7 +11,7 @@ window.Mascot={src:src,img:img};
 function head(){
   const h=document.querySelector('#screen-home .home-head');
   if(!h||h.querySelector('.mx-head'))return;
-  h.classList.add('has-mx');h.insertAdjacentHTML('beforeend',img('hug','mx-head'));
+  h.classList.add('has-mx');h.insertAdjacentHTML('beforeend',img('coin','mx-head'));
 }
 function empties(){
   document.querySelectorAll('.empty-rich .er-ic:not([data-mx])').forEach(e=>{

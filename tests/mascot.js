@@ -10,6 +10,8 @@ function ok(c, n, x) { if (c) pass++; else { fail++; fails.push(n + (x !== undef
   await p.addInitScript(() => { if (!sessionStorage.getItem('s')) { sessionStorage.setItem('s', '1'); localStorage.clear(); ['tc_cloud_gate_skip', 'tc_onboarded', 'tc_swipe_hint'].forEach(k => localStorage.setItem(k, '1')); localStorage.setItem('tc_last_backup', String(Date.now())); } });
   await p.goto(BASE); await p.waitForTimeout(2500);
   const r1 = await p.evaluate(() => { const i = document.querySelector('.home-head .mx-head'); const h = document.querySelector('.home-head'); if (!i) return null; const a = i.getBoundingClientRect(), b = h.getBoundingClientRect(); return { loaded: i.complete && i.naturalWidth > 0, inside: a.top >= b.top - 1 && a.right <= b.right + 1 && a.bottom <= b.bottom, card: !!document.getElementById('mascotCard'), pe: getComputedStyle(i).pointerEvents }; });
+  const isCoin = await p.evaluate(() => /coin\.webp/.test(document.querySelector('.home-head .mx-head').src));
+  ok(isCoin, '1b thẻ chào dùng mèo ôm đồng xu');
   ok(r1 && r1.loaded && r1.inside && !r1.card && r1.pe === 'none', '1 mèo nằm gọn trong thẻ chào, không có thẻ chữ, không chặn bấm', r1);
   await p.evaluate(() => showScreen('accounts')); await p.waitForTimeout(600);
   const r2 = await p.evaluate(() => { const i = document.querySelector('#accList .mx-empty'); return i && /bag\.webp/.test(i.src) && i.complete && i.naturalWidth > 0; });
