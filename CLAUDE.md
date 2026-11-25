@@ -13,7 +13,7 @@ App web tĩnh (GitHub Pages), không có bước build. Nhánh chính: `main` �
 4. Trả lời người dùng bằng tiếng Việt, ngắn gọn.
 
 ## Cấu trúc
-- `index.html` – giao diện; `app.js` – logic chính; `features.js` – tính năng mở rộng
+- `index.html` – giao diện; `app.js` – logic chính; `features.js` – tính năng mở rộng (Nhập nhanh `qeParse`: v104 nhận ra ví theo tên/mã ngân hàng/loại – `QE_BANK_ALIAS` vcb, tcb, vikki…, "thẻ td", "tm"; bấm Xong khi đủ số tiền + hạng mục là lưu luôn, có Hoàn tác; `tests/qewallet.js`)
 - `skin.js` – giao diện màu (gold, sky, red, mono = Tối giản); `app.css` – style
 - `more.js` – mẫu ghi nhanh, gợi ý hạng mục, tạm ứng chờ thu, lọc báo cáo theo ví, tỷ lệ tiết kiệm, nhắc vay, nhắc sao lưu, tìm kiếm giao dịch
 - `ux2.js` – màn Thêm gọn (số tiền lên đầu, gợi ý số tiền, Lưu & ghi tiếp, giữ nháp), vuốt để xoá, thanh ngân sách tháng

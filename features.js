@@ -104,6 +104,42 @@ function qeFindDate(n){
     if(dd>=1&&dd<=31&&mm>=1&&mm<=12){const s=yy+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0');const chk=new Date(s+'T00:00:00');if(chk.getDate()===dd)return {date:s,start:m.index,end:m.index+m[0].length,label:dmy(s)};}}
   return null;
 }
+/* v104: nhận ra ví trong câu nhập nhanh: "10k cf vcb", "50k xăng thẻ td", "200k vikki" */
+const QE_BANK_ALIAS={VCB:['vcb','vietcombank','vietcom','ngoai thuong'],TCB:['tcb','techcombank','techcom'],MB:['mb','mbb','mbbank','mb bank','quan doi'],
+  BIDV:['bidv'],CTG:['ctg','vtb','vietinbank','vietin'],AGB:['agribank','agri','agr'],ACB:['acb'],VPB:['vpb','vpbank'],TPB:['tpb','tpbank'],
+  STB:['stb','sacombank','sacom'],VIB:['vib'],HDB:['hdb','hdbank'],SHB:['shb'],MSB:['msb','hang hai'],OCB:['ocb'],LPB:['lpb','lpbank','lienviet','lpbk'],
+  DAB:['dab','donga','dong a','vikki','vikki bank'],SEA:['seabank','seab'],EIB:['eib','eximbank','exim'],PVC:['pvcombank','pvcb'],NAB:['nam a','namabank'],
+  ABB:['abbank'],BVB:['baovietbank'],VAB:['vietabank'],VBB:['vietbank'],SGB:['saigonbank'],NCB:['ncb'],PGB:['pgbank','pg bank'],GPB:['gpbank'],
+  OJB:['oceanbank'],CB:['cbbank'],SCB:['scb'],CITI:['citi','citibank'],HSBC:['hsbc'],SHBVN:['shinhan']};
+const QE_TYPE_ALIAS={credit:['the td','the tin dung','tin dung','ttd','credit','the credit'],cash:['tien mat','tm','cash']};
+const QE_W_STOP=new Set(['tien','the','tai','khoan','ngan','hang','dung','chinh','phu','tiet','kiem','cua','toi','minh','bank','account']);
+function qeClean(s){return normKeepLen(String(s||'')).replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
+function qeWalletKeys(w){
+  const keys=[],add=(k,g)=>{k=qeClean(k);if(k&&k.length>=2)keys.push({k,g:g||k});};
+  const nm=qeClean(w.name);
+  add(nm,'name');if(nm.indexOf(' ')>0)add(nm.replace(/ /g,''),'name');
+  nm.split(' ').forEach(x=>{if(x.length>=4&&!QE_W_STOP.has(x))add(x,'w:'+x);});
+  const pad=' '+nm+' ',banks=new Set();if(w.bankCode)banks.add(w.bankCode);
+  Object.keys(QE_BANK_ALIAS).forEach(c=>{if(QE_BANK_ALIAS[c].some(a=>pad.indexOf(' '+a+' ')>=0||pad.replace(/ /g,'').indexOf(a.replace(/ /g,''))>=0&&a.length>=5))banks.add(c);});
+  banks.forEach(c=>(QE_BANK_ALIAS[c]||[c.toLowerCase()]).forEach(a=>add(a,'bank:'+c)));
+  (QE_TYPE_ALIAS[w.type]||[]).forEach(a=>add(a,'type'));
+  return keys;
+}
+function qeFindWallet(n3){
+  let list=[];try{list=getSpendableWallets();}catch(e){list=(typeof wallets!=='undefined'?wallets:[]).filter(w=>w.type!=='saving');}
+  const acc=document.getElementById('accSelect');
+  if(acc&&acc.options.length)list=list.filter(w=>[...acc.options].some(o=>o.value===String(w.id)));
+  if(!list.length)return null;
+  const padded=' '+n3.replace(/[^a-z0-9]/g,' ')+' ';let best=null;
+  list.forEach((w,idx)=>{
+    const got={};
+    qeWalletKeys(w).forEach(({k,g})=>{const i=padded.indexOf(' '+k+' ');if(i<0)return;if(!got[g]||got[g].k.length<k.length)got[g]={k,i};});
+    const hits=Object.values(got);if(!hits.length)return;
+    const score=hits.reduce((s,h)=>s+h.k.length,0)*10-(w.type==='credit'?1:0);
+    if(!best||score>best.score)best={w,score,spans:hits.map(h=>[h.i,h.i+h.k.length])};
+  });
+  return best;
+}
 function qeParse(text){
   const orig=String(text||'');const n=normKeepLen(orig);
   const res={type:null,group:null,item:null,amount:0,date:null,dateLabel:'',note:'',fx:null};
@@ -113,6 +149,8 @@ function qeParse(text){
   const a=qeFindAmount(n2);
   if(a){cut.push([a.start,a.end]);if(a.cur){res.fx={cur:a.cur,amt:a.fxAmt};}else res.amount=a.value;}
   let n3=n;cut.forEach(([s,e])=>{n3=n3.slice(0,s)+' '.repeat(e-s)+n3.slice(e);});
+  const wf=qeFindWallet(n3);
+  if(wf){res.walletId=wf.w.id;res.walletName=wf.w.name;wf.spans.forEach(sp=>cut.push(sp));n3=n;cut.forEach(([s,e])=>{n3=n3.slice(0,s)+' '.repeat(e-s)+n3.slice(e);});}
   const padded=' '+n3.replace(/[^a-z0-9$+.]/g,' ')+' ';
   let kwHit=null;
   for(const x of qeKeywords()){const i=padded.indexOf(' '+x.k+' ');if(i>=0){kwHit=x;break;}}
@@ -135,11 +173,13 @@ function qeRun(){
   else if(r.amount){fxSet('VND');document.getElementById('amountInput').value=fmtShort(r.amount);}
   if(r.group&&(currentType==='chi'||currentType==='thu')){selectedGroup=r.group;selectedItem=r.item;renderCatPicker();}
   if(r.date){document.getElementById('dateInput').value=r.date;}
+  if(r.walletId){const acc=document.getElementById('accSelect');if(acc&&[...acc.options].some(o=>o.value===String(r.walletId))){acc.value=String(r.walletId);acc.dispatchEvent(new Event('change',{bubbles:true}));}}
   const noteEl=document.getElementById('noteInput');
   if(noteEl&&(noteEl.value===''||noteEl.value===qeSetNote)){noteEl.value=r.note;qeSetNote=r.note;}
   const parts=[];
   if(r.item)parts.push((r.type==='thu'?'Thu · ':'Chi · ')+r.item);
   if(r.fx)parts.push(r.fx.amt+' '+r.fx.cur+' ≈ '+document.getElementById('amountInput').value+' đ');else if(r.amount)parts.push(fmtShort(r.amount)+' đ');
+  if(r.walletName)parts.push('ví '+r.walletName);
   if(r.dateLabel)parts.push(r.dateLabel);
   if(hint)hint.innerHTML=parts.length?('✓ '+escH(parts.join(' · '))+(r.amount||r.fx?'':' · <span class="qe-warn">chưa có số tiền</span>')):'<span class="qe-warn">Chưa nhận ra nội dung, hãy nhập thêm số tiền (vd 35k)</span>';
 }
@@ -162,7 +202,14 @@ function qeReset(){const i=document.getElementById('qeInput');if(i)i.value='';co
 (function(){
   const inp=document.getElementById('qeInput');if(!inp)return;
   inp.addEventListener('input',()=>{clearTimeout(qeTimer);qeTimer=setTimeout(qeRun,250);});
-  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();clearTimeout(qeTimer);qeRun();inp.blur();}});
+  /* v104: bấm Xong/Enter – nếu đã đủ số tiền + hạng mục thì LƯU LUÔN (có nút Hoàn tác), thiếu thì chỉ điền sẵn */
+  inp.addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();clearTimeout(qeTimer);
+    const txt=inp.value.trim();qeRun();
+    const r=txt?qeParse(txt):null;
+    const ok=r&&(r.amount>0||r.fx)&&r.item&&(currentType==='chi'||currentType==='thu')&&selectedItem&&!editingTxId&&typeof window.saveAndNext==='function';
+    if(!ok){inp.blur();return;}
+    const n=txs.length;window.saveAndNext();
+    if(txs.length>n){qeReset();setTimeout(()=>{const i=document.getElementById('qeInput');if(i&&currentScreen()==='add')i.focus();},120);}});
 })();
 
 /* =====================================================================
